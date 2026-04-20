@@ -21,6 +21,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.spritesheet("monsters", "/assets/32rogues/monsters.png", { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet("rogues",   "/assets/32rogues/rogues.png",   { frameWidth: 32, frameHeight: 32 });
     this.load.image("bg_brick", "/assets/256x256/256_Brick 01 Mud.png");
+    this.load.image("bg_sand",  "/assets/256x256/256_Sand 01.png");
     this.load.image("stat_hp",  "/assets/Items Assets/Misc/Heart.png");
     this.load.image("stat_atk", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");
     this.load.image("stat_def", "/assets/Items Assets/Weapon & Tool/Iron Shield.png");

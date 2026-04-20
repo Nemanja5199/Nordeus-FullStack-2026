@@ -41,17 +41,19 @@ const CLASSES = [
     },
 ];
 
-const STAT_ROWS = [
-    { key: "stat_hp", label: "HP" },
-    { key: "stat_atk", label: "ATK" },
-    { key: "stat_def", label: "DEF" },
-    { key: "stat_mag", label: "MAG" },
+const STAT_DEFS = [
+    { key: "stat_hp",  label: "HP",  desc: "Health Points — how much damage you can take before dying." },
+    { key: "stat_atk", label: "ATK", desc: "Attack — raw physical damage dealt to enemies each hit." },
+    { key: "stat_def", label: "DEF", desc: "Defense — reduces incoming physical damage from enemies." },
+    { key: "stat_mag", label: "MAG", desc: "Magic — power of spells, buffs, and magical abilities." },
 ] as const;
 
 export class CharacterSelectScene extends Phaser.Scene {
     private selectedIndex = 0;
     private cardContainers: Phaser.GameObjects.Container[] = [];
     private runConfig!: RunConfig;
+    private statInfoText!: Phaser.GameObjects.Text;
+    private statInfoBg!: Phaser.GameObjects.Rectangle;
 
     constructor() {
         super("CharacterSelectScene");
@@ -85,13 +87,14 @@ export class CharacterSelectScene extends Phaser.Scene {
             })
             .setOrigin(0.5);
 
-        const cardW = Math.min(240, (width - 80) / 3);
-        const cardH = height * 0.54;
-        const totalW = cardW * 3 + 40 * 2;
+        const cardW = Math.min(280, (width - 160) / 3);
+        const cardH = height * 0.60;
+        const gap = Math.max(40, (width - cardW * 3) / 6);
+        const totalW = cardW * 3 + gap * 2;
         const startX = width / 2 - totalW / 2 + cardW / 2;
 
         CLASSES.forEach((cls, i) => {
-            const x = startX + i * (cardW + 40);
+            const x = startX + i * (cardW + gap);
             const y = height * 0.49;
             const container = this.buildCard(cls, x, y, cardW, cardH, i);
             this.cardContainers.push(container);
@@ -99,8 +102,32 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         this.highlightCard(0);
 
+        // Stat info bar — shown when hovering a stat icon
+        this.statInfoBg = this.add
+            .rectangle(width / 2, height * 0.835, width * 0.55, 32, 0x1c1408, 0.92)
+            .setStrokeStyle(1, 0x7a5828)
+            .setVisible(false);
+        this.statInfoText = this.add
+            .text(width / 2, height * 0.835, "", {
+                fontSize: "14px",
+                color: "#d4b483",
+                align: "center",
+            })
+            .setOrigin(0.5)
+            .setVisible(false);
+
         createButton(this, width / 2 + 140, height * 0.9, { ...BTN_MD, label: "START RUN", color: 0x1c2e14, onClick: () => this.confirm() });
         createButton(this, width / 2 - 140, height * 0.9, { ...BTN_MD, label: "BACK", color: 0x1a1c20, onClick: () => this.scene.start("MainMenuScene") });
+    }
+
+    private showStatInfo(text: string) {
+        this.statInfoText.setText(text).setVisible(true);
+        this.statInfoBg.setVisible(true);
+    }
+
+    private hideStatInfo() {
+        this.statInfoText.setVisible(false);
+        this.statInfoBg.setVisible(false);
     }
 
     private buildCard(
@@ -117,13 +144,11 @@ export class CharacterSelectScene extends Phaser.Scene {
             .rectangle(0, 0, w, h, cls.locked ? 0x100c08 : 0x1c1408, 0.95)
             .setStrokeStyle(2, cls.locked ? 0x2a2018 : 0x7a5828);
 
-        // Sprite
         const sprite = this.add
             .image(0, -h * 0.3, cls.spriteKey, cls.spriteFrame)
             .setScale(cls.locked ? 3 : 4)
             .setAlpha(cls.locked ? 0.3 : 1);
 
-        // Name
         const nameText = this.add
             .text(0, -h * 0.13, cls.name, {
                 fontSize: "20px",
@@ -132,42 +157,67 @@ export class CharacterSelectScene extends Phaser.Scene {
             })
             .setOrigin(0.5);
 
-        // Stats 2x2 icon grid
+        // Stats — 4-row vertical list
         const statObjs: Phaser.GameObjects.GameObject[] = [];
         const statValues = [cls.stats.hp, cls.stats.atk, cls.stats.def, cls.stats.mag];
-        const iconScale = 0.45;
-        const colX = [-w * 0.22, w * 0.22];
-        const rowY = [-h * 0.035, h * 0.055];
+        const iconScale = 0.72;
+        const iconHalf = 16 * iconScale;
+        const rowSpacing = 28;
+        const statsStartY = -h * 0.06;
+        // left-align the block, centered on card
+        const blockW = iconHalf * 2 + 8 + 70; // icon + gap + text estimate
+        const iconX = -blockW / 2 + iconHalf;
+        const textX = iconX + iconHalf + 8;
 
-        STAT_ROWS.forEach((stat, i) => {
-            const col = i % 2;
-            const row = Math.floor(i / 2);
-            const sx = colX[col];
-            const sy = rowY[row];
-            const iconColor = cls.locked ? 0.15 : 1;
+        STAT_DEFS.forEach((stat, i) => {
+            const sy = statsStartY + i * rowSpacing;
+            const alpha = cls.locked ? 0.15 : 1;
 
-            const icon = this.add.image(sx - 14, sy, stat.key).setScale(iconScale).setAlpha(iconColor);
-            const label = this.add.text(sx + 4, sy, `${statValues[i]}`, {
-                fontSize: "20px",
-                color: cls.locked ? "#2a2418" : "#d4b483",
-            }).setOrigin(0, 0.5);
+            const icon = this.add
+                .image(iconX, sy, stat.key)
+                .setScale(iconScale)
+                .setAlpha(alpha);
 
-            statObjs.push(icon, label);
+            const valueText = this.add
+                .text(textX, sy, `${stat.label}  ${statValues[i]}`, {
+                    fontSize: "13px",
+                    color: cls.locked ? "#2a2418" : "#d4b483",
+                })
+                .setOrigin(0, 0.5);
+
+            if (!cls.locked) {
+                const hitW = blockW + 20;
+                const hit = this.add
+                    .rectangle(0, sy, hitW, 24, 0xffffff, 0)
+                    .setInteractive({ useHandCursor: false });
+
+                hit.on("pointerover", () => {
+                    icon.setTint(0xffd700);
+                    valueText.setColor("#c8a035");
+                    this.showStatInfo(`${stat.label} — ${stat.desc}`);
+                });
+                hit.on("pointerout", () => {
+                    icon.clearTint();
+                    valueText.setColor("#d4b483");
+                    this.hideStatInfo();
+                });
+                statObjs.push(icon, valueText, hit);
+            } else {
+                statObjs.push(icon, valueText);
+            }
         });
 
-        // Description
         const descText = this.add
-            .text(0, h * 0.18, cls.description, {
+            .text(0, h * 0.22, cls.description, {
                 fontSize: "12px",
                 color: cls.locked ? "#2a2418" : "#d4b483",
                 align: "center",
-                wordWrap: { width: w - 20 },
+                wordWrap: { width: w - 24 },
             })
             .setOrigin(0.5);
 
-        // Moves list
         const movesLabel = this.add
-            .text(0, h * 0.32, "Moves", {
+            .text(0, h * 0.35, "Moves", {
                 fontSize: "12px",
                 fontFamily: "EnchantedLand",
                 color: cls.locked ? "#2a2418" : "#8a7a5a",
@@ -175,7 +225,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             .setOrigin(0.5);
 
         const movesText = this.add
-            .text(0, h * 0.4, cls.moves.join("  ·  "), {
+            .text(0, h * 0.42, cls.moves.join("  ·  "), {
                 fontSize: "11px",
                 color: cls.locked ? "#2a2418" : "#c8b078",
                 align: "center",
