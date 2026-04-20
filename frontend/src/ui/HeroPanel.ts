@@ -40,7 +40,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
 
     // Stats 2×2 grid
     const stats = [
-        { key: "stat_hp",  val: hero.maxHp  },
+        { key: "stat_hp",  val: `${hero.currentHp ?? hero.maxHp}/${hero.maxHp}`  },
         { key: "stat_atk", val: hero.attack  },
         { key: "stat_def", val: hero.defense },
         { key: "stat_mag", val: hero.magic   },

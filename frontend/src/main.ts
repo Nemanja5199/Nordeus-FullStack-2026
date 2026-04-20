@@ -6,11 +6,12 @@ import { MapScene } from "./scenes/MapScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { PostBattleScene } from "./scenes/PostBattleScene";
 import { MoveManagementScene } from "./scenes/MoveManagementScene";
+import { TreeMapScene } from "./scenes/TreeMapScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   backgroundColor: "#0a0a1e",
-  scene: [PreloadScene, MainMenuScene, CharacterSelectScene, MapScene, BattleScene, PostBattleScene, MoveManagementScene],
+  scene: [PreloadScene, MainMenuScene, CharacterSelectScene, MapScene, BattleScene, PostBattleScene, MoveManagementScene, TreeMapScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,

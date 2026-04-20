@@ -1,13 +1,15 @@
 import type { HeroState, RunConfig, RunSave } from "../types/game";
 
-const SESSION_KEY = "rpg_session_id";
-const HERO_KEY = "rpg_hero";
-const RUN_KEY = "rpg_run";
+const SESSION_KEY  = "rpg_session_id";
+const HERO_KEY     = "rpg_hero";
+const RUN_KEY      = "rpg_run";
+const TREE_KEY     = "rpg_tree_state";
 
 function defaultHero(defaults: { maxHp: number; attack: number; defense: number; magic: number; defaultMoves: string[] }): HeroState {
   return {
     level: 1,
     xp: 0,
+    currentHp: defaults.maxHp,
     maxHp: defaults.maxHp,
     attack: defaults.attack,
     defense: defaults.defense,
@@ -22,6 +24,10 @@ class GameStateManager {
   runConfig: RunConfig | null = null;
   runSave: RunSave | null = null;
 
+  // Tree-run progress
+  completedNodes: string[] = [];
+  currentNode: string | null = null;
+
   getSessionId(): string {
     let id = localStorage.getItem(SESSION_KEY);
     if (!id) {
@@ -34,6 +40,7 @@ class GameStateManager {
   initHero(config: RunConfig): void {
     const raw = localStorage.getItem(HERO_KEY);
     this.hero = raw ? JSON.parse(raw) : defaultHero(config.heroDefaults);
+    if (this.hero.currentHp === undefined) this.hero.currentHp = this.hero.maxHp;
   }
 
   saveHero(): void {
@@ -53,6 +60,40 @@ class GameStateManager {
   clearRun(): void {
     this.runSave = null;
     localStorage.removeItem(RUN_KEY);
+    this.clearTreeState();
+  }
+
+  saveTreeState(): void {
+    localStorage.setItem(TREE_KEY, JSON.stringify({
+      completedNodes: this.completedNodes,
+      currentNode:    this.currentNode,
+    }));
+  }
+
+  loadTreeState(): void {
+    const raw = localStorage.getItem(TREE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      this.completedNodes = saved.completedNodes ?? [];
+      this.currentNode    = saved.currentNode ?? null;
+    } else {
+      this.completedNodes = [];
+      this.currentNode    = null;
+    }
+  }
+
+  clearTreeState(): void {
+    this.completedNodes = [];
+    this.currentNode    = null;
+    localStorage.removeItem(TREE_KEY);
+  }
+
+  completeNode(nodeId: string): void {
+    if (!this.completedNodes.includes(nodeId)) {
+      this.completedNodes.push(nodeId);
+    }
+    this.currentNode = nodeId;
+    this.saveTreeState();
   }
 
   addXp(amount: number): boolean {
@@ -72,6 +113,7 @@ class GameStateManager {
     this.hero.level += 1;
     this.hero.xp = 0;
     this.hero.maxHp += gains.maxHp;
+    this.hero.currentHp = Math.min((this.hero.currentHp ?? this.hero.maxHp) + gains.maxHp, this.hero.maxHp);
     this.hero.attack += gains.attack;
     this.hero.defense += gains.defense;
     this.hero.magic += gains.magic;

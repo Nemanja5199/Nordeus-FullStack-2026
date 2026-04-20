@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { GameState } from "../utils/gameState";
 import { createButton, BTN_SM } from "../ui/Button";
+import {
+  BG_DARKEST, BG_MOVE_CARD, BG_MOVE_EQUIPPED, BG_BTN_CLOSE,
+  BORDER_GOLD, BORDER_GOLD_BRIGHT, BORDER_LOCKED,
+  TXT_GOLD, TXT_GOLD_LIGHT, TXT_GOLD_MID, TXT_MUTED, TXT_HERO, TXT_LOCKED,
+} from "../ui/colors";
 
 interface MoveManagementData {
   returnScene: string;
@@ -26,102 +31,135 @@ export class MoveManagementScene extends Phaser.Scene {
     this.equippedButtons = [];
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, 0x0d0905, 0.96).setOrigin(0);
-    this.add.text(width / 2, 30, "MOVE MANAGEMENT", {
-      fontSize: "30px", color: "#c8a035", fontStyle: "bold", stroke: "#4a3010", strokeThickness: 3,
+
+    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.96).setOrigin(0);
+
+    this.add.text(width / 2, 32, "MOVE MANAGEMENT", {
+      fontSize: "32px", fontFamily: "EnchantedLand", color: TXT_GOLD,
+      stroke: "#4a3010", strokeThickness: 3,
     }).setOrigin(0.5);
 
-    this.add.text(120, 72, "ALL LEARNED MOVES", { fontSize: "16px", color: "#c8a035" }).setOrigin(0.5);
-    this.add.text(width - 200, 72, "EQUIPPED (4 slots)", { fontSize: "16px", color: "#c8a035" }).setOrigin(0.5);
-
-    this.add.text(width / 2, 96, "Click a learned move, then click an equipped slot to swap.", {
-      fontSize: "13px", color: "#8a7a5a",
+    this.add.text(width / 4, 72, "LEARNED MOVES", {
+      fontSize: "15px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID,
     }).setOrigin(0.5);
 
-    this.infoText = this.add.text(width / 2, height - 70, "", {
-      fontSize: "14px", color: "#d4b483", wordWrap: { width: width - 40 }, align: "center",
+    this.add.text((width * 3) / 4, 72, "EQUIPPED SLOTS", {
+      fontSize: "15px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID,
     }).setOrigin(0.5);
 
-    this.buildLearnedPanel(width, height);
-    this.buildEquippedPanel(width, height);
+    this.infoText = this.add.text(width / 2, height - 68, "Hover a move to see its description.", {
+      fontSize: "14px", color: TXT_MUTED, wordWrap: { width: width - 60 }, align: "center",
+    }).setOrigin(0.5);
 
-    createButton(this, width / 2, height - 30, { ...BTN_SM, label: "CLOSE", color: 0x2a2a4a, onClick: () => this.scene.stop() });
+    this.buildLearnedPanel(width);
+    this.buildEquippedPanel(width);
+
+    createButton(this, width / 2, height - 28, {
+      ...BTN_SM, label: "CLOSE", color: BG_BTN_CLOSE,
+      onClick: () => this.scene.stop(),
+    });
   }
 
-  private buildLearnedPanel(_width: number, _height: number) {
-    const startY = 120;
-    const learned = GameState.hero.learnedMoves;
-    const panelX = 110;
+  private buildLearnedPanel(width: number) {
+    const startY = 110;
+    const cardW  = 220;
+    const cardH  = 44;
+    const panelX = width / 4;
 
-    learned.forEach((moveId, i) => {
+    GameState.hero.learnedMoves.forEach((moveId, i) => {
       const move = GameState.runConfig!.moves[moveId];
       if (!move) return;
-      const y = startY + i * 54;
+
       const isEquipped = GameState.hero.equippedMoves.includes(moveId);
+      const y = startY + i * (cardH + 10);
 
       const container = this.add.container(panelX, y);
-      const bg = this.add.rectangle(0, 0, 210, 48, isEquipped ? 0x1e1a10 : 0x1c1408, 0.9)
-        .setStrokeStyle(1, isEquipped ? 0x7a5828 : 0x4a3818);
-      const nameTxt = this.add.text(-98, -12, move.name, { fontSize: "14px", color: "#d4b483", fontStyle: "bold" });
-      const typeTxt = this.add.text(-98, 6, `[${move.moveType}]  ${move.description.slice(0, 28)}…`, { fontSize: "11px", color: "#8a7a5a" });
+      const bg = this.add.rectangle(0, 0, cardW, cardH,
+        isEquipped ? BG_MOVE_EQUIPPED : BG_MOVE_CARD, 0.92)
+        .setStrokeStyle(1, isEquipped ? BORDER_GOLD : BORDER_LOCKED);
+
+      const nameTxt = this.add.text(-cardW / 2 + 12, -8, move.name, {
+        fontSize: "15px", fontFamily: "EnchantedLand", color: TXT_GOLD_LIGHT,
+      });
+      const typeTxt = this.add.text(-cardW / 2 + 12, 9, `[${move.moveType}]`, {
+        fontSize: "11px", color: TXT_MUTED,
+      });
 
       bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerdown", () => this.selectLearned(i, moveId, container));
-      bg.on("pointerover", () => { bg.setAlpha(0.7); this.infoText.setText(move.description); });
-      bg.on("pointerout", () => bg.setAlpha(1));
+      bg.on("pointerdown", () => this.selectLearned(i, moveId));
+      bg.on("pointerover", () => {
+        bg.setAlpha(0.7);
+        this.infoText.setText(move.description);
+      });
+      bg.on("pointerout", () => {
+        bg.setAlpha(1);
+        this.infoText.setText("Hover a move to see its description.");
+      });
 
       container.add([bg, nameTxt, typeTxt]);
       this.learnedButtons.push(container);
     });
   }
 
-  private buildEquippedPanel(width: number, _height: number) {
-    const startY = 120;
-    const equipped = GameState.hero.equippedMoves;
-    const panelX = width - 200;
+  private buildEquippedPanel(width: number) {
+    const startY = 110;
+    const cardW  = 220;
+    const cardH  = 44;
+    const panelX = (width * 3) / 4;
 
     for (let slot = 0; slot < 4; slot++) {
-      const moveId = equipped[slot];
-      const move = moveId ? GameState.runConfig!.moves[moveId] : null;
-      const y = startY + slot * 54;
+      const moveId = GameState.hero.equippedMoves[slot];
+      const move   = moveId ? GameState.runConfig!.moves[moveId] : null;
+      const y = startY + slot * (cardH + 10);
 
       const container = this.add.container(panelX, y);
-      const bg = this.add.rectangle(0, 0, 210, 48, 0x1c1408, 0.9).setStrokeStyle(1, 0x4a3818);
-      const slotLabel = this.add.text(-98, -14, `Slot ${slot + 1}: ${move ? move.name : "(empty)"}`, {
-        fontSize: "14px", color: move ? "#a8c888" : "#4a3818", fontStyle: "bold",
+      const bg = this.add.rectangle(0, 0, cardW, cardH, BG_MOVE_CARD, 0.92)
+        .setStrokeStyle(1, BORDER_LOCKED);
+
+      const slotTxt = this.add.text(-cardW / 2 + 12, -14, `SLOT ${slot + 1}`, {
+        fontSize: "10px", color: TXT_MUTED,
       });
-      const typeTxt = this.add.text(-98, 6, move ? `[${move.moveType}]` : "", { fontSize: "11px", color: "#8a7a5a" });
+      const nameTxt = this.add.text(-cardW / 2 + 12, 3, move ? move.name : "(empty)", {
+        fontSize: "15px", fontFamily: "EnchantedLand",
+        color: move ? TXT_HERO : TXT_LOCKED,
+      });
 
       bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerdown", () => this.selectEquipped(slot, container));
-      bg.on("pointerover", () => { bg.setAlpha(0.7); if (move) this.infoText.setText(move.description); });
-      bg.on("pointerout", () => bg.setAlpha(1));
+      bg.on("pointerdown", () => this.selectEquipped(slot));
+      bg.on("pointerover", () => {
+        bg.setAlpha(0.7);
+        if (move) this.infoText.setText(move.description);
+      });
+      bg.on("pointerout", () => {
+        bg.setAlpha(1);
+        this.infoText.setText("Hover a move to see its description.");
+      });
 
-      container.add([bg, slotLabel, typeTxt]);
+      container.add([bg, slotTxt, nameTxt]);
       this.equippedButtons.push(container);
     }
   }
 
-  private selectLearned(index: number, moveId: string, _container: Phaser.GameObjects.Container) {
+  private selectLearned(index: number, moveId: string) {
     this.selectedLearnedIndex = index;
     this.selectedEquippedSlot = -1;
 
-    // Highlight selection
     this.learnedButtons.forEach((c, i) => {
-      const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
-      bg.setStrokeStyle(2, i === index ? 0xb88820 : 0x4a3818);
+      (c.getAt(0) as Phaser.GameObjects.Rectangle)
+        .setStrokeStyle(2, i === index ? BORDER_GOLD_BRIGHT : BORDER_LOCKED);
     });
 
-    this.infoText.setText(`Selected: ${GameState.runConfig!.moves[moveId]?.name} — now click an equipped slot to swap.`);
+    const name = GameState.runConfig!.moves[moveId]?.name;
+    this.infoText.setText(`"${name}" selected — click an equipped slot to place it.`);
     this.trySwap(moveId);
   }
 
-  private selectEquipped(slot: number, _container: Phaser.GameObjects.Container) {
+  private selectEquipped(slot: number) {
     this.selectedEquippedSlot = slot;
 
     this.equippedButtons.forEach((c, i) => {
-      const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
-      bg.setStrokeStyle(2, i === slot ? 0xb88820 : 0x4a3818);
+      (c.getAt(0) as Phaser.GameObjects.Rectangle)
+        .setStrokeStyle(2, i === slot ? BORDER_GOLD_BRIGHT : BORDER_LOCKED);
     });
 
     if (this.selectedLearnedIndex >= 0) {
@@ -132,13 +170,25 @@ export class MoveManagementScene extends Phaser.Scene {
 
   private trySwap(moveId: string) {
     if (this.selectedEquippedSlot < 0) return;
-    GameState.equipMove(this.selectedEquippedSlot, moveId);
+
+    const targetSlot   = this.selectedEquippedSlot;
+    const existingSlot = GameState.hero.equippedMoves.indexOf(moveId);
+
+    if (existingSlot === targetSlot) {
+      this.selectedLearnedIndex = -1;
+      this.selectedEquippedSlot = -1;
+      return;
+    }
+
+    if (existingSlot >= 0) {
+      const displaced = GameState.hero.equippedMoves[targetSlot];
+      GameState.equipMove(existingSlot, displaced);
+    }
+
+    GameState.equipMove(targetSlot, moveId);
     this.selectedLearnedIndex = -1;
     this.selectedEquippedSlot = -1;
-    // Rebuild panels to reflect new state
     this.children.removeAll(true);
     this.create({ returnScene: this.returnScene });
   }
-
 }
-

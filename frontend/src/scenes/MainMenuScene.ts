@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
 import { createButton, BTN_LG } from "../ui/Button";
+import { BG_BTN_SUCCESS, BG_BTN_NEUTRAL, BG_BTN_DANGER } from "../ui/colors";
 
 export class MainMenuScene extends Phaser.Scene {
     constructor() {
@@ -41,9 +42,12 @@ export class MainMenuScene extends Phaser.Scene {
             })
             .setOrigin(0.5);
 
-        createButton(this, width / 2, height * 0.55, { ...BTN_LG, label: "NEW GAME", color: 0x1c2e14, onClick: () => this.startNewGame() });
-        createButton(this, width / 2, height * 0.67, { ...BTN_LG, label: "CONTINUE", color: 0x1a1c20, onClick: () => this.continueGame() });
-        createButton(this, width / 2, height * 0.79, { ...BTN_LG, label: "RESET PROGRESS", color: 0x2e1008, onClick: () => this.resetProgress() });
+        const btnY     = height * 0.50;
+        const btnGap   = 72;
+        createButton(this, width / 2, btnY,            { ...BTN_LG, label: "NEW GAME",       color: BG_BTN_SUCCESS, onClick: () => this.startNewGame() });
+        createButton(this, width / 2, btnY + btnGap,   { ...BTN_LG, label: "CONTINUE",       color: BG_BTN_NEUTRAL, onClick: () => this.continueGame() });
+        createButton(this, width / 2, btnY + btnGap*2, { ...BTN_LG, label: "RESET PROGRESS", color: BG_BTN_DANGER,  onClick: () => this.resetProgress() });
+        createButton(this, width / 2, btnY + btnGap*3, { ...BTN_LG, label: "TREE MAP (TEST)", color: BG_BTN_NEUTRAL, onClick: () => this.openTreeTest() });
     }
 
     private async startNewGame() {
@@ -78,6 +82,22 @@ export class MainMenuScene extends Phaser.Scene {
                 loading.setText("No save found — starting new game.").setColor("#c8a035");
                 this.time.delayedCall(1500, () => this.startNewGame());
             }
+        } catch {
+            loading.setText("Failed to connect to server.").setColor("#c84a2a");
+        }
+    }
+
+    private async openTreeTest() {
+        const loading = this.add
+            .text(this.scale.width / 2, this.scale.height * 0.91, "Loading...", { fontSize: "18px", color: "#8a7a5a" })
+            .setOrigin(0.5);
+        try {
+            const config = await api.getRunConfig();
+            const { GameState } = await import("../utils/gameState");
+            GameState.runConfig = config;
+            GameState.initHero(config);
+            GameState.clearTreeState();
+            this.scene.start("TreeMapScene");
         } catch {
             loading.setText("Failed to connect to server.").setColor("#c84a2a");
         }

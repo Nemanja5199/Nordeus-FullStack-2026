@@ -11,7 +11,12 @@ function rogueFrame(row: number, col: number) {
 
 export const HERO_FRAME = {
   key: "rogues",
-  frame: rogueFrame(1, 0), // Knight
+  frame: rogueFrame(1, 0), // 2.a Knight
+};
+
+export const SHOPKEEPER_FRAME = {
+  key: "rogues",
+  frame: rogueFrame(6, 0), // 8.a peasant / coalburner
 };
 
 export const MONSTER_FRAMES: Record<string, { key: string; frame: number }> = {

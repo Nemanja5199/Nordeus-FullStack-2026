@@ -50,11 +50,14 @@ export interface RunConfig {
   monsters: MonsterConfig[];
   moves: Record<string, MoveConfig>;
   heroDefaults: HeroDefaults;
+  mapTree: import("../utils/mockMapTree").MapTree;
+  seed: number;
 }
 
 export interface HeroState {
   level: number;
   xp: number;
+  currentHp: number;
   maxHp: number;
   attack: number;
   defense: number;

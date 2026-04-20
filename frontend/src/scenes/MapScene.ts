@@ -2,8 +2,9 @@ import Phaser from "phaser";
 import { GameState } from "../utils/gameState";
 import { createHeroPanel } from "../ui/HeroPanel";
 import { createMonsterNode } from "../ui/MonsterNode";
+import { createButton, BTN_SM } from "../ui/Button";
 import type { NodeState } from "../ui/MonsterNode";
-import { TXT_DARK, TXT_GOLD, BG_SEPIA, DOT_PATH_DEFEATED, DOT_PATH_ACTIVE } from "../ui/colors";
+import { TXT_DARK, TXT_GOLD, BG_SEPIA, DOT_PATH_DEFEATED, DOT_PATH_ACTIVE, BG_BTN_CLOSE } from "../ui/colors";
 
 
 interface MapData {
@@ -41,6 +42,12 @@ export class MapScene extends Phaser.Scene {
                 strokeThickness: 2,
             })
             .setOrigin(0.5);
+
+        createButton(this, width - 70, 28, {
+            ...BTN_SM, width: 120, height: 45, fontSize: "17px",
+            label: "SAVE & EXIT", color: BG_BTN_CLOSE,
+            onClick: () => this.saveAndExit(),
+        });
 
         createHeroPanel(this, {
             x: PANEL_GAP,
@@ -130,6 +137,16 @@ export class MapScene extends Phaser.Scene {
                 onFight: () => this.enterBattle(i),
             });
         }
+    }
+
+    private saveAndExit() {
+        GameState.saveRun({
+            currentMonsterIndex: this.currentMonsterIndex,
+            defeatedMonsterIds: this.defeatedIds,
+            runConfig: GameState.runConfig!,
+        });
+        GameState.saveHero();
+        this.scene.start("MainMenuScene");
     }
 
     private enterBattle(monsterIndex: number) {
