@@ -1,0 +1,40 @@
+from pydantic import BaseModel
+from typing import Any
+
+
+class ActiveBuff(BaseModel):
+    stat: str
+    multiplier: float
+    turnsRemaining: int
+
+
+class CharacterState(BaseModel):
+    hp: int
+    maxHp: int
+    attack: int
+    defense: int
+    magic: int
+    activeBuffs: list[ActiveBuff] = []
+
+
+class MonsterMoveRequest(BaseModel):
+    monsterId: str
+    monsterMoves: list[str]
+    monsterState: CharacterState
+    heroState: CharacterState
+    turnNumber: int
+
+
+class MonsterMoveResponse(BaseModel):
+    moveId: str
+    moveName: str
+
+
+class SaveStateRequest(BaseModel):
+    sessionId: str
+    hero: dict[str, Any]
+    run: dict[str, Any] | None = None
+
+
+class SaveStateResponse(BaseModel):
+    ok: bool
