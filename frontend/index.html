@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RPG Gauntlet</title>
     <style>
+      @font-face {
+        font-family: 'EnchantedLand';
+        src: url('/assets/fonts/Enchanted Land.otf') format('opentype');
+      }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background: #0a0a0f; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
       canvas { display: block; }
+      #font-preload { position: absolute; visibility: hidden; font-family: 'EnchantedLand'; }
     </style>
   </head>
   <body>
+    <div id="font-preload">.</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

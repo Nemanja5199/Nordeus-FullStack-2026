@@ -1,5 +1,7 @@
 import Phaser from "phaser";
+import { PreloadScene } from "./scenes/PreloadScene";
 import { MainMenuScene } from "./scenes/MainMenuScene";
+import { CharacterSelectScene } from "./scenes/CharacterSelectScene";
 import { MapScene } from "./scenes/MapScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { PostBattleScene } from "./scenes/PostBattleScene";
@@ -7,13 +9,13 @@ import { MoveManagementScene } from "./scenes/MoveManagementScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1280,
-  height: 720,
   backgroundColor: "#0a0a1e",
-  scene: [MainMenuScene, MapScene, BattleScene, PostBattleScene, MoveManagementScene],
+  scene: [PreloadScene, MainMenuScene, CharacterSelectScene, MapScene, BattleScene, PostBattleScene, MoveManagementScene],
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: window.innerWidth,
+    height: window.innerHeight,
   },
 };
 

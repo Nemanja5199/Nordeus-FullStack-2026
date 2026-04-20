@@ -20,3 +20,9 @@ frontend/.vite/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude
+.claude/settings.local.json
+
+# Large unused asset folders
+frontend/public/assets/Free - Raven Fantasy Icons/Separated Files/

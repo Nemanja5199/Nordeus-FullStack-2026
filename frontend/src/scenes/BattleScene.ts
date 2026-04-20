@@ -3,6 +3,7 @@ import type { CombatCharacter, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs } from "../utils/combat";
 import { GameState } from "../utils/gameState";
 import { api } from "../services/api";
+import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
 
 interface BattleData {
   monster: MonsterConfig;
@@ -37,6 +38,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(data: BattleData) {
+    // Reset state carried over from previous battle (scene instance is reused)
+    this.busy = false;
+    this.turnNumber = 0;
+    this.moveButtons = [];
+    this.logLines = [];
+
     this.monsterCfg = data.monster;
     this.monsterIndex = data.monsterIndex;
     this.defeatedIds = data.defeatedIds ?? [];
@@ -58,7 +65,7 @@ export class BattleScene extends Phaser.Scene {
     };
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, 0x0d0d1a).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x0d0905).setOrigin(0);
 
     this.buildHeroArea(width, height);
     this.buildMonsterArea(width, height);
@@ -75,17 +82,22 @@ export class BattleScene extends Phaser.Scene {
     const cx = width * 0.22;
     const cy = height * 0.38;
 
-    this.add.rectangle(cx, cy, 200, 180, 0x1a2a1a, 0.85).setStrokeStyle(2, 0x44aa44);
+    this.add.rectangle(cx, cy, 200, 180, 0x1c3018, 0.85).setStrokeStyle(2, 0x4a8a3a);
 
     this.add.text(cx, cy - 72, `Knight  Lv.${GameState.hero.level}`, {
-      fontSize: "18px", color: "#aaffaa", fontStyle: "bold",
+      fontSize: "18px", color: "#a8c888", fontStyle: "bold",
     }).setOrigin(0.5);
+
+    // Hero sprite scaled 4x
+    this.add.image(cx, cy + 10, HERO_FRAME.key, HERO_FRAME.frame)
+      .setScale(4)
+      .setOrigin(0.5);
 
     // HP bar background
     this.add.rectangle(cx, cy - 50, 160, 14, 0x333333).setOrigin(0.5);
-    this.heroHpFill = this.add.rectangle(cx - 80, cy - 50, 160, 14, 0x44cc44).setOrigin(0, 0.5);
-    this.heroHpText = this.add.text(cx, cy - 35, "", { fontSize: "13px", color: "#ccc" }).setOrigin(0.5);
-    this.heroBuffText = this.add.text(cx, cy + 60, "", { fontSize: "11px", color: "#88aaff", wordWrap: { width: 185 }, align: "center" }).setOrigin(0.5);
+    this.heroHpFill = this.add.rectangle(cx - 80, cy - 50, 160, 14, 0x4a8a3a).setOrigin(0, 0.5);
+    this.heroHpText = this.add.text(cx, cy - 35, "", { fontSize: "13px", color: "#d4b483" }).setOrigin(0.5);
+    this.heroBuffText = this.add.text(cx, cy + 60, "", { fontSize: "11px", color: "#a07840", wordWrap: { width: 185 }, align: "center" }).setOrigin(0.5);
 
     this.updateHeroHp();
   }
@@ -96,16 +108,24 @@ export class BattleScene extends Phaser.Scene {
     const cx = width * 0.78;
     const cy = height * 0.38;
 
-    this.add.rectangle(cx, cy, 200, 180, 0x2a1a1a, 0.85).setStrokeStyle(2, 0xcc4444);
+    this.add.rectangle(cx, cy, 200, 180, 0x301010, 0.85).setStrokeStyle(2, 0x8a3a3a);
 
     this.add.text(cx, cy - 72, this.monsterCfg.name, {
-      fontSize: "18px", color: "#ffaaaa", fontStyle: "bold",
+      fontSize: "18px", color: "#c87870", fontStyle: "bold",
     }).setOrigin(0.5);
 
+    // Monster sprite scaled 4x, flipped horizontally to face the hero
+    const monsterFrame = MONSTER_FRAMES[this.monsterCfg.id];
+    if (monsterFrame) {
+      this.add.image(cx, cy + 10, monsterFrame.key, monsterFrame.frame)
+        .setScale(-4, 4)
+        .setOrigin(0.5);
+    }
+
     this.add.rectangle(cx, cy - 50, 160, 14, 0x333333).setOrigin(0.5);
-    this.monsterHpFill = this.add.rectangle(cx - 80, cy - 50, 160, 14, 0xcc4444).setOrigin(0, 0.5);
-    this.monsterHpText = this.add.text(cx, cy - 35, "", { fontSize: "13px", color: "#ccc" }).setOrigin(0.5);
-    this.monsterBuffText = this.add.text(cx, cy + 60, "", { fontSize: "11px", color: "#ffaa44", wordWrap: { width: 185 }, align: "center" }).setOrigin(0.5);
+    this.monsterHpFill = this.add.rectangle(cx - 80, cy - 50, 160, 14, 0x8a3a3a).setOrigin(0, 0.5);
+    this.monsterHpText = this.add.text(cx, cy - 35, "", { fontSize: "13px", color: "#d4b483" }).setOrigin(0.5);
+    this.monsterBuffText = this.add.text(cx, cy + 60, "", { fontSize: "11px", color: "#c87840", wordWrap: { width: 185 }, align: "center" }).setOrigin(0.5);
 
     this.updateMonsterHp();
   }
@@ -113,9 +133,9 @@ export class BattleScene extends Phaser.Scene {
   // ── Status bar ───────────────────────────────────────────────────────
 
   private buildStatusBar(width: number, height: number) {
-    this.add.rectangle(width / 2, height * 0.72, width - 20, 36, 0x1a1a2a, 0.9);
+    this.add.rectangle(width / 2, height * 0.72, width - 20, 36, 0x1c1408, 0.9);
     this.statusText = this.add
-      .text(width / 2, height * 0.72, "", { fontSize: "18px", color: "#ffd700" })
+      .text(width / 2, height * 0.72, "", { fontSize: "18px", color: "#c8a035" })
       .setOrigin(0.5);
   }
 
@@ -128,11 +148,11 @@ export class BattleScene extends Phaser.Scene {
   private buildBattleLog(width: number, height: number) {
     const x = width * 0.5;
     const startY = height * 0.77;
-    this.add.rectangle(x, startY + (LOG_LINES * 18) / 2, width * 0.6, LOG_LINES * 18 + 10, 0x111122, 0.7);
+    this.add.rectangle(x, startY + (LOG_LINES * 18) / 2, width * 0.6, LOG_LINES * 18 + 10, 0x0d0905, 0.7);
 
     for (let i = 0; i < LOG_LINES; i++) {
       this.logLines.push(
-        this.add.text(x, startY + i * 18, "", { fontSize: "13px", color: "#aaaacc" }).setOrigin(0.5)
+        this.add.text(x, startY + i * 18, "", { fontSize: "13px", color: "#a09070" }).setOrigin(0.5)
       );
     }
   }
@@ -166,13 +186,13 @@ export class BattleScene extends Phaser.Scene {
       if (!move) return;
 
       const container = this.add.container(x, y);
-      const bg = this.add.rectangle(0, 0, btnW, btnH, 0x2a3a4a, 0.9).setStrokeStyle(1, 0x4466aa);
-      const label = this.add.text(0, -7, move.name, { fontSize: "15px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5);
-      const sub = this.add.text(0, 10, move.description.slice(0, 40) + (move.description.length > 40 ? "…" : ""), { fontSize: "11px", color: "#88aacc" }).setOrigin(0.5);
+      const bg = this.add.rectangle(0, 0, btnW, btnH, 0x1e1a10, 0.9).setStrokeStyle(1, 0x4a3818);
+      const label = this.add.text(0, -7, move.name, { fontSize: "15px", color: "#d4b483", fontStyle: "bold" }).setOrigin(0.5);
+      const sub = this.add.text(0, 10, move.description.slice(0, 40) + (move.description.length > 40 ? "…" : ""), { fontSize: "11px", color: "#8a7a5a" }).setOrigin(0.5);
 
       bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerover", () => { if (!this.busy) { bg.setFillStyle(0x3a4a5a); label.setColor("#ffd700"); } });
-      bg.on("pointerout", () => { bg.setFillStyle(0x2a3a4a); label.setColor("#ffffff"); });
+      bg.on("pointerover", () => { if (!this.busy) { bg.setFillStyle(0x2a2010); label.setColor("#c8a035"); } });
+      bg.on("pointerout", () => { bg.setFillStyle(0x1e1a10); label.setColor("#d4b483"); });
       bg.on("pointerdown", () => this.handlePlayerMove(moveId));
 
       container.add([bg, label, sub]);

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GameState } from "../utils/gameState";
+import { createButton, BTN_SM } from "../ui/Button";
 
 interface MoveManagementData {
   returnScene: string;
@@ -25,28 +26,26 @@ export class MoveManagementScene extends Phaser.Scene {
     this.equippedButtons = [];
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, 0x08081a, 0.96).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x0d0905, 0.96).setOrigin(0);
     this.add.text(width / 2, 30, "MOVE MANAGEMENT", {
-      fontSize: "30px", color: "#ffd700", fontStyle: "bold",
+      fontSize: "30px", color: "#c8a035", fontStyle: "bold", stroke: "#4a3010", strokeThickness: 3,
     }).setOrigin(0.5);
 
-    this.add.text(120, 72, "ALL LEARNED MOVES", { fontSize: "16px", color: "#88aaff" }).setOrigin(0.5);
-    this.add.text(width - 200, 72, "EQUIPPED (4 slots)", { fontSize: "16px", color: "#aaffaa" }).setOrigin(0.5);
+    this.add.text(120, 72, "ALL LEARNED MOVES", { fontSize: "16px", color: "#c8a035" }).setOrigin(0.5);
+    this.add.text(width - 200, 72, "EQUIPPED (4 slots)", { fontSize: "16px", color: "#c8a035" }).setOrigin(0.5);
 
     this.add.text(width / 2, 96, "Click a learned move, then click an equipped slot to swap.", {
-      fontSize: "13px", color: "#888888",
+      fontSize: "13px", color: "#8a7a5a",
     }).setOrigin(0.5);
 
     this.infoText = this.add.text(width / 2, height - 70, "", {
-      fontSize: "14px", color: "#cccccc", wordWrap: { width: width - 40 }, align: "center",
+      fontSize: "14px", color: "#d4b483", wordWrap: { width: width - 40 }, align: "center",
     }).setOrigin(0.5);
 
     this.buildLearnedPanel(width, height);
     this.buildEquippedPanel(width, height);
 
-    this.makeButton(width / 2, height - 30, "CLOSE", 0x2a2a4a, () => {
-      this.scene.stop();
-    });
+    createButton(this, width / 2, height - 30, { ...BTN_SM, label: "CLOSE", color: 0x2a2a4a, onClick: () => this.scene.stop() });
   }
 
   private buildLearnedPanel(_width: number, _height: number) {
@@ -61,10 +60,10 @@ export class MoveManagementScene extends Phaser.Scene {
       const isEquipped = GameState.hero.equippedMoves.includes(moveId);
 
       const container = this.add.container(panelX, y);
-      const bg = this.add.rectangle(0, 0, 210, 48, isEquipped ? 0x1a2a3a : 0x1a1a2a, 0.9)
-        .setStrokeStyle(1, isEquipped ? 0x4488cc : 0x334466);
-      const nameTxt = this.add.text(-98, -12, move.name, { fontSize: "14px", color: "#ffffff", fontStyle: "bold" });
-      const typeTxt = this.add.text(-98, 6, `[${move.moveType}]  ${move.description.slice(0, 28)}…`, { fontSize: "11px", color: "#8899aa" });
+      const bg = this.add.rectangle(0, 0, 210, 48, isEquipped ? 0x1e1a10 : 0x1c1408, 0.9)
+        .setStrokeStyle(1, isEquipped ? 0x7a5828 : 0x4a3818);
+      const nameTxt = this.add.text(-98, -12, move.name, { fontSize: "14px", color: "#d4b483", fontStyle: "bold" });
+      const typeTxt = this.add.text(-98, 6, `[${move.moveType}]  ${move.description.slice(0, 28)}…`, { fontSize: "11px", color: "#8a7a5a" });
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => this.selectLearned(i, moveId, container));
@@ -87,11 +86,11 @@ export class MoveManagementScene extends Phaser.Scene {
       const y = startY + slot * 54;
 
       const container = this.add.container(panelX, y);
-      const bg = this.add.rectangle(0, 0, 210, 48, 0x1a2a1a, 0.9).setStrokeStyle(1, 0x447744);
+      const bg = this.add.rectangle(0, 0, 210, 48, 0x1c1408, 0.9).setStrokeStyle(1, 0x4a3818);
       const slotLabel = this.add.text(-98, -14, `Slot ${slot + 1}: ${move ? move.name : "(empty)"}`, {
-        fontSize: "14px", color: move ? "#aaffaa" : "#556655", fontStyle: "bold",
+        fontSize: "14px", color: move ? "#a8c888" : "#4a3818", fontStyle: "bold",
       });
-      const typeTxt = this.add.text(-98, 6, move ? `[${move.moveType}]` : "", { fontSize: "11px", color: "#669966" });
+      const typeTxt = this.add.text(-98, 6, move ? `[${move.moveType}]` : "", { fontSize: "11px", color: "#8a7a5a" });
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => this.selectEquipped(slot, container));
@@ -110,7 +109,7 @@ export class MoveManagementScene extends Phaser.Scene {
     // Highlight selection
     this.learnedButtons.forEach((c, i) => {
       const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
-      bg.setStrokeStyle(2, i === index ? 0xffd700 : 0x334466);
+      bg.setStrokeStyle(2, i === index ? 0xb88820 : 0x4a3818);
     });
 
     this.infoText.setText(`Selected: ${GameState.runConfig!.moves[moveId]?.name} — now click an equipped slot to swap.`);
@@ -122,7 +121,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.equippedButtons.forEach((c, i) => {
       const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
-      bg.setStrokeStyle(2, i === slot ? 0xffd700 : 0x447744);
+      bg.setStrokeStyle(2, i === slot ? 0xb88820 : 0x4a3818);
     });
 
     if (this.selectedLearnedIndex >= 0) {
@@ -141,11 +140,5 @@ export class MoveManagementScene extends Phaser.Scene {
     this.create({ returnScene: this.returnScene });
   }
 
-  private makeButton(x: number, y: number, label: string, color: number, cb: () => void) {
-    const bg = this.add.rectangle(x, y, 180, 42, color, 0.9).setInteractive({ useHandCursor: true });
-    const txt = this.add.text(x, y, label, { fontSize: "18px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5);
-    bg.on("pointerover", () => { bg.setAlpha(1); txt.setColor("#ffd700"); });
-    bg.on("pointerout", () => { bg.setAlpha(0.9); txt.setColor("#ffffff"); });
-    bg.on("pointerdown", cb);
-  }
 }
+
