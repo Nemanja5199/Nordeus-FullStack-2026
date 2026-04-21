@@ -36,7 +36,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
 
     // Hero sprite
     scene.add.image(cx, panelY + 92, HERO_FRAME.key, HERO_FRAME.frame)
-        .setScale(4).setOrigin(0.5);
+        .setScale(3.2).setOrigin(0.5);
 
     // Stats 2×2 grid
     const stats = [
@@ -45,8 +45,8 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
         { key: "stat_def", val: hero.defense },
         { key: "stat_mag", val: hero.magic   },
     ];
-    const col1X = cx - 60;
-    const col2X = cx + 16;
+    const col1X = cx - 72;
+    const col2X = cx + 36;
     stats.forEach((s, i) => {
         const sx = i % 2 === 0 ? col1X : col2X;
         const sy = panelY + 152 + Math.floor(i / 2) * 32;

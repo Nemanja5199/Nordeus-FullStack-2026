@@ -294,12 +294,14 @@ export class TreeMapScene extends Phaser.Scene {
 
     bg.on("pointerover", () => {
       this.children.bringToTop(container);
+      this.tweens.killTweensOf(container);
       this.tweens.add({
         targets: container, scaleX: HOVER_SCALE, scaleY: HOVER_SCALE,
         duration: 140, ease: "Back.easeOut",
       });
     });
     bg.on("pointerout", () => {
+      this.tweens.killTweensOf(container);
       this.tweens.add({
         targets: container, scaleX: 1, scaleY: 1,
         duration: 110, ease: "Power2",

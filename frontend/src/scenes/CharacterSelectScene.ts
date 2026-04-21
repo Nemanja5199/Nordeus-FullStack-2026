@@ -280,6 +280,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         GameState.initHero(this.runConfig);
         GameState.clearRun();
 
-        this.scene.start("MapScene", { monsterIndex: 0, defeatedIds: [] });
+        GameState.clearTreeState();
+        this.scene.start("TreeMapScene");
     }
 }

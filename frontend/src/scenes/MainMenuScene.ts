@@ -47,7 +47,6 @@ export class MainMenuScene extends Phaser.Scene {
         createButton(this, width / 2, btnY,            { ...BTN_LG, label: "NEW GAME",       color: BG_BTN_SUCCESS, onClick: () => this.startNewGame() });
         createButton(this, width / 2, btnY + btnGap,   { ...BTN_LG, label: "CONTINUE",       color: BG_BTN_NEUTRAL, onClick: () => this.continueGame() });
         createButton(this, width / 2, btnY + btnGap*2, { ...BTN_LG, label: "RESET PROGRESS", color: BG_BTN_DANGER,  onClick: () => this.resetProgress() });
-        createButton(this, width / 2, btnY + btnGap*3, { ...BTN_LG, label: "TREE MAP (TEST)", color: BG_BTN_NEUTRAL, onClick: () => this.openTreeTest() });
     }
 
     private async startNewGame() {
@@ -72,32 +71,13 @@ export class MainMenuScene extends Phaser.Scene {
             const config = await api.getRunConfig();
             GameState.runConfig = config;
             GameState.initHero(config);
-            const runSave = GameState.loadRun();
-            if (runSave) {
-                this.scene.start("MapScene", {
-                    monsterIndex: runSave.currentMonsterIndex,
-                    defeatedIds: runSave.defeatedMonsterIds,
-                });
+            GameState.loadTreeState();
+            if (GameState.completedNodes.length > 0 || GameState.currentNode !== null) {
+                this.scene.start("TreeMapScene");
             } else {
                 loading.setText("No save found — starting new game.").setColor("#c8a035");
                 this.time.delayedCall(1500, () => this.startNewGame());
             }
-        } catch {
-            loading.setText("Failed to connect to server.").setColor("#c84a2a");
-        }
-    }
-
-    private async openTreeTest() {
-        const loading = this.add
-            .text(this.scale.width / 2, this.scale.height * 0.91, "Loading...", { fontSize: "18px", color: "#8a7a5a" })
-            .setOrigin(0.5);
-        try {
-            const config = await api.getRunConfig();
-            const { GameState } = await import("../utils/gameState");
-            GameState.runConfig = config;
-            GameState.initHero(config);
-            GameState.clearTreeState();
-            this.scene.start("TreeMapScene");
         } catch {
             loading.setText("Failed to connect to server.").setColor("#c84a2a");
         }
