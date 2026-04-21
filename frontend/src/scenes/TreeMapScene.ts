@@ -38,6 +38,10 @@ export class TreeMapScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     GameState.loadTreeState();
+    if (GameState.runConfig?.seed && !GameState.runSeed) {
+      GameState.runSeed = GameState.runConfig.seed;
+      GameState.saveTreeState();
+    }
 
     this.drawBackground(width, height);
 
@@ -49,8 +53,8 @@ export class TreeMapScene extends Phaser.Scene {
 
     createButton(this, width - 70, 28, {
       ...BTN_SM, width: 120, height: 45, fontSize: "17px",
-      label: "← BACK", color: BG_BTN_CLOSE,
-      onClick: () => this.scene.start("MainMenuScene"),
+      label: "SAVE & EXIT", color: BG_BTN_CLOSE,
+      onClick: () => { this.scene.stop("MoveManagementScene"); GameState.saveHero(); GameState.saveTreeState(); this.scene.start("MainMenuScene"); },
     });
 
     createHeroPanel(this, {
@@ -61,7 +65,7 @@ export class TreeMapScene extends Phaser.Scene {
       hero: GameState.hero,
       xpPerLevel: GameState.hero.level * (GameState.runConfig?.heroDefaults.xpPerLevel ?? 100),
       moves: GameState.runConfig?.moves ?? {},
-      onManageMoves: () => this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" }),
+      onManageMoves: () => { this.scene.stop("MoveManagementScene"); this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" }); this.scene.bringToTop("MoveManagementScene"); },
     });
 
     this.drawTree(width, height);
@@ -313,6 +317,7 @@ export class TreeMapScene extends Phaser.Scene {
         const monster = GameState.runConfig!.monsters.find(m => m.id === node.monsterId);
         if (!monster) return;
         const monsterIndex = GameState.runConfig!.monsters.indexOf(monster);
+        this.scene.stop("MoveManagementScene");
         this.scene.start("BattleScene", {
           monster,
           monsterIndex,

@@ -277,7 +277,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         if (cls.locked) return;
 
         GameState.runConfig = this.runConfig;
-        GameState.initHero(this.runConfig);
+        GameState.resetHero(this.runConfig);
         GameState.clearRun();
 
         GameState.clearTreeState();

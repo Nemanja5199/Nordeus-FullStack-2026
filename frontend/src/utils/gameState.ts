@@ -14,6 +14,7 @@ function defaultHero(defaults: { maxHp: number; attack: number; defense: number;
     attack: defaults.attack,
     defense: defaults.defense,
     magic: defaults.magic,
+    skillPoints: 0,
     learnedMoves: [...defaults.defaultMoves],
     equippedMoves: [...defaults.defaultMoves],
   };
@@ -27,6 +28,7 @@ class GameStateManager {
   // Tree-run progress
   completedNodes: string[] = [];
   currentNode: string | null = null;
+  runSeed: number | null = null;
 
   getSessionId(): string {
     let id = localStorage.getItem(SESSION_KEY);
@@ -41,6 +43,7 @@ class GameStateManager {
     const raw = localStorage.getItem(HERO_KEY);
     this.hero = raw ? JSON.parse(raw) : defaultHero(config.heroDefaults);
     if (this.hero.currentHp === undefined) this.hero.currentHp = this.hero.maxHp;
+    if (this.hero.skillPoints === undefined) this.hero.skillPoints = 0;
   }
 
   saveHero(): void {
@@ -67,6 +70,7 @@ class GameStateManager {
     localStorage.setItem(TREE_KEY, JSON.stringify({
       completedNodes: this.completedNodes,
       currentNode:    this.currentNode,
+      runSeed:        this.runSeed,
     }));
   }
 
@@ -76,15 +80,18 @@ class GameStateManager {
       const saved = JSON.parse(raw);
       this.completedNodes = saved.completedNodes ?? [];
       this.currentNode    = saved.currentNode ?? null;
+      this.runSeed        = saved.runSeed ?? null;
     } else {
       this.completedNodes = [];
       this.currentNode    = null;
+      this.runSeed        = null;
     }
   }
 
   clearTreeState(): void {
     this.completedNodes = [];
     this.currentNode    = null;
+    this.runSeed        = null;
     localStorage.removeItem(TREE_KEY);
   }
 
@@ -109,14 +116,23 @@ class GameStateManager {
   }
 
   private levelUp(): void {
-    const gains = this.runConfig?.heroDefaults.levelUpStats ?? { maxHp: 20, attack: 3, defense: 2, magic: 2 };
     this.hero.level += 1;
     this.hero.xp = 0;
-    this.hero.maxHp += gains.maxHp;
-    this.hero.currentHp = Math.min((this.hero.currentHp ?? this.hero.maxHp) + gains.maxHp, this.hero.maxHp);
-    this.hero.attack += gains.attack;
-    this.hero.defense += gains.defense;
-    this.hero.magic += gains.magic;
+    this.hero.skillPoints = (this.hero.skillPoints ?? 0) + 3;
+  }
+
+  spendSkillPoint(stat: "attack" | "defense" | "magic" | "maxHp"): boolean {
+    if ((this.hero.skillPoints ?? 0) <= 0) return false;
+    const gains = this.runConfig?.heroDefaults.levelUpStats ?? { maxHp: 20, attack: 3, defense: 2, magic: 2 };
+    if (stat === "maxHp") {
+      this.hero.maxHp += gains.maxHp;
+      this.hero.currentHp = Math.min(this.hero.currentHp + gains.maxHp, this.hero.maxHp);
+    } else {
+      this.hero[stat] += gains[stat];
+    }
+    this.hero.skillPoints -= 1;
+    this.saveHero();
+    return true;
   }
 
   learnMove(moveId: string): void {

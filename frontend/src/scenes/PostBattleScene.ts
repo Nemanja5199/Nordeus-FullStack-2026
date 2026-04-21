@@ -56,9 +56,8 @@ export class PostBattleScene extends Phaser.Scene {
         }).setOrigin(0.5);
         y += 44;
 
-        const gains = GameState.runConfig!.heroDefaults.levelUpStats;
         this.add.text(width / 2, y,
-          `HP +${gains.maxHp}   ATK +${gains.attack}   DEF +${gains.defense}   MAG +${gains.magic}`, {
+          `+3 Skill Points — allocate them in Manage Moves`, {
             fontSize: "16px", color: TXT_HERO,
           }).setOrigin(0.5);
         y += 36;

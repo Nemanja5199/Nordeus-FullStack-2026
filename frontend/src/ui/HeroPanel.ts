@@ -5,7 +5,7 @@ import {
     BG_PANEL, BG_ROW, BG_ROW_MID, BG_BTN, BG_BTN_HOVER,
     BORDER_GOLD, BORDER_ROW,
     TXT_GOLD, TXT_GOLD_LIGHT, TXT_GOLD_MID, TXT_MUTED,
-    BAR_XP_FILL,
+    BAR_XP_FILL, TXT_SKILL_POINTS,
 } from "./colors";
 
 export interface HeroPanelOptions {
@@ -87,15 +87,18 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
 
     // Manage Moves button
     const btnY = panelY + h - 24;
+    const hasPoints = (hero.skillPoints ?? 0) > 0;
     const btnBg = scene.add.rectangle(cx, btnY, w - 20, 32, BG_BTN, 0.9)
-        .setStrokeStyle(1, BORDER_GOLD)
+        .setStrokeStyle(1, hasPoints ? 0x5a8a3a : BORDER_GOLD)
         .setInteractive({ useHandCursor: true });
-    const btnTxt = scene.add.text(cx, btnY, "Manage Moves", {
-        fontSize: "15px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID,
+    const btnLabel = hasPoints ? `Manage Moves  ✦ ${hero.skillPoints}` : "Manage Moves";
+    const btnTxt = scene.add.text(cx, btnY, btnLabel, {
+        fontSize: "15px", fontFamily: "EnchantedLand",
+        color: hasPoints ? TXT_SKILL_POINTS : TXT_GOLD_MID,
     }).setOrigin(0.5);
 
     btnBg.on("pointerover", () => { btnBg.setFillStyle(BG_BTN_HOVER); btnTxt.setColor(TXT_GOLD); });
-    btnBg.on("pointerout",  () => { btnBg.setFillStyle(BG_BTN);       btnTxt.setColor(TXT_GOLD_MID); });
+    btnBg.on("pointerout",  () => { btnBg.setFillStyle(BG_BTN); btnTxt.setColor(hasPoints ? TXT_SKILL_POINTS : TXT_GOLD_MID); });
     btnBg.on("pointerdown", onManageMoves);
 
 }

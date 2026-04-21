@@ -49,22 +49,24 @@ export function applyMove(
       }
       case "buff": {
         const tgt = fx.target === "self" ? attacker : defender;
-        tgt.activeBuffs.push({
-          stat: fx.stat as ActiveBuff["stat"],
-          multiplier: fx.multiplier!,
-          turnsRemaining: fx.turns!,
-        });
+        const existing = tgt.activeBuffs.find(b => b.stat === fx.stat && b.multiplier === fx.multiplier);
+        if (existing) {
+          existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns!);
+        } else {
+          tgt.activeBuffs.push({ stat: fx.stat as ActiveBuff["stat"], multiplier: fx.multiplier!, turnsRemaining: fx.turns! });
+        }
         const pct = Math.round((fx.multiplier! - 1) * 100);
         logs.push(`${tgt.name}'s ${fx.stat} +${pct}% (${fx.turns}t)`);
         break;
       }
       case "debuff": {
         const tgt = fx.target === "opponent" ? defender : attacker;
-        tgt.activeBuffs.push({
-          stat: fx.stat as ActiveBuff["stat"],
-          multiplier: fx.multiplier!,
-          turnsRemaining: fx.turns!,
-        });
+        const existing = tgt.activeBuffs.find(b => b.stat === fx.stat && b.multiplier === fx.multiplier);
+        if (existing) {
+          existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns!);
+        } else {
+          tgt.activeBuffs.push({ stat: fx.stat as ActiveBuff["stat"], multiplier: fx.multiplier!, turnsRemaining: fx.turns! });
+        }
         const pct = Math.round((1 - fx.multiplier!) * 100);
         logs.push(`${tgt.name}'s ${fx.stat} -${pct}% (${fx.turns}t)`);
         break;

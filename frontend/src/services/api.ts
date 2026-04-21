@@ -26,7 +26,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getRunConfig: () => request<RunConfig>("/api/run/config"),
+  getRunConfig: (seed?: number) =>
+    request<RunConfig>(`/api/run/config${seed !== undefined ? `?seed=${seed}` : ""}`),
 
   getMonsterMove: (payload: BattleStatePayload) =>
     request<{ moveId: string; moveName: string }>("/api/battle/monster-move", {

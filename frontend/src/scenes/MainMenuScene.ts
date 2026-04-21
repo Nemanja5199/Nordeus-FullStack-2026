@@ -42,11 +42,14 @@ export class MainMenuScene extends Phaser.Scene {
             })
             .setOrigin(0.5);
 
+        const hasSave  = !!localStorage.getItem("rpg_tree_state");
         const btnY     = height * 0.50;
         const btnGap   = 72;
-        createButton(this, width / 2, btnY,            { ...BTN_LG, label: "NEW GAME",       color: BG_BTN_SUCCESS, onClick: () => this.startNewGame() });
-        createButton(this, width / 2, btnY + btnGap,   { ...BTN_LG, label: "CONTINUE",       color: BG_BTN_NEUTRAL, onClick: () => this.continueGame() });
-        createButton(this, width / 2, btnY + btnGap*2, { ...BTN_LG, label: "RESET PROGRESS", color: BG_BTN_DANGER,  onClick: () => this.resetProgress() });
+        createButton(this, width / 2, btnY,          { ...BTN_LG, label: "NEW GAME",       color: BG_BTN_SUCCESS, onClick: () => this.startNewGame() });
+        if (hasSave) {
+            createButton(this, width / 2, btnY + btnGap,   { ...BTN_LG, label: "CONTINUE",       color: BG_BTN_NEUTRAL, onClick: () => this.continueGame() });
+            createButton(this, width / 2, btnY + btnGap*2, { ...BTN_LG, label: "RESET PROGRESS", color: BG_BTN_DANGER,  onClick: () => this.resetProgress() });
+        }
     }
 
     private async startNewGame() {
@@ -68,11 +71,11 @@ export class MainMenuScene extends Phaser.Scene {
             .setOrigin(0.5);
 
         try {
-            const config = await api.getRunConfig();
+            GameState.loadTreeState();
+            const config = await api.getRunConfig(GameState.runSeed ?? undefined);
             GameState.runConfig = config;
             GameState.initHero(config);
-            GameState.loadTreeState();
-            if (GameState.completedNodes.length > 0 || GameState.currentNode !== null) {
+            if (localStorage.getItem("rpg_tree_state")) {
                 this.scene.start("TreeMapScene");
             } else {
                 loading.setText("No save found — starting new game.").setColor("#c8a035");

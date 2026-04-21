@@ -32,8 +32,13 @@ def _pick_move(req: MonsterMoveRequest) -> str:
     ]
     damage_moves = [m for m in moves if MOVES[m]["baseValue"] > 0]
 
-    # Prioritise healing when below 30 % HP
-    if hp_pct < 0.30 and heal_moves:
+    # Witch-specific: prefer Drain Life when below 50% HP (probabilistic, not guaranteed)
+    if req.monsterId == "witch" and hp_pct < 0.50 and "drain_life" in moves:
+        if random.random() < 0.70:
+            return "drain_life"
+
+    # Prioritise healing when below 30% HP (skip for Witch — handled above)
+    if hp_pct < 0.30 and heal_moves and req.monsterId != "witch":
         return random.choice(heal_moves)
 
     # Occasionally debuff the hero

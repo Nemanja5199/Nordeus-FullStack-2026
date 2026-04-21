@@ -79,3 +79,16 @@ export const TXT_SHOP_LOCKED      = "#1a2a44";
 export const STROKE_TITLE_DARK    = "#2a1404";
 export const BG_TITLE_BAND        = 0x000000;
 export const TXT_BOSS             = "#c84a2a";
+
+// ─── Skill points ────────────────────────────────────────────────────────────
+export const BG_STAT_CARD       = 0x1a1408;
+export const BG_STAT_CARD_AVAIL = 0x1c2a10;
+export const BORDER_STAT_AVAIL  = 0x5a8a3a;
+export const TXT_SKILL_POINTS   = "#70cc50";  // green — unspent points badge
+
+// ─── Enemy intent + battle log colors ────────────────────────────────────────
+export const TXT_INTENT_ATTACK  = "#c85030";  // red — physical damage
+export const TXT_LOG_MAGIC      = "#a060e0";  // purple — magic damage
+export const TXT_INTENT_DEBUFF  = "#9060c0";  // purple — debuff
+export const TXT_INTENT_BUFF    = "#c8a035";  // gold — buff
+export const TXT_INTENT_HEAL    = "#50aa50";  // green — heal/drain

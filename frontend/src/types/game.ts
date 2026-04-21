@@ -62,6 +62,7 @@ export interface HeroState {
   attack: number;
   defense: number;
   magic: number;
+  skillPoints: number;
   learnedMoves: string[];
   equippedMoves: string[];
 }
