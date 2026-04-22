@@ -6,7 +6,7 @@ MOVES: dict[str, dict[str, Any]] = {
     # ── Knight defaults ──────────────────────────────────────────────────
     "slash": {
         "id": "slash", "name": "Slash", "moveType": "physical", "baseValue": 20,
-        "effects": [], "repeatPenalty": 0.4,
+        "effects": [], "repeatPenalty": 0.3,
         "description": "A powerful slash dealing moderate physical damage.",
     },
     "shield_up": {
@@ -56,7 +56,7 @@ MOVES: dict[str, dict[str, Any]] = {
     # ── Giant Spider ─────────────────────────────────────────────────────
     "bite": {
         "id": "bite", "name": "Bite", "moveType": "physical", "baseValue": 18,
-        "effects": [], "repeatPenalty": 0.4,
+        "effects": [], "repeatPenalty": 0.25,
         "description": "Deals moderate physical damage.",
     },
     "web_throw": {
@@ -79,12 +79,12 @@ MOVES: dict[str, dict[str, Any]] = {
     # ── Dragon (boss — heavy moves have strong cooldown feel) ─────────────
     "flame_breath": {
         "id": "flame_breath", "name": "Flame Breath", "moveType": "magic", "baseValue": 32,
-        "effects": [], "repeatPenalty": 0.1,
+        "effects": [], "repeatPenalty": 0.15,
         "description": "Deals heavy magic damage that ignores Defense.",
     },
     "claw_swipe": {
         "id": "claw_swipe", "name": "Claw Swipe", "moveType": "physical", "baseValue": 22,
-        "effects": [], "repeatPenalty": 0.4,
+        "effects": [], "repeatPenalty": 0.2,
         "description": "Deals moderate physical damage.",
     },
     "intimidate": {
@@ -102,7 +102,7 @@ MOVES: dict[str, dict[str, Any]] = {
     # ── Goblin Warrior ───────────────────────────────────────────────────
     "rusty_blade": {
         "id": "rusty_blade", "name": "Rusty Blade", "moveType": "physical", "baseValue": 16,
-        "effects": [], "repeatPenalty": 0.4,
+        "effects": [], "repeatPenalty": 0.25,
         "description": "Deals moderate physical damage.",
     },
     "dirty_kick": {
@@ -125,7 +125,7 @@ MOVES: dict[str, dict[str, Any]] = {
     # ── Goblin Mage ──────────────────────────────────────────────────────
     "firebolt": {
         "id": "firebolt", "name": "Firebolt", "moveType": "magic", "baseValue": 18,
-        "effects": [], "repeatPenalty": 0.4,
+        "effects": [], "repeatPenalty": 0.25,
         "description": "Deals moderate magic damage.",
     },
     "arcane_surge": {

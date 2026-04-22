@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 from fastapi import APIRouter
 from app.models import ActiveBuff, CharacterState, MonsterMoveRequest, MonsterMoveResponse
@@ -206,7 +207,7 @@ def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
         elif b.multiplier < 1.0:
             buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
 
-    return hp_score + buff_score
+    return hp_score + buff_score * 2.0
 
 
 def _minimax(
@@ -346,10 +347,10 @@ def _pick_move(req: MonsterMoveRequest) -> str:
             req.monsterMoves, req.heroMoves,
         )
 
-    # Shift scores to positive, apply repeat penalty, then pick weighted random
+    # sqrt-compress shifted scores so utility moves aren't crowded out by heavy damage moves
     min_score = min(raw_scores.values())
     weights: dict[str, float] = {
-        move_id: (score - min_score + 1.0) * _repeat_penalty(move_id, req.lastMonsterMoves)
+        move_id: math.sqrt(score - min_score + 1.0) * _repeat_penalty(move_id, req.lastMonsterMoves)
         for move_id, score in raw_scores.items()
     }
 
