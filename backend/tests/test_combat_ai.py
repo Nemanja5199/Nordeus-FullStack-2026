@@ -3,7 +3,7 @@ import pytest
 from app.models import MonsterMoveRequest, CharacterState, ActiveBuff
 from app.routers.battle import (
     _score_move, _pick_move, _pick_move_heuristic,
-    _minimax, _evaluate, _apply_move_sim, _tick_buffs_sim, _get_effective_stat,
+    _minimax, _evaluate, _buff_impact, _apply_move_sim, _tick_buffs_sim, _get_effective_stat,
     _repeat_penalty, AI_PROFILES,
 )
 from app.game_config import MOVES
@@ -233,6 +233,60 @@ class TestMinimax:
         assert score == -1000.0
 
 
+# ── _evaluate / _buff_impact ──────────────────────────────────────────────────
+
+class TestEvaluate:
+    def test_equal_state_near_zero(self):
+        m = make_state(hp=100, max_hp=100)
+        h = make_state(hp=100, max_hp=100)
+        assert _evaluate(m, h) == pytest.approx(0.0)
+
+    def test_monster_hp_advantage_positive(self):
+        m = make_state(hp=80, max_hp=100)
+        h = make_state(hp=40, max_hp=100)
+        assert _evaluate(m, h) > 0
+
+    def test_hero_hp_advantage_negative(self):
+        m = make_state(hp=30, max_hp=100)
+        h = make_state(hp=90, max_hp=100)
+        assert _evaluate(m, h) < 0
+
+    def test_monster_attack_buff_increases_score(self):
+        buff = ActiveBuff(stat="attack", multiplier=1.5, turnsRemaining=2)
+        m_buffed = make_state(attack=25, buffs=[buff])
+        m_clean  = make_state(attack=25)
+        h = make_state()
+        assert _evaluate(m_buffed, h) > _evaluate(m_clean, h)
+
+    def test_hero_attack_buff_decreases_score(self):
+        buff = ActiveBuff(stat="attack", multiplier=1.5, turnsRemaining=2)
+        h_buffed = make_state(attack=15, buffs=[buff])
+        h_clean  = make_state(attack=15)
+        m = make_state()
+        assert _evaluate(m, h_buffed) < _evaluate(m, h_clean)
+
+    def test_hero_debuff_increases_score(self):
+        debuff = ActiveBuff(stat="attack", multiplier=0.7, turnsRemaining=2)
+        h_debuffed = make_state(attack=15, buffs=[debuff])
+        h_clean    = make_state(attack=15)
+        m = make_state()
+        assert _evaluate(m, h_debuffed) > _evaluate(m, h_clean)
+
+    def test_attack_buff_worth_more_than_defense_buff_for_same_stat_value(self):
+        # attack base=20 delta=0.5 turns=2: 20*0.5*0.75*2 = 15
+        # defense base=20 delta=0.5 turns=2: 20*0.5*0.5*2 = 10
+        atk_buff = ActiveBuff(stat="attack", multiplier=1.5, turnsRemaining=2)
+        def_buff = ActiveBuff(stat="defense", multiplier=1.5, turnsRemaining=2)
+        score_atk = _buff_impact("attack", 1.5, 2, make_state(attack=20))
+        score_def = _buff_impact("defense", 1.5, 2, make_state(defense=20))
+        assert score_atk > score_def
+
+    def test_longer_buff_worth_more(self):
+        s1 = _buff_impact("attack", 1.5, 1, make_state(attack=15))
+        s2 = _buff_impact("attack", 1.5, 2, make_state(attack=15))
+        assert s2 > s1
+
+
 # ── Repeat penalty ────────────────────────────────────────────────────────────
 
 class TestRepeatPenalty:
@@ -256,9 +310,10 @@ class TestRepeatPenalty:
         expected = base + (1.0 - base) * (2 / 3)
         assert _repeat_penalty("headbutt", ["rusty_blade", "frenzy", "headbutt"]) == pytest.approx(expected)
 
-    def test_flame_breath_has_strong_penalty(self):
-        # flame_breath has repeatPenalty=0.1 — boss move, strong cooldown
-        assert _repeat_penalty("flame_breath", ["flame_breath"]) == pytest.approx(0.1)
+    def test_flame_breath_penalty_matches_config(self):
+        from app.game_config import MOVES
+        expected = MOVES["flame_breath"]["repeatPenalty"]
+        assert _repeat_penalty("flame_breath", ["flame_breath"]) == pytest.approx(expected)
 
     def test_buff_move_has_mild_penalty(self):
         # frenzy has repeatPenalty=0.6 — mild nudge, almost free to repeat

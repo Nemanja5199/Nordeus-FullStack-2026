@@ -179,15 +179,34 @@ def _tick_buffs_sim(state: CharacterState) -> CharacterState:
     return s
 
 
+def _buff_impact(stat: str, multiplier: float, turns: int, char: CharacterState) -> float:
+    """Estimate the combat value of a buff/debuff in HP-equivalent units."""
+    base = getattr(char, stat, 0)
+    delta = abs(multiplier - 1.0)
+    if stat == "attack":
+        return base * delta * 0.75 * turns
+    elif stat == "defense":
+        return base * delta * 0.5 * turns
+    elif stat == "magic":
+        return base * delta * 1.1 * turns
+    return delta * turns * 3.0
+
+
 def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
     """Heuristic score from the monster's perspective. Positive = monster is winning."""
     hp_score = ((monster.hp / monster.maxHp) - (hero.hp / hero.maxHp)) * 100.0
 
-    monster_buff_turns = sum(b.turnsRemaining for b in monster.activeBuffs if b.multiplier > 1.0)
-    hero_buff_turns    = sum(b.turnsRemaining for b in hero.activeBuffs    if b.multiplier > 1.0)
-    hero_debuff_turns  = sum(b.turnsRemaining for b in hero.activeBuffs    if b.multiplier < 1.0)
+    buff_score = 0.0
+    for b in monster.activeBuffs:
+        if b.multiplier > 1.0:
+            buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, monster)
+    for b in hero.activeBuffs:
+        if b.multiplier > 1.0:
+            buff_score -= _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
+        elif b.multiplier < 1.0:
+            buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
 
-    return hp_score + (monster_buff_turns - hero_buff_turns + hero_debuff_turns) * 2.0
+    return hp_score + buff_score
 
 
 def _minimax(
