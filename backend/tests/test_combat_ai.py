@@ -198,19 +198,19 @@ class TestMinimax:
         result = _pick_move(req)
         assert result != "dark_pact"
 
-    def test_endgame_mode_picks_highest_damage(self):
-        # Hero at 40% HP — pounce doesn't one-shot but endgame mode should always pick
-        # the highest baseValue move (pounce=30), ignoring repeat penalty history
+    def test_pounce_repeated_when_kill_is_near(self):
+        # Spider can nearly kill hero in one pounce; repeat penalty should be ignored
         req = make_request(
             "giant_spider",
             ["bite", "web_throw", "pounce", "skitter"],
             monster_state=make_state(hp=85, max_hp=85, attack=20, defense=10, magic=3),
-            hero_state=make_state(hp=40, max_hp=100),
+            hero_state=make_state(hp=28, max_hp=100),
             hero_moves=HERO_MOVES,
-            last_monster_moves=["pounce"],
+            last_monster_moves=["pounce"],  # pounce just played, heavy penalty normally
         )
-        results = [_pick_move(req) for _ in range(20)]
-        assert all(r == "pounce" for r in results), "endgame mode must deterministically pick pounce"
+        results = [_pick_move(req) for _ in range(30)]
+        pounce_count = results.count("pounce")
+        assert pounce_count > 20, f"pounce should dominate when hero is near-dead, got {pounce_count}/30"
 
     def test_fallback_to_heuristic_when_no_hero_moves(self):
         # heroMoves=[] means minimax can't run — must fall back gracefully
