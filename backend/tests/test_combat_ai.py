@@ -1,7 +1,11 @@
-"""Tests for monster AI move selection — _score_move and _pick_move."""
+"""Tests for monster AI move selection — _score_move, _pick_move, and minimax."""
 import pytest
 from app.models import MonsterMoveRequest, CharacterState, ActiveBuff
-from app.routers.battle import _score_move, _pick_move, AI_PROFILES
+from app.routers.battle import (
+    _score_move, _pick_move, _pick_move_heuristic,
+    _minimax, _evaluate, _apply_move_sim, _tick_buffs_sim, _get_effective_stat,
+    AI_PROFILES,
+)
 from app.game_config import MOVES
 
 
@@ -15,13 +19,17 @@ def make_state(hp=100, max_hp=100, attack=15, defense=10, magic=8, buffs=None):
     )
 
 
-def make_request(monster_id, moves, monster_state=None, hero_state=None, turn=1):
+HERO_MOVES = ["slash", "shield_up", "battle_cry", "second_wind"]
+
+
+def make_request(monster_id, moves, monster_state=None, hero_state=None, turn=1, hero_moves=None):
     return MonsterMoveRequest(
         monsterId=monster_id,
         monsterMoves=moves,
         monsterState=monster_state or make_state(),
         heroState=hero_state or make_state(),
         turnNumber=turn,
+        heroMoves=hero_moves if hero_moves is not None else [],
     )
 
 
@@ -136,3 +144,87 @@ class TestPickMove:
         for _ in range(50):
             result = _pick_move(req)
             assert result in moves
+
+
+# ── Minimax ───────────────────────────────────────────────────────────────────
+
+class TestMinimax:
+    MONSTER_MOVES = ["shadow_bolt", "drain_life", "curse", "dark_pact"]
+    DRAGON_MOVES  = ["flame_breath", "claw_swipe", "intimidate", "dragon_scales"]
+
+    def test_drain_chosen_when_low_hp(self):
+        # Witch at 15/75 HP — drain_life recovers HP and deals damage, best survival move
+        req = make_request(
+            "witch", self.MONSTER_MOVES,
+            monster_state=make_state(hp=15, max_hp=75),
+            hero_moves=HERO_MOVES,
+        )
+        result = _pick_move(req)
+        assert result == "drain_life"
+
+    def test_no_rebuff_when_already_buffed(self):
+        # goblin_mage with magic buff active — arcane_surge would just extend by 0, waste a turn
+        magic_buff = ActiveBuff(stat="magic", multiplier=1.6, turnsRemaining=2)
+        req = make_request(
+            "goblin_mage", ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
+            monster_state=make_state(attack=10, defense=8, magic=14, buffs=[magic_buff]),
+            hero_moves=HERO_MOVES,
+        )
+        result = _pick_move(req)
+        assert result != "arcane_surge"
+
+    def test_kill_shot_over_buff_when_hero_near_dead(self):
+        # Hero at 5 HP — any damage move kills; minimax should take the kill, not buff
+        req = make_request(
+            "dragon", self.DRAGON_MOVES,
+            monster_state=make_state(attack=18, defense=14, magic=10),
+            hero_state=make_state(hp=5, max_hp=100),
+            hero_moves=HERO_MOVES,
+        )
+        result = _pick_move(req)
+        assert result in ("flame_breath", "claw_swipe")
+
+    def test_avoids_hp_cost_move_when_near_dead(self):
+        # Witch at 16 HP — dark_pact costs 15 HP, leaving 1 HP; drain_life is clearly safer
+        req = make_request(
+            "witch", self.MONSTER_MOVES,
+            monster_state=make_state(hp=16, max_hp=75),
+            hero_moves=HERO_MOVES,
+        )
+        result = _pick_move(req)
+        assert result != "dark_pact"
+
+    def test_fallback_to_heuristic_when_no_hero_moves(self):
+        # heroMoves=[] means minimax can't run — must fall back gracefully
+        moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
+        req = make_request("goblin_warrior", moves, hero_moves=[])
+        for _ in range(20):
+            assert _pick_move(req) in moves
+
+    def test_terminal_hero_dead_returns_max_score(self):
+        # Hero already at 0 HP — minimax should immediately return +1000
+        score = _minimax(
+            monster=make_state(hp=80, max_hp=100),
+            hero=make_state(hp=0, max_hp=100),
+            depth=6,
+            is_monster_turn=True,
+            alpha=-float("inf"),
+            beta=float("inf"),
+            monster_moves=["rusty_blade"],
+            hero_moves=HERO_MOVES,
+        )
+        assert score == 1000.0
+
+    def test_terminal_monster_dead_returns_min_score(self):
+        # Monster already at 0 HP — minimax should immediately return -1000
+        score = _minimax(
+            monster=make_state(hp=0, max_hp=100),
+            hero=make_state(hp=80, max_hp=100),
+            depth=6,
+            is_monster_turn=True,
+            alpha=-float("inf"),
+            beta=float("inf"),
+            monster_moves=["rusty_blade"],
+            hero_moves=HERO_MOVES,
+        )
+        assert score == -1000.0

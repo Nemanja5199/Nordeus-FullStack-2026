@@ -22,6 +22,7 @@ export interface BattleStatePayload {
     activeBuffs: ActiveBuff[];
   };
   turnNumber: number;
+  heroMoves: string[];
 }
 
 export interface SavePayload {

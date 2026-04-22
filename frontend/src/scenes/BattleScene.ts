@@ -569,6 +569,7 @@ export class BattleScene extends Phaser.Scene {
           activeBuffs: this.hero.activeBuffs,
         },
         turnNumber: this.turnNumber,
+        heroMoves: this.hero.moves,
       };
       const resp = await api.getMonsterMove(payload);
       if (this.turnNumber !== capturedTurn) return; // player already moved, discard
@@ -741,6 +742,7 @@ export class BattleScene extends Phaser.Scene {
             activeBuffs: this.hero.activeBuffs,
           },
           turnNumber: this.turnNumber,
+          heroMoves: this.hero.moves,
         };
         const resp = await api.getMonsterMove(payload);
         moveId = resp.moveId;

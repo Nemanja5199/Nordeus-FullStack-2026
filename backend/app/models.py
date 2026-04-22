@@ -23,6 +23,7 @@ class MonsterMoveRequest(BaseModel):
     monsterState: CharacterState
     heroState: CharacterState
     turnNumber: int
+    heroMoves: list[str] = []
 
 
 class MonsterMoveResponse(BaseModel):

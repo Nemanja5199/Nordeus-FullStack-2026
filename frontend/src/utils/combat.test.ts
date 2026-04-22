@@ -144,7 +144,11 @@ describe("applyMove — magic", () => {
 
 describe("applyMove — heal", () => {
   it("heals the attacker", () => {
-    const attacker = makeChar({ hp: 60, maxHp: 100, baseStats: { attack: 10, defense: 10, magic: 8 } });
+    const attacker = makeChar({
+      hp: 60,
+      maxHp: 100,
+      baseStats: { attack: 10, defense: 10, magic: 8 },
+    });
     const defender = makeChar();
     const move = makeMove({ moveType: "heal", baseValue: 15, effects: [] });
 
@@ -154,7 +158,11 @@ describe("applyMove — heal", () => {
   });
 
   it("does not overheal beyond maxHp", () => {
-    const attacker = makeChar({ hp: 99, maxHp: 100, baseStats: { attack: 10, defense: 10, magic: 8 } });
+    const attacker = makeChar({
+      hp: 99,
+      maxHp: 100,
+      baseStats: { attack: 10, defense: 10, magic: 8 },
+    });
     const defender = makeChar();
     const move = makeMove({ moveType: "heal", baseValue: 50, effects: [] });
 
@@ -186,7 +194,11 @@ describe("applyMove — buff/debuff effects", () => {
 
     applyMove(move, attacker, defender);
     expect(attacker.activeBuffs).toHaveLength(1);
-    expect(attacker.activeBuffs[0]).toMatchObject({ stat: "attack", multiplier: 1.5, turnsRemaining: 2 });
+    expect(attacker.activeBuffs[0]).toMatchObject({
+      stat: "attack",
+      multiplier: 1.5,
+      turnsRemaining: 2,
+    });
   });
 
   it("applies a debuff to the defender", () => {
@@ -200,7 +212,11 @@ describe("applyMove — buff/debuff effects", () => {
 
     applyMove(move, attacker, defender);
     expect(defender.activeBuffs).toHaveLength(1);
-    expect(defender.activeBuffs[0]).toMatchObject({ stat: "defense", multiplier: 0.7, turnsRemaining: 2 });
+    expect(defender.activeBuffs[0]).toMatchObject({
+      stat: "defense",
+      multiplier: 0.7,
+      turnsRemaining: 2,
+    });
   });
 
   it("refreshes buff duration instead of stacking if same stat+multiplier", () => {
@@ -222,7 +238,11 @@ describe("applyMove — buff/debuff effects", () => {
 
 describe("applyMove — drain", () => {
   it("heals attacker for the same amount as damage dealt", () => {
-    const attacker = makeChar({ hp: 50, maxHp: 100, baseStats: { attack: 10, defense: 10, magic: 15 } });
+    const attacker = makeChar({
+      hp: 50,
+      maxHp: 100,
+      baseStats: { attack: 10, defense: 10, magic: 15 },
+    });
     const defender = makeChar({ hp: 100, baseStats: { attack: 10, defense: 5, magic: 5 } });
     const move = makeMove({
       moveType: "magic",

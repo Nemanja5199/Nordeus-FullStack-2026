@@ -1,6 +1,7 @@
+import copy
 import random
 from fastapi import APIRouter
-from app.models import MonsterMoveRequest, MonsterMoveResponse
+from app.models import ActiveBuff, CharacterState, MonsterMoveRequest, MonsterMoveResponse
 from app.game_config import MOVES
 
 router = APIRouter()
@@ -109,7 +110,139 @@ def _score_move(move_id: str, req: MonsterMoveRequest, hp_pct: float, profile: d
     return max(score, 0.1)
 
 
-def _pick_move(req: MonsterMoveRequest) -> str:
+# ── Combat simulation (mirrors frontend combat.ts exactly) ───────────────────
+
+
+def _get_effective_stat(state: CharacterState, stat: str) -> int:
+    multiplier = 1.0
+    for b in state.activeBuffs:
+        if b.stat == stat:
+            multiplier *= b.multiplier
+    return max(1, int(getattr(state, stat) * multiplier))
+
+
+def _apply_move_sim(
+    move_id: str,
+    attacker: CharacterState,
+    defender: CharacterState,
+) -> tuple[CharacterState, CharacterState]:
+    """Non-mutating: returns deep-copied (attacker, defender) with the move applied."""
+    atk = copy.deepcopy(attacker)
+    dfn = copy.deepcopy(defender)
+    move = MOVES[move_id]
+
+    eff_atk = _get_effective_stat(atk, "attack")
+    eff_mag = _get_effective_stat(atk, "magic")
+    eff_def = _get_effective_stat(dfn, "defense")
+    damage = 0
+
+    if move["moveType"] == "physical" and move["baseValue"] > 0:
+        damage = max(1, int((move["baseValue"] + eff_atk) * 0.75 - eff_def * 0.5))
+        dfn.hp = max(0, dfn.hp - damage)
+    elif move["moveType"] == "magic" and move["baseValue"] > 0:
+        damage = max(1, int(move["baseValue"] + eff_mag * 1.1))
+        dfn.hp = max(0, dfn.hp - damage)
+    elif move["moveType"] == "heal":
+        heal = max(5, int(move["baseValue"] + eff_mag))
+        atk.hp = min(atk.maxHp, atk.hp + heal)
+
+    for fx in move["effects"]:
+        ftype = fx["type"]
+        if ftype == "drain":
+            atk.hp = min(atk.maxHp, atk.hp + damage)
+        elif ftype in ("buff", "debuff"):
+            tgt = atk if fx.get("target") == "self" else dfn
+            existing = next(
+                (b for b in tgt.activeBuffs if b.stat == fx["stat"] and b.multiplier == fx["multiplier"]),
+                None,
+            )
+            if existing:
+                existing.turnsRemaining = max(existing.turnsRemaining, fx["turns"])
+            else:
+                tgt.activeBuffs.append(
+                    ActiveBuff(stat=fx["stat"], multiplier=fx["multiplier"], turnsRemaining=fx["turns"])
+                )
+        elif ftype == "hp_cost":
+            atk.hp = max(1, atk.hp - fx["value"])
+
+    return atk, dfn
+
+
+def _tick_buffs_sim(state: CharacterState) -> CharacterState:
+    """Non-mutating: returns a deep copy with all buff durations decremented and expired ones removed."""
+    s = copy.deepcopy(state)
+    s.activeBuffs = [
+        ActiveBuff(stat=b.stat, multiplier=b.multiplier, turnsRemaining=b.turnsRemaining - 1)
+        for b in s.activeBuffs
+        if b.turnsRemaining - 1 > 0
+    ]
+    return s
+
+
+def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
+    """Heuristic score from the monster's perspective. Positive = monster is winning."""
+    hp_score = ((monster.hp / monster.maxHp) - (hero.hp / hero.maxHp)) * 100.0
+
+    monster_buff_turns = sum(b.turnsRemaining for b in monster.activeBuffs if b.multiplier > 1.0)
+    hero_buff_turns    = sum(b.turnsRemaining for b in hero.activeBuffs    if b.multiplier > 1.0)
+    hero_debuff_turns  = sum(b.turnsRemaining for b in hero.activeBuffs    if b.multiplier < 1.0)
+
+    return hp_score + (monster_buff_turns - hero_buff_turns + hero_debuff_turns) * 2.0
+
+
+def _minimax(
+    monster: CharacterState,
+    hero: CharacterState,
+    depth: int,
+    is_monster_turn: bool,
+    alpha: float,
+    beta: float,
+    monster_moves: list[str],
+    hero_moves: list[str],
+) -> float:
+    """
+    Alpha-beta minimax from the monster's perspective.
+    Monster = maximiser, Hero = minimiser.
+    depth counts full turns (monster + hero). Buffs tick after each full turn.
+    """
+    if monster.hp <= 0:
+        return -1000.0
+    if hero.hp <= 0:
+        return 1000.0
+    if depth == 0:
+        return _evaluate(monster, hero)
+
+    if is_monster_turn:
+        best = -float("inf")
+        for move_id in monster_moves:
+            m2, h2 = _apply_move_sim(move_id, monster, hero)
+            score = _minimax(m2, h2, depth, False, alpha, beta, monster_moves, hero_moves)
+            best = max(best, score)
+            alpha = max(alpha, score)
+            if beta <= alpha:
+                break
+        return best
+    else:
+        worst = float("inf")
+        for move_id in hero_moves:
+            h2, m2 = _apply_move_sim(move_id, hero, monster)
+            # Buffs tick at the end of each full turn (after both sides have acted)
+            m3 = _tick_buffs_sim(m2)
+            h3 = _tick_buffs_sim(h2)
+            score = _minimax(m3, h3, depth - 1, True, alpha, beta, monster_moves, hero_moves)
+            worst = min(worst, score)
+            beta = min(beta, score)
+            if beta <= alpha:
+                break
+        return worst
+
+
+# ── Move selection ────────────────────────────────────────────────────────────
+
+_MINIMAX_DEPTH = 6  # 3 full turns lookahead; max 4^6 = 4096 nodes before pruning
+
+
+def _pick_move_heuristic(req: MonsterMoveRequest) -> str:
     moves   = req.monsterMoves
     hp_pct  = req.monsterState.hp / req.monsterState.maxHp
     turn    = req.turnNumber
@@ -161,6 +294,26 @@ def _pick_move(req: MonsterMoveRequest) -> str:
             return move_id
 
     return moves[-1]
+
+
+def _pick_move(req: MonsterMoveRequest) -> str:
+    if not req.heroMoves:
+        return _pick_move_heuristic(req)
+
+    best_score = -float("inf")
+    best_move = req.monsterMoves[0]
+
+    for move_id in req.monsterMoves:
+        m2, h2 = _apply_move_sim(move_id, req.monsterState, req.heroState)
+        if h2.hp <= 0:
+            return move_id  # immediate kill — no need to search deeper
+        score = _minimax(m2, h2, _MINIMAX_DEPTH, False, -float("inf"), float("inf"),
+                         req.monsterMoves, req.heroMoves)
+        if score > best_score:
+            best_score = score
+            best_move = move_id
+
+    return best_move
 
 
 @router.post("/battle/monster-move", response_model=MonsterMoveResponse)
