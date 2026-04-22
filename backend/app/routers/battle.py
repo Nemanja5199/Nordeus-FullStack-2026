@@ -331,30 +331,38 @@ def _pick_move_heuristic(req: MonsterMoveRequest) -> str:
     return moves[-1]
 
 
-def _pick_move(req: MonsterMoveRequest) -> str:
-    if not req.heroMoves:
-        return _pick_move_heuristic(req)
+_ENDGAME_HP_PCT = 0.45  # below this, monster ignores utility and goes for maximum damage
 
-    # Score every move with expectiminimax
-    raw_scores: dict[str, float] = {}
+
+def _pick_move(req: MonsterMoveRequest) -> str:
+    # 1. Immediate kill: take it without further analysis
     for move_id in req.monsterMoves:
         m2, h2 = _apply_move_sim(move_id, req.monsterState, req.heroState)
         if h2.hp <= 0:
-            return move_id  # immediate kill — no need to search
+            return move_id
+
+    # 2. Endgame: hero below 45% HP — minimax scores tie at 1000 across all moves, so
+    #    skip variety logic and pick the move with the highest base damage value.
+    if req.heroState.hp / req.heroState.maxHp < _ENDGAME_HP_PCT:
+        return max(req.monsterMoves, key=lambda m: MOVES[m].get("baseValue", 0))
+
+    if not req.heroMoves:
+        return _pick_move_heuristic(req)
+
+    # 3. Normal fight: score every move with expectiminimax
+    raw_scores: dict[str, float] = {}
+    for move_id in req.monsterMoves:
+        m2, h2 = _apply_move_sim(move_id, req.monsterState, req.heroState)
         raw_scores[move_id] = _minimax(
             m2, h2, _MINIMAX_DEPTH, False,
             -float("inf"), float("inf"),
             req.monsterMoves, req.heroMoves,
         )
 
-    # sqrt-compress shifted scores so utility moves aren't crowded out by heavy damage moves.
-    # Skip repeat penalty for moves that lead to a near-certain win — monster should go for the kill.
-    _KILL_THRESHOLD = 800.0
+    # sqrt-compress shifted scores so utility moves aren't crowded out by heavy damage moves
     min_score = min(raw_scores.values())
     weights: dict[str, float] = {
-        move_id: math.sqrt(score - min_score + 1.0) * (
-            1.0 if score >= _KILL_THRESHOLD else _repeat_penalty(move_id, req.lastMonsterMoves)
-        )
+        move_id: math.sqrt(score - min_score + 1.0) * _repeat_penalty(move_id, req.lastMonsterMoves)
         for move_id, score in raw_scores.items()
     }
 
