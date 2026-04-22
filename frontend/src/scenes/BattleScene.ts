@@ -13,8 +13,10 @@ import {
   TXT_GOLD, TXT_GOLD_LIGHT, TXT_GOLD_MID, TXT_MUTED,
   TXT_HERO, TXT_MONSTER,
   BAR_HP_FILL, BAR_HERO_HP, BAR_HP_HIGH, BAR_HP_MID, BAR_HP_LOW,
-  BG_BAR_TRACK, TXT_LOG,
+  BG_BAR_TRACK,
+  HP_GHOST_HERO, HP_GHOST_MONSTER,
   TXT_INTENT_ATTACK, TXT_INTENT_BUFF, TXT_INTENT_DEBUFF, TXT_INTENT_HEAL, TXT_LOG_MAGIC,
+  TXT_DUST_MOTE,
 } from "../ui/colors";
 
 interface BattleData {
@@ -77,7 +79,7 @@ export class BattleScene extends Phaser.Scene {
     this.monsterCfg   = data.monster;
     this.monsterIndex = data.monsterIndex;
     this.defeatedIds  = data.defeatedIds ?? [];
-    this.sourceScene  = data.sourceScene ?? "MapScene";
+    this.sourceScene  = data.sourceScene ?? "TreeMapScene";
     this.nodeId       = data.nodeId;
 
     const hs = GameState.hero;
@@ -137,7 +139,7 @@ export class BattleScene extends Phaser.Scene {
     this.heroBarY    = barY;
     this.add.rectangle(cx, barY, BAR_W, 14, BG_BAR_TRACK).setOrigin(0.5);
     this.heroHpFill  = this.add.rectangle(this.heroBarLeft, barY, BAR_W, 14, BAR_HERO_HP).setOrigin(0, 0.5);
-    this.heroHpGhost = this.add.rectangle(this.heroBarLeft, barY, 0, 14, 0x8a1a1a, 0.75).setOrigin(0, 0.5);
+    this.heroHpGhost = this.add.rectangle(this.heroBarLeft, barY, 0, 14, HP_GHOST_HERO, 0.75).setOrigin(0, 0.5);
     this.heroHpText  = this.add.text(cx, barY + 18, "", {
       fontSize: "15px", color: TXT_GOLD_LIGHT,
     }).setOrigin(0.5);
@@ -183,7 +185,7 @@ export class BattleScene extends Phaser.Scene {
     this.monsterBarY    = barY;
     this.add.rectangle(cx, barY, BAR_W, 14, BG_BAR_TRACK).setOrigin(0.5);
     this.monsterHpFill  = this.add.rectangle(this.monsterBarLeft, barY, BAR_W, 14, BAR_HP_FILL).setOrigin(0, 0.5);
-    this.monsterHpGhost = this.add.rectangle(this.monsterBarLeft, barY, 0, 14, 0x3a0808, 0.85).setOrigin(0, 0.5);
+    this.monsterHpGhost = this.add.rectangle(this.monsterBarLeft, barY, 0, 14, HP_GHOST_MONSTER, 0.85).setOrigin(0, 0.5);
     this.monsterHpText  = this.add.text(cx, barY + 18, "", {
       fontSize: "15px", color: TXT_GOLD_LIGHT,
     }).setOrigin(0.5);
@@ -196,7 +198,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Active buffs/debuffs
     this.monsterBuffText = this.add.text(cx, panelTop + panelH * 0.94, "", {
-      fontSize: "12px", color: "#c87840",
+      fontSize: "12px", color: TXT_DUST_MOTE,
       wordWrap: { width: PANEL_W - 16 }, align: "center",
     }).setOrigin(0.5);
 
@@ -521,7 +523,7 @@ export class BattleScene extends Phaser.Scene {
     if (playerHeal > 0) {
       const futureHp = Math.min(this.hero.maxHp, this.hero.hp + playerHeal);
       this.heroHpGhost.setPosition(this.heroBarLeft + BAR_W * (this.hero.hp / this.hero.maxHp), this.heroBarY);
-      this.heroHpGhost.setSize(BAR_W * ((futureHp - this.hero.hp) / this.hero.maxHp), 14).setFillStyle(0x44cc44, 0.7);
+      this.heroHpGhost.setSize(BAR_W * ((futureHp - this.hero.hp) / this.hero.maxHp), 14).setFillStyle(BAR_HP_HIGH, 0.7);
       this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT_INTENT_HEAL);
       return; // don't show retaliation on heal turns
     }
@@ -542,7 +544,7 @@ export class BattleScene extends Phaser.Scene {
       if (monsterDmg > 0) {
         const futureHp = Math.max(0, this.hero.hp - monsterDmg);
         this.heroHpGhost.setPosition(this.heroBarLeft + BAR_W * (futureHp / this.hero.maxHp), this.heroBarY);
-        this.heroHpGhost.setSize(BAR_W * (monsterDmg / this.hero.maxHp), 14).setFillStyle(0x8a1a1a, 0.75);
+        this.heroHpGhost.setSize(BAR_W * (monsterDmg / this.hero.maxHp), 14).setFillStyle(HP_GHOST_HERO, 0.75);
         this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT_INTENT_ATTACK);
       }
     }

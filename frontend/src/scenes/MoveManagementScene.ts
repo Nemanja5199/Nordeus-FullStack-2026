@@ -6,6 +6,7 @@ import {
   BORDER_GOLD, BORDER_GOLD_BRIGHT, BORDER_LOCKED,
   TXT_GOLD, TXT_GOLD_LIGHT, TXT_GOLD_MID, TXT_MUTED, TXT_HERO, TXT_LOCKED,
   BG_STAT_CARD, BG_STAT_CARD_AVAIL, BORDER_STAT_AVAIL, TXT_SKILL_POINTS,
+  BG_BTN_STAT, BG_BTN_STAT_HOVER, TXT_STROKE_HEADER,
 } from "../ui/colors";
 
 interface MoveManagementData {
@@ -31,7 +32,7 @@ export class MoveManagementScene extends Phaser.Scene {
   }
 
   create(data: MoveManagementData) {
-    this.returnScene = data.returnScene ?? "MapScene";
+    this.returnScene = data.returnScene ?? "TreeMapScene";
     this.selectedLearnedIndex = -1;
     this.selectedEquippedSlot = -1;
     this.learnedButtons = [];
@@ -43,7 +44,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.add.text(width / 2, 34, "MOVE MANAGEMENT", {
       fontSize: "36px", fontFamily: "EnchantedLand", color: TXT_GOLD,
-      stroke: "#4a3010", strokeThickness: 3,
+      stroke: TXT_STROKE_HEADER, strokeThickness: 3,
     }).setOrigin(0.5);
 
     // Column X positions
@@ -70,7 +71,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.buildLearnedPanel(colLearnedX);
     this.buildEquippedPanel(colEquippedX);
-    this.buildStatPanel(colStatsX, height);
+    this.buildStatPanel(colStatsX);
 
     createButton(this, width / 2, height - 22, {
       ...BTN_SM, label: "CLOSE", color: BG_BTN_CLOSE,
@@ -136,7 +137,7 @@ export class MoveManagementScene extends Phaser.Scene {
     }
   }
 
-  private buildStatPanel(panelX: number, height: number) {
+  private buildStatPanel(panelX: number) {
     const pts  = GameState.hero.skillPoints ?? 0;
     const cardW = 200;
     const cardH = 80;
@@ -163,7 +164,7 @@ export class MoveManagementScene extends Phaser.Scene {
       const haspts = pts > 0;
       const val    = key === "maxHp" ? GameState.hero.maxHp : GameState.hero[key];
 
-      const bg = this.add.rectangle(panelX, y, cardW, cardH,
+      this.add.rectangle(panelX, y, cardW, cardH,
         haspts ? BG_STAT_CARD_AVAIL : BG_STAT_CARD, 0.95)
         .setStrokeStyle(haspts ? 2 : 1, haspts ? BORDER_STAT_AVAIL : BORDER_LOCKED);
 
@@ -188,7 +189,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
       if (haspts) {
         const btnX = panelX + cardW / 2 - 36;
-        const btn = this.add.rectangle(btnX, y, 56, 36, 0x2a4a18, 0.95)
+        const btn = this.add.rectangle(btnX, y, 56, 36, BG_BTN_STAT, 0.95)
           .setStrokeStyle(1, BORDER_STAT_AVAIL)
           .setInteractive({ useHandCursor: true });
 
@@ -196,8 +197,8 @@ export class MoveManagementScene extends Phaser.Scene {
           fontSize: "14px", fontFamily: "EnchantedLand", color: TXT_SKILL_POINTS,
         }).setOrigin(0.5);
 
-        btn.on("pointerover",  () => btn.setFillStyle(0x3a6a24));
-        btn.on("pointerout",   () => btn.setFillStyle(0x2a4a18));
+        btn.on("pointerover",  () => btn.setFillStyle(BG_BTN_STAT_HOVER));
+        btn.on("pointerout",   () => btn.setFillStyle(BG_BTN_STAT));
         btn.on("pointerdown",  () => {
           GameState.spendSkillPoint(key);
           this.children.removeAll(true);
@@ -205,7 +206,6 @@ export class MoveManagementScene extends Phaser.Scene {
         });
       }
 
-      void bg;
     });
   }
 

@@ -11,7 +11,15 @@
       "Bash(git remote *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(python3 -c \"import pdfplumber; pdf = pdfplumber.open\\('Job Fair 2026__Full Stack Challenge.pdf'\\); [print\\(f'--- PAGE {i+1} ---\\\\n', p.extract_text\\(\\)\\) for i, p in enumerate\\(pdf.pages\\)]\")",
+      "Bash(python3 -c \"import PyPDF2; r = PyPDF2.PdfReader\\('/mnt/d/Nordeus FullStack Challange 2026/Job Fair 2026__Full Stack Challenge.pdf'\\); [print\\(f'--- PAGE {i+1} ---\\\\n', r.pages[i].extract_text\\(\\)\\) for i in range\\(len\\(r.pages\\)\\)]\")",
+      "Bash(python3 -c \"import pypdf; r = pypdf.PdfReader\\('/mnt/d/Nordeus FullStack Challange 2026/Job Fair 2026__Full Stack Challenge.pdf'\\); [print\\(f'--- PAGE {i+1} ---\\\\n', r.pages[i].extract_text\\(\\)\\) for i in range\\(len\\(r.pages\\)\\)]\")",
+      "Bash(pip install *)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

@@ -3,7 +3,7 @@ import type { HeroState, MoveConfig } from "../types/game";
 import { HERO_FRAME } from "../utils/spriteFrames";
 import {
     BG_PANEL, BG_ROW, BG_ROW_MID, BG_BTN, BG_BTN_HOVER,
-    BORDER_GOLD, BORDER_ROW,
+    BORDER_GOLD, BORDER_ROW, BORDER_STAT_AVAIL,
     TXT_GOLD, TXT_GOLD_LIGHT, TXT_GOLD_MID, TXT_MUTED,
     BAR_XP_FILL, TXT_SKILL_POINTS,
 } from "./colors";
@@ -89,7 +89,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
     const btnY = panelY + h - 24;
     const hasPoints = (hero.skillPoints ?? 0) > 0;
     const btnBg = scene.add.rectangle(cx, btnY, w - 20, 32, BG_BTN, 0.9)
-        .setStrokeStyle(1, hasPoints ? 0x5a8a3a : BORDER_GOLD)
+        .setStrokeStyle(1, hasPoints ? BORDER_STAT_AVAIL : BORDER_GOLD)
         .setInteractive({ useHandCursor: true });
     const btnLabel = hasPoints ? `Manage Moves  ✦ ${hero.skillPoints}` : "Manage Moves";
     const btnTxt = scene.add.text(cx, btnY, btnLabel, {

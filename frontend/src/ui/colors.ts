@@ -52,6 +52,10 @@ export const BG_MOVE_CARD     = 0x1c1408;  // default move card bg
 export const BG_MOVE_EQUIPPED = 0x1a2010;  // learned card bg when already equipped
 export const BG_BTN_CLOSE     = 0x1a1a2e;  // close / cancel button
 
+// ─── Battle HP ghosts (damage / heal preview overlay on bars) ────────────────
+export const HP_GHOST_HERO      = 0x8a1a1a;  // dark red — incoming damage preview on hero bar
+export const HP_GHOST_MONSTER   = 0x3a0808;  // darker red — incoming damage preview on monster bar
+
 // ─── Stat bars ───────────────────────────────────────────────────────────────
 export const BAR_HP_FILL   = 0x8a3a3a;  // monster HP
 export const BAR_HERO_HP   = 0x4a8a3a;  // hero HP default
@@ -75,10 +79,40 @@ export const TXT_SHOP             = "#70aaff";
 export const TXT_SHOP_DONE        = "#3a6aaa";
 export const TXT_SHOP_LOCKED      = "#1a2a44";
 
+// ─── Overlays / gradient base ────────────────────────────────────────────────
+export const BG_BLACK             = 0x000000;
+
+// ─── Preload ─────────────────────────────────────────────────────────────────
+export const BG_LOAD_BAR_TRACK    = 0x2a2010;  // progress bar background in PreloadScene
+
+// ─── Character select cards ──────────────────────────────────────────────────
+export const BG_CARD_LOCKED       = 0x100c08;  // locked class card background
+export const BORDER_CARD_LOCKED   = 0x2a2018;  // locked class card border
+export const BG_CARD_SELECTED     = 0x2a1e08;  // selected (highlighted) card background
+export const TINT_GOLD            = 0xffd700;  // stat icon hover tint
+export const DUST_MOTE_COLOR      = 0xb89050;  // main menu ambient dust particles
+
+// ─── Stat-point "Add" button in Move Management ──────────────────────────────
+export const BG_BTN_STAT          = 0x2a4a18;  // "add stat point" button default
+export const BG_BTN_STAT_HOVER    = 0x3a6a24;  // "add stat point" button hover
+
 // ─── Title stroke (used on light/textured backgrounds) ───────────────────────
 export const STROKE_TITLE_DARK    = "#2a1404";
+export const TXT_STROKE_TITLE     = "#3a2008";  // title stroke on dark backgrounds
+export const TXT_STROKE_HEADER    = "#4a3010";  // scene header stroke (lighter dark-gold)
 export const BG_TITLE_BAND        = 0x000000;
 export const TXT_BOSS             = "#c84a2a";
+export const TXT_TAGLINE          = "#a09060";  // main menu subtitle / tagline
+export const TXT_TIER_BOSS        = "#8a3a3a";  // boss-tier band label in TreeMap
+
+// ─── Locked card text ────────────────────────────────────────────────────────
+export const TXT_CARD_LOCKED      = "#2a2418";  // body text on locked class cards
+export const TXT_CLASS_LOCKED     = "#3a3020";  // class name text on locked cards
+export const TXT_COMING_SOON      = "#4a3820";  // "COMING SOON" overlay on locked cards
+export const TXT_GOLD_WARM        = "#c8b078";  // warm mid-gold (class moves list)
+
+// ─── Particles / ambient ─────────────────────────────────────────────────────
+export const TXT_DUST_MOTE        = "#c87840";  // dust motes + monster active-buff text
 
 // ─── Skill points ────────────────────────────────────────────────────────────
 export const BG_STAT_CARD       = 0x1a1408;

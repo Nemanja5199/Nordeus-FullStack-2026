@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -8,13 +9,13 @@ export class PreloadScene extends Phaser.Scene {
   preload() {
     const { width, height } = this.scale;
 
-    this.add.rectangle(0, 0, width, height, 0x0d0905).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG_DARKEST).setOrigin(0);
     this.add.text(width / 2, height / 2 - 40, "Loading...", {
-      fontSize: "28px", color: "#c8a035",
+      fontSize: "28px", color: TXT_GOLD,
     }).setOrigin(0.5);
 
-    const bar = this.add.rectangle(width / 2 - 200, height / 2 + 10, 0, 20, 0x7a5828).setOrigin(0, 0.5);
-    this.add.rectangle(width / 2, height / 2 + 10, 400, 20, 0x2a2010).setOrigin(0.5);
+    const bar = this.add.rectangle(width / 2 - 200, height / 2 + 10, 0, 20, BORDER_GOLD).setOrigin(0, 0.5);
+    this.add.rectangle(width / 2, height / 2 + 10, 400, 20, BG_LOAD_BAR_TRACK).setOrigin(0.5);
 
     this.load.on("progress", (v: number) => bar.setSize(400 * v, 20));
 

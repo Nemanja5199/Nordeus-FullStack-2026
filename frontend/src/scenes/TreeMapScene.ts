@@ -8,16 +8,18 @@ import {
 } from "../utils/mockMapTree";
 import type { MapTree, MapTreeNode, TreeNodeState } from "../utils/mockMapTree";
 import {
+  BG_BLACK,
   TXT_GOLD, TXT_GOLD_LIGHT, TXT_MUTED,
   TXT_DEFEATED, TXT_LOCKED, TXT_LOCKED_NAME,
   BG_SEPIA, BG_NODE_ACTIVE, BG_NODE_DEFEATED, BG_NODE_LOCKED,
   BORDER_GOLD_BRIGHT, BORDER_DEFEATED, BORDER_LOCKED,
+  BORDER_HERO_BATTLE, BORDER_MON_BATTLE,
   DOT_PATH_DEFEATED, DOT_PATH_ACTIVE,
   BG_BTN_CLOSE,
   BG_NODE_SHOP, BG_NODE_SHOP_DONE, BG_NODE_SHOP_LOCKED,
   BORDER_SHOP, BORDER_SHOP_DONE, BORDER_SHOP_LOCKED,
   TXT_SHOP, TXT_SHOP_DONE, TXT_SHOP_LOCKED,
-  STROKE_TITLE_DARK, TXT_BOSS,
+  STROKE_TITLE_DARK, TXT_BOSS, TXT_TIER_BOSS,
 } from "../ui/colors";
 
 const PANEL_W   = 260;
@@ -76,11 +78,11 @@ export class TreeMapScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, BG_SEPIA, 0.38).setOrigin(0);
 
     const g = this.add.graphics();
-    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.65, 0.65, 0, 0);
+    g.fillGradientStyle(BG_BLACK, BG_BLACK, BG_BLACK, BG_BLACK, 0.65, 0.65, 0, 0);
     g.fillRect(0, 0, width, height * 0.28);
-    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.65, 0.65);
+    g.fillGradientStyle(BG_BLACK, BG_BLACK, BG_BLACK, BG_BLACK, 0, 0, 0.65, 0.65);
     g.fillRect(0, height * 0.72, width, height * 0.28);
-    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0, 0, 0.5);
+    g.fillGradientStyle(BG_BLACK, BG_BLACK, BG_BLACK, BG_BLACK, 0.5, 0, 0, 0.5);
     g.fillRect(0, 0, width * 0.18, height);
   }
 
@@ -159,13 +161,13 @@ export class TreeMapScene extends Phaser.Scene {
     const midBoss  = (y4 + yB) / 2;
     const bandPad  = 40;
 
-    g.fillStyle(0xb88820, bandAlpha);
+    g.fillStyle(BORDER_GOLD_BRIGHT, bandAlpha);
     g.fillRect(treeLeft, y1 - bandPad, treeW, midTier2 - y1 + bandPad);
 
-    g.fillStyle(0x4a8a3a, bandAlpha);
+    g.fillStyle(BORDER_HERO_BATTLE, bandAlpha);
     g.fillRect(treeLeft, midTier2, treeW, midBoss - midTier2);
 
-    g.fillStyle(0x8a3a3a, bandAlpha);
+    g.fillStyle(BORDER_MON_BATTLE, bandAlpha);
     g.fillRect(treeLeft, midBoss, treeW, height - midBoss);
   }
 
@@ -221,7 +223,7 @@ export class TreeMapScene extends Phaser.Scene {
 
     this.add.text(labelX, y12, "TIER I",  style).setOrigin(1, 0.5);
     this.add.text(labelX, y34, "TIER II", style).setOrigin(1, 0.5);
-    this.add.text(labelX, yB,  "BOSS",   { ...style, color: "#8a3a3a" }).setOrigin(1, 0.5);
+    this.add.text(labelX, yB,  "BOSS",   { ...style, color: TXT_TIER_BOSS }).setOrigin(1, 0.5);
   }
 
   private drawNode(

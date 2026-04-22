@@ -79,7 +79,7 @@ export class PostBattleScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Description shows on hover
-        const descText = this.add.text(width / 2, y + cardH + 12, "", {
+        const descText = this.add.text(width / 2, y + cardH + 16, "", {
           fontSize: "14px", color: TXT_HERO,
           wordWrap: { width: 380 }, align: "center",
         }).setOrigin(0.5);
@@ -109,14 +109,10 @@ export class PostBattleScene extends Phaser.Scene {
 
     y = height * 0.72;
 
-    const isTreeFlow = data.sourceScene === "TreeMapScene";
-
     if (data.won) {
       createButton(this, width / 2, y, {
         ...BTN_MD, label: "BACK TO MAP", color: BG_BTN_SUCCESS,
-        onClick: () => isTreeFlow
-          ? this.scene.start("TreeMapScene")
-          : this.scene.start("MapScene", { monsterIndex: data.monsterIndex + 1, defeatedIds: data.defeatedIds }),
+        onClick: () => this.scene.start("TreeMapScene"),
       });
       y += 60;
 
@@ -145,9 +141,7 @@ export class PostBattleScene extends Phaser.Scene {
 
       createButton(this, width / 2, y, {
         ...BTN_MD, label: "BACK TO MAP", color: BG_BTN_NEUTRAL,
-        onClick: () => isTreeFlow
-          ? this.scene.start("TreeMapScene")
-          : this.scene.start("MapScene", { monsterIndex: data.monsterIndex, defeatedIds: data.defeatedIds }),
+        onClick: () => this.scene.start("TreeMapScene"),
       });
     }
   }

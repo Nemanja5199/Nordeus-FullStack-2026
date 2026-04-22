@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TXT_GOLD, TXT_GOLD_LIGHT } from "./colors";
 
 export interface ButtonOptions {
     label: string;
@@ -27,10 +28,10 @@ export function createButton(
     const fs = opts.fontSize ?? "20px";
 
     const bg = scene.add.rectangle(0, 0, w, h, opts.color, 0.9).setInteractive({ useHandCursor: true });
-    const txt = scene.add.text(0, 0, opts.label, { fontSize: fs, color: "#d4b483", fontFamily: "EnchantedLand", lineSpacing: opts.lineSpacing ?? 0, letterSpacing: opts.letterSpacing ?? 4 }).setOrigin(0.5);
+    const txt = scene.add.text(0, 0, opts.label, { fontSize: fs, color: TXT_GOLD_LIGHT, fontFamily: "EnchantedLand", lineSpacing: opts.lineSpacing ?? 0, letterSpacing: opts.letterSpacing ?? 4 }).setOrigin(0.5);
 
-    bg.on("pointerover", () => { bg.setAlpha(1); txt.setColor("#c8a035"); });
-    bg.on("pointerout", () => { bg.setAlpha(0.9); txt.setColor("#d4b483"); });
+    bg.on("pointerover", () => { bg.setAlpha(1); txt.setColor(TXT_GOLD); });
+    bg.on("pointerout", () => { bg.setAlpha(0.9); txt.setColor(TXT_GOLD_LIGHT); });
     bg.on("pointerdown", opts.onClick);
 
     const container = scene.add.container(x, y, [bg, txt]);

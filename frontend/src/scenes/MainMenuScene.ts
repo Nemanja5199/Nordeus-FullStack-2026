@@ -2,7 +2,10 @@ import Phaser from "phaser";
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
 import { createButton, BTN_LG } from "../ui/Button";
-import { BG_BTN_SUCCESS, BG_BTN_NEUTRAL, BG_BTN_DANGER } from "../ui/colors";
+import {
+  BG_BLACK, BG_BTN_SUCCESS, BG_BTN_NEUTRAL, BG_BTN_DANGER,
+  DUST_MOTE_COLOR, TXT_GOLD, TXT_STROKE_TITLE, TXT_TAGLINE, TXT_MUTED, TXT_BOSS,
+} from "../ui/colors";
 
 export class MainMenuScene extends Phaser.Scene {
     constructor() {
@@ -13,22 +16,22 @@ export class MainMenuScene extends Phaser.Scene {
         const { width, height } = this.scale;
 
         this.add.tileSprite(0, 0, width, height, "bg_brick").setOrigin(0);
-        this.add.rectangle(0, 0, width, height, 0x000000, 0.62).setOrigin(0);
+        this.add.rectangle(0, 0, width, height, BG_BLACK, 0.62).setOrigin(0);
 
         // Dust motes
         for (let i = 0; i < 80; i++) {
             const x = Phaser.Math.Between(0, width);
             const y = Phaser.Math.Between(0, height);
             const size = Math.random() < 0.3 ? 2 : 1;
-            this.add.circle(x, y, size, 0xb89050, Math.random() * 0.35 + 0.05);
+            this.add.circle(x, y, size, DUST_MOTE_COLOR, Math.random() * 0.35 + 0.05);
         }
 
         this.add
             .text(width / 2, height * 0.22, "RPG Gauntlet", {
                 fontSize: "100px",
                 fontFamily: "EnchantedLand",
-                color: "#c8a035",
-                stroke: "#3a2008",
+                color: TXT_GOLD,
+                stroke: TXT_STROKE_TITLE,
                 strokeThickness: 8,
             })
             .setOrigin(0.5);
@@ -37,7 +40,7 @@ export class MainMenuScene extends Phaser.Scene {
             .text(width / 2, height * 0.36, "Five monsters. One hero.\nCan you survive the gauntlet?", {
                 fontSize: "40px",
                 fontFamily: "EnchantedLand",
-                color: "#a09060",
+                color: TXT_TAGLINE,
                 align: "center",
             })
             .setOrigin(0.5);
@@ -54,20 +57,20 @@ export class MainMenuScene extends Phaser.Scene {
 
     private async startNewGame() {
         const loading = this.add
-            .text(this.scale.width / 2, this.scale.height * 0.91, "Loading...", { fontSize: "18px", color: "#8a7a5a" })
+            .text(this.scale.width / 2, this.scale.height * 0.91, "Loading...", { fontSize: "18px", color: TXT_MUTED })
             .setOrigin(0.5);
 
         try {
             const config = await api.getRunConfig();
             this.scene.start("CharacterSelectScene", { runConfig: config });
         } catch {
-            loading.setText("Failed to connect to server. Is it running?").setColor("#c84a2a");
+            loading.setText("Failed to connect to server. Is it running?").setColor(TXT_BOSS);
         }
     }
 
     private async continueGame() {
         const loading = this.add
-            .text(this.scale.width / 2, this.scale.height * 0.91, "Loading save...", { fontSize: "18px", color: "#8a7a5a" })
+            .text(this.scale.width / 2, this.scale.height * 0.91, "Loading save...", { fontSize: "18px", color: TXT_MUTED })
             .setOrigin(0.5);
 
         try {
@@ -78,11 +81,11 @@ export class MainMenuScene extends Phaser.Scene {
             if (localStorage.getItem("rpg_tree_state")) {
                 this.scene.start("TreeMapScene");
             } else {
-                loading.setText("No save found — starting new game.").setColor("#c8a035");
+                loading.setText("No save found — starting new game.").setColor(TXT_GOLD);
                 this.time.delayedCall(1500, () => this.startNewGame());
             }
         } catch {
-            loading.setText("Failed to connect to server.").setColor("#c84a2a");
+            loading.setText("Failed to connect to server.").setColor(TXT_BOSS);
         }
     }
 
@@ -91,7 +94,7 @@ export class MainMenuScene extends Phaser.Scene {
         GameState.clearRun();
         localStorage.removeItem("rpg_hero");
         this.add
-            .text(this.scale.width / 2, this.scale.height * 0.91, "Progress reset.", { fontSize: "18px", color: "#c84a2a" })
+            .text(this.scale.width / 2, this.scale.height * 0.91, "Progress reset.", { fontSize: "18px", color: TXT_BOSS })
             .setOrigin(0.5);
     }
 }
