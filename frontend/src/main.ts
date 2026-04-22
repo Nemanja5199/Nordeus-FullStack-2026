@@ -10,7 +10,15 @@ import { TreeMapScene } from "./scenes/TreeMapScene";
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   backgroundColor: "#0a0a1e",
-  scene: [PreloadScene, MainMenuScene, CharacterSelectScene, BattleScene, PostBattleScene, MoveManagementScene, TreeMapScene],
+  scene: [
+    PreloadScene,
+    MainMenuScene,
+    CharacterSelectScene,
+    BattleScene,
+    PostBattleScene,
+    MoveManagementScene,
+    TreeMapScene,
+  ],
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,

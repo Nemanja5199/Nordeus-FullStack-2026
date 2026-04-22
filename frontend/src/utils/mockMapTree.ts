@@ -1,14 +1,14 @@
 export interface MapTreeNode {
   id: string;
-  monsterId?: string;  // absent for shop nodes
-  level: number;       // 1-5
-  children: string[];  // node IDs
+  monsterId?: string; // absent for shop nodes
+  level: number; // 1-5
+  children: string[]; // node IDs
   type?: "monster" | "boss" | "shop";
 }
 
 export interface MapTree {
   nodes: Record<string, MapTreeNode>;
-  roots: string[];  // level-1 node IDs the player can choose from
+  roots: string[]; // level-1 node IDs the player can choose from
 }
 
 export type TreeNodeState = "available" | "completed" | "locked";
@@ -43,20 +43,20 @@ export const MOCK_MAP_TREE: MapTree = {
   nodes: {
     // ── Level 1 (tier 1) ──────────────────────────────────────────────────
     n1a: { id: "n1a", monsterId: "goblin_warrior", level: 1, children: ["n2a"] },
-    n1b: { id: "n1b", monsterId: "goblin_mage",    level: 1, children: ["n2a", "n2b"] },
+    n1b: { id: "n1b", monsterId: "goblin_mage", level: 1, children: ["n2a", "n2b"] },
     n1c: { id: "n1c", monsterId: "goblin_warrior", level: 1, children: ["n2c"] },
     // ── Level 2 (tier 1) ──────────────────────────────────────────────────
-    n2a: { id: "n2a", monsterId: "goblin_mage",    level: 2, children: ["n3a"] },
+    n2a: { id: "n2a", monsterId: "goblin_mage", level: 2, children: ["n3a"] },
     n2b: { id: "n2b", monsterId: "goblin_warrior", level: 2, children: ["n3a", "n3b"] },
-    n2c: { id: "n2c", monsterId: "goblin_mage",    level: 2, children: ["n3b"] },
+    n2c: { id: "n2c", monsterId: "goblin_mage", level: 2, children: ["n3b"] },
     // ── Level 3 (tier 2) ──────────────────────────────────────────────────
-    n3a: { id: "n3a", monsterId: "giant_spider",   level: 3, children: ["n4a"] },
-    n3b: { id: "n3b",                              level: 3, children: ["n4a", "n4b"], type: "shop" },
+    n3a: { id: "n3a", monsterId: "giant_spider", level: 3, children: ["n4a"] },
+    n3b: { id: "n3b", level: 3, children: ["n4a", "n4b"], type: "shop" },
     // ── Level 4 (tier 2) ──────────────────────────────────────────────────
-    n4a: { id: "n4a", monsterId: "witch",          level: 4, children: ["boss"] },
-    n4b: { id: "n4b", monsterId: "giant_spider",   level: 4, children: ["boss"] },
+    n4a: { id: "n4a", monsterId: "witch", level: 4, children: ["boss"] },
+    n4b: { id: "n4b", monsterId: "giant_spider", level: 4, children: ["boss"] },
     // ── Level 5 (boss) ────────────────────────────────────────────────────
-    boss: { id: "boss", monsterId: "dragon",       level: 5, children: [], type: "boss" },
+    boss: { id: "boss", monsterId: "dragon", level: 5, children: [], type: "boss" },
   },
 };
 

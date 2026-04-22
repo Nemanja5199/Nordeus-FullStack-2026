@@ -5,8 +5,22 @@ const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 export interface BattleStatePayload {
   monsterId: string;
   monsterMoves: string[];
-  monsterState: { hp: number; maxHp: number; attack: number; defense: number; magic: number; activeBuffs: ActiveBuff[] };
-  heroState: { hp: number; maxHp: number; attack: number; defense: number; magic: number; activeBuffs: ActiveBuff[] };
+  monsterState: {
+    hp: number;
+    maxHp: number;
+    attack: number;
+    defense: number;
+    magic: number;
+    activeBuffs: ActiveBuff[];
+  };
+  heroState: {
+    hp: number;
+    maxHp: number;
+    attack: number;
+    defense: number;
+    magic: number;
+    activeBuffs: ActiveBuff[];
+  };
   turnNumber: number;
 }
 
@@ -43,6 +57,6 @@ export const api = {
 
   loadGame: (sessionId: string) =>
     request<{ hero: Record<string, unknown> | null; run: Record<string, unknown> | null }>(
-      `/api/game/load/${sessionId}`
+      `/api/game/load/${sessionId}`,
     ),
 };

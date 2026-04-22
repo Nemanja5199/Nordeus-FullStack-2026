@@ -1,9 +1,6 @@
 import type { ActiveBuff, CombatCharacter, MoveConfig, MoveResult } from "../types/game";
 
-export function getEffectiveStat(
-  char: CombatCharacter,
-  stat: keyof typeof char.baseStats
-): number {
+export function getEffectiveStat(char: CombatCharacter, stat: keyof typeof char.baseStats): number {
   let multiplier = 1;
   char.activeBuffs
     .filter((b: ActiveBuff) => b.stat === stat)
@@ -14,7 +11,7 @@ export function getEffectiveStat(
 export function applyMove(
   move: MoveConfig,
   attacker: CombatCharacter,
-  defender: CombatCharacter
+  defender: CombatCharacter,
 ): MoveResult {
   const result: MoveResult = { damage: 0, heal: 0, hpCost: 0, logMessage: "" };
   const logs: string[] = [];
@@ -49,11 +46,17 @@ export function applyMove(
       }
       case "buff": {
         const tgt = fx.target === "self" ? attacker : defender;
-        const existing = tgt.activeBuffs.find(b => b.stat === fx.stat && b.multiplier === fx.multiplier);
+        const existing = tgt.activeBuffs.find(
+          (b) => b.stat === fx.stat && b.multiplier === fx.multiplier,
+        );
         if (existing) {
           existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns!);
         } else {
-          tgt.activeBuffs.push({ stat: fx.stat as ActiveBuff["stat"], multiplier: fx.multiplier!, turnsRemaining: fx.turns! });
+          tgt.activeBuffs.push({
+            stat: fx.stat as ActiveBuff["stat"],
+            multiplier: fx.multiplier!,
+            turnsRemaining: fx.turns!,
+          });
         }
         const pct = Math.round((fx.multiplier! - 1) * 100);
         logs.push(`${tgt.name}'s ${fx.stat} +${pct}% (${fx.turns}t)`);
@@ -61,11 +64,17 @@ export function applyMove(
       }
       case "debuff": {
         const tgt = fx.target === "opponent" ? defender : attacker;
-        const existing = tgt.activeBuffs.find(b => b.stat === fx.stat && b.multiplier === fx.multiplier);
+        const existing = tgt.activeBuffs.find(
+          (b) => b.stat === fx.stat && b.multiplier === fx.multiplier,
+        );
         if (existing) {
           existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns!);
         } else {
-          tgt.activeBuffs.push({ stat: fx.stat as ActiveBuff["stat"], multiplier: fx.multiplier!, turnsRemaining: fx.turns! });
+          tgt.activeBuffs.push({
+            stat: fx.stat as ActiveBuff["stat"],
+            multiplier: fx.multiplier!,
+            turnsRemaining: fx.turns!,
+          });
         }
         const pct = Math.round((1 - fx.multiplier!) * 100);
         logs.push(`${tgt.name}'s ${fx.stat} -${pct}% (${fx.turns}t)`);

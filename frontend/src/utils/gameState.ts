@@ -1,11 +1,17 @@
 import type { HeroState, RunConfig, RunSave } from "../types/game";
 
-const SESSION_KEY  = "rpg_session_id";
-const HERO_KEY     = "rpg_hero";
-const RUN_KEY      = "rpg_run";
-const TREE_KEY     = "rpg_tree_state";
+const SESSION_KEY = "rpg_session_id";
+const HERO_KEY = "rpg_hero";
+const RUN_KEY = "rpg_run";
+const TREE_KEY = "rpg_tree_state";
 
-function defaultHero(defaults: { maxHp: number; attack: number; defense: number; magic: number; defaultMoves: string[] }): HeroState {
+function defaultHero(defaults: {
+  maxHp: number;
+  attack: number;
+  defense: number;
+  magic: number;
+  defaultMoves: string[];
+}): HeroState {
   return {
     level: 1,
     xp: 0,
@@ -67,11 +73,14 @@ class GameStateManager {
   }
 
   saveTreeState(): void {
-    localStorage.setItem(TREE_KEY, JSON.stringify({
-      completedNodes: this.completedNodes,
-      currentNode:    this.currentNode,
-      runSeed:        this.runSeed,
-    }));
+    localStorage.setItem(
+      TREE_KEY,
+      JSON.stringify({
+        completedNodes: this.completedNodes,
+        currentNode: this.currentNode,
+        runSeed: this.runSeed,
+      }),
+    );
   }
 
   loadTreeState(): void {
@@ -79,19 +88,19 @@ class GameStateManager {
     if (raw) {
       const saved = JSON.parse(raw);
       this.completedNodes = saved.completedNodes ?? [];
-      this.currentNode    = saved.currentNode ?? null;
-      this.runSeed        = saved.runSeed ?? null;
+      this.currentNode = saved.currentNode ?? null;
+      this.runSeed = saved.runSeed ?? null;
     } else {
       this.completedNodes = [];
-      this.currentNode    = null;
-      this.runSeed        = null;
+      this.currentNode = null;
+      this.runSeed = null;
     }
   }
 
   clearTreeState(): void {
     this.completedNodes = [];
-    this.currentNode    = null;
-    this.runSeed        = null;
+    this.currentNode = null;
+    this.runSeed = null;
     localStorage.removeItem(TREE_KEY);
   }
 
@@ -123,7 +132,12 @@ class GameStateManager {
 
   spendSkillPoint(stat: "attack" | "defense" | "magic" | "maxHp"): boolean {
     if ((this.hero.skillPoints ?? 0) <= 0) return false;
-    const gains = this.runConfig?.heroDefaults.levelUpStats ?? { maxHp: 20, attack: 3, defense: 2, magic: 2 };
+    const gains = this.runConfig?.heroDefaults.levelUpStats ?? {
+      maxHp: 20,
+      attack: 3,
+      defense: 2,
+      magic: 2,
+    };
     if (stat === "maxHp") {
       this.hero.maxHp += gains.maxHp;
       this.hero.currentHp = Math.min(this.hero.currentHp + gains.maxHp, this.hero.maxHp);

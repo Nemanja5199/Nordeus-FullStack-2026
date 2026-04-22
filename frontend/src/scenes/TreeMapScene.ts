@@ -3,33 +3,50 @@ import { GameState } from "../utils/gameState";
 import { createHeroPanel } from "../ui/HeroPanel";
 import { createButton, BTN_SM } from "../ui/Button";
 import { MONSTER_FRAMES, SHOPKEEPER_FRAME } from "../utils/spriteFrames";
-import {
-  getNodeState,
-} from "../utils/mockMapTree";
+import { getNodeState } from "../utils/mockMapTree";
 import type { MapTree, MapTreeNode, TreeNodeState } from "../utils/mockMapTree";
 import {
   BG_BLACK,
-  TXT_GOLD, TXT_GOLD_LIGHT, TXT_MUTED,
-  TXT_DEFEATED, TXT_LOCKED, TXT_LOCKED_NAME,
-  BG_SEPIA, BG_NODE_ACTIVE, BG_NODE_DEFEATED, BG_NODE_LOCKED,
-  BORDER_GOLD_BRIGHT, BORDER_DEFEATED, BORDER_LOCKED,
-  BORDER_HERO_BATTLE, BORDER_MON_BATTLE,
-  DOT_PATH_DEFEATED, DOT_PATH_ACTIVE,
+  TXT_GOLD,
+  TXT_GOLD_LIGHT,
+  TXT_MUTED,
+  TXT_DEFEATED,
+  TXT_LOCKED,
+  TXT_LOCKED_NAME,
+  BG_SEPIA,
+  BG_NODE_ACTIVE,
+  BG_NODE_DEFEATED,
+  BG_NODE_LOCKED,
+  BORDER_GOLD_BRIGHT,
+  BORDER_DEFEATED,
+  BORDER_LOCKED,
+  BORDER_HERO_BATTLE,
+  BORDER_MON_BATTLE,
+  DOT_PATH_DEFEATED,
+  DOT_PATH_ACTIVE,
   BG_BTN_CLOSE,
-  BG_NODE_SHOP, BG_NODE_SHOP_DONE, BG_NODE_SHOP_LOCKED,
-  BORDER_SHOP, BORDER_SHOP_DONE, BORDER_SHOP_LOCKED,
-  TXT_SHOP, TXT_SHOP_DONE, TXT_SHOP_LOCKED,
-  STROKE_TITLE_DARK, TXT_BOSS, TXT_TIER_BOSS,
+  BG_NODE_SHOP,
+  BG_NODE_SHOP_DONE,
+  BG_NODE_SHOP_LOCKED,
+  BORDER_SHOP,
+  BORDER_SHOP_DONE,
+  BORDER_SHOP_LOCKED,
+  TXT_SHOP,
+  TXT_SHOP_DONE,
+  TXT_SHOP_LOCKED,
+  STROKE_TITLE_DARK,
+  TXT_BOSS,
+  TXT_TIER_BOSS,
 } from "../ui/colors";
 
-const PANEL_W   = 260;
-const PANEL_H   = 560;
+const PANEL_W = 260;
+const PANEL_H = 560;
 const PANEL_GAP = 16;
 
-const NODE_W    = 96;
-const NODE_H    = 84;
-const BOSS_W    = 120;
-const BOSS_H    = 98;
+const NODE_W = 96;
+const NODE_H = 84;
+const BOSS_W = 120;
+const BOSS_H = 98;
 const HOVER_SCALE = 1.35;
 
 export class TreeMapScene extends Phaser.Scene {
@@ -47,16 +64,30 @@ export class TreeMapScene extends Phaser.Scene {
 
     this.drawBackground(width, height);
 
-    this.add.text(width / 2, height * 0.06, "The Gauntlet", {
-      fontSize: "76px", fontFamily: "EnchantedLand",
-      color: TXT_GOLD, stroke: STROKE_TITLE_DARK, strokeThickness: 10,
-      shadow: { offsetX: 4, offsetY: 4, color: "#000000", blur: 8, fill: true },
-    }).setOrigin(0.5);
+    this.add
+      .text(width / 2, height * 0.06, "The Gauntlet", {
+        fontSize: "76px",
+        fontFamily: "EnchantedLand",
+        color: TXT_GOLD,
+        stroke: STROKE_TITLE_DARK,
+        strokeThickness: 10,
+        shadow: { offsetX: 4, offsetY: 4, color: "#000000", blur: 8, fill: true },
+      })
+      .setOrigin(0.5);
 
     createButton(this, width - 70, 28, {
-      ...BTN_SM, width: 120, height: 45, fontSize: "17px",
-      label: "SAVE & EXIT", color: BG_BTN_CLOSE,
-      onClick: () => { this.scene.stop("MoveManagementScene"); GameState.saveHero(); GameState.saveTreeState(); this.scene.start("MainMenuScene"); },
+      ...BTN_SM,
+      width: 120,
+      height: 45,
+      fontSize: "17px",
+      label: "SAVE & EXIT",
+      color: BG_BTN_CLOSE,
+      onClick: () => {
+        this.scene.stop("MoveManagementScene");
+        GameState.saveHero();
+        GameState.saveTreeState();
+        this.scene.start("MainMenuScene");
+      },
     });
 
     createHeroPanel(this, {
@@ -67,7 +98,11 @@ export class TreeMapScene extends Phaser.Scene {
       hero: GameState.hero,
       xpPerLevel: GameState.hero.level * (GameState.runConfig?.heroDefaults.xpPerLevel ?? 100),
       moves: GameState.runConfig?.moves ?? {},
-      onManageMoves: () => { this.scene.stop("MoveManagementScene"); this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" }); this.scene.bringToTop("MoveManagementScene"); },
+      onManageMoves: () => {
+        this.scene.stop("MoveManagementScene");
+        this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" });
+        this.scene.bringToTop("MoveManagementScene");
+      },
     });
 
     this.drawTree(width, height);
@@ -87,16 +122,16 @@ export class TreeMapScene extends Phaser.Scene {
   }
 
   private drawTree(width: number, height: number) {
-    const tree        = GameState.runConfig!.mapTree;
-    const completed   = GameState.completedNodes;
+    const tree = GameState.runConfig!.mapTree;
+    const completed = GameState.completedNodes;
     const currentNode = GameState.currentNode;
 
-    const treeLeft  = PANEL_GAP + PANEL_W + 24;
+    const treeLeft = PANEL_GAP + PANEL_W + 24;
     const treeRight = width - PANEL_GAP - 8;
-    const treeW     = treeRight - treeLeft;
-    const treeTop   = height * 0.22;
-    const treeBot   = height * 0.85;
-    const treeH     = treeBot - treeTop;
+    const treeW = treeRight - treeLeft;
+    const treeTop = height * 0.22;
+    const treeBot = height * 0.85;
+    const treeH = treeBot - treeTop;
 
     const { positions, byLevel } = this.computePositions(tree, treeLeft, treeW, treeTop, treeH);
 
@@ -105,11 +140,14 @@ export class TreeMapScene extends Phaser.Scene {
     this.drawTierLabels(treeRight, positions, byLevel);
 
     for (const node of Object.values(tree.nodes)) {
-      const pos     = positions[node.id];
-      const state   = getNodeState(node.id, tree, completed, currentNode);
-      const label   = node.type === "shop"
-        ? "Merchant"
-        : (GameState.runConfig!.monsters.find(m => m.id === node.monsterId)?.name ?? node.monsterId ?? "?");
+      const pos = positions[node.id];
+      const state = getNodeState(node.id, tree, completed, currentNode);
+      const label =
+        node.type === "shop"
+          ? "Merchant"
+          : (GameState.runConfig!.monsters.find((m) => m.id === node.monsterId)?.name ??
+            node.monsterId ??
+            "?");
       this.drawNode(pos.x, pos.y, node, label, state);
     }
   }
@@ -132,7 +170,7 @@ export class TreeMapScene extends Phaser.Scene {
 
     for (const [lvlStr, ids] of Object.entries(byLevel)) {
       const level = parseInt(lvlStr);
-      const y     = treeTop + treeH * (levelYFracs[level] ?? 0);
+      const y = treeTop + treeH * (levelYFracs[level] ?? 0);
       ids.forEach((id, i) => {
         positions[id] = {
           x: treeLeft + treeW * ((i + 1) / (ids.length + 1)),
@@ -155,11 +193,15 @@ export class TreeMapScene extends Phaser.Scene {
     const bandAlpha = 0.06;
 
     const yAt = (level: number) => positions[byLevel[level]?.[0]]?.y ?? 0;
-    const y1 = yAt(1), y2 = yAt(2), y3 = yAt(3), y4 = yAt(4), yB = yAt(5);
+    const y1 = yAt(1),
+      y2 = yAt(2),
+      y3 = yAt(3),
+      y4 = yAt(4),
+      yB = yAt(5);
 
     const midTier2 = (y2 + y3) / 2;
-    const midBoss  = (y4 + yB) / 2;
-    const bandPad  = 40;
+    const midBoss = (y4 + yB) / 2;
+    const bandPad = 40;
 
     g.fillStyle(BORDER_GOLD_BRIGHT, bandAlpha);
     g.fillRect(treeLeft, y1 - bandPad, treeW, midTier2 - y1 + bandPad);
@@ -179,30 +221,36 @@ export class TreeMapScene extends Phaser.Scene {
     const g = this.add.graphics();
 
     for (const node of Object.values(tree.nodes)) {
-      const from         = positions[node.id];
+      const from = positions[node.id];
       const nodeComplete = completedIds.includes(node.id);
 
       for (const childId of node.children) {
-        const to           = positions[childId];
+        const to = positions[childId];
         const childComplete = completedIds.includes(childId);
 
         let color: number, alpha: number, lineW: number;
         if (nodeComplete && childComplete) {
-          color = DOT_PATH_DEFEATED; alpha = 1.0; lineW = 3;
+          color = DOT_PATH_DEFEATED;
+          alpha = 1.0;
+          lineW = 3;
         } else if (nodeComplete) {
-          color = DOT_PATH_ACTIVE; alpha = 0.9; lineW = 2;
+          color = DOT_PATH_ACTIVE;
+          alpha = 0.9;
+          lineW = 2;
         } else {
-          color = BORDER_LOCKED; alpha = 0.65; lineW = 3;
+          color = BORDER_LOCKED;
+          alpha = 0.65;
+          lineW = 3;
         }
 
         const childNode = tree.nodes[childId];
         const fromY = from.y + (node.level === 5 ? BOSS_H : NODE_H) / 2;
-        const toY   = to.y   - (childNode?.level === 5 ? BOSS_H : NODE_H) / 2;
+        const toY = to.y - (childNode?.level === 5 ? BOSS_H : NODE_H) / 2;
 
         g.lineStyle(lineW, color, alpha);
         g.beginPath();
         g.moveTo(from.x, fromY);
-        g.lineTo(to.x,   toY);
+        g.lineTo(to.x, toY);
         g.strokePath();
       }
     }
@@ -214,16 +262,16 @@ export class TreeMapScene extends Phaser.Scene {
     byLevel: Record<number, string[]>,
   ) {
     const labelX = treeRight - 4;
-    const style  = { fontSize: "12px", fontFamily: "EnchantedLand", color: TXT_MUTED };
+    const style = { fontSize: "12px", fontFamily: "EnchantedLand", color: TXT_MUTED };
 
     const yAt = (level: number) => positions[byLevel[level]?.[0]]?.y ?? 0;
     const y12 = (yAt(1) + yAt(2)) / 2;
     const y34 = (yAt(3) + yAt(4)) / 2;
-    const yB  = yAt(5);
+    const yB = yAt(5);
 
-    this.add.text(labelX, y12, "TIER I",  style).setOrigin(1, 0.5);
+    this.add.text(labelX, y12, "TIER I", style).setOrigin(1, 0.5);
     this.add.text(labelX, y34, "TIER II", style).setOrigin(1, 0.5);
-    this.add.text(labelX, yB,  "BOSS",   { ...style, color: TXT_TIER_BOSS }).setOrigin(1, 0.5);
+    this.add.text(labelX, yB, "BOSS", { ...style, color: TXT_TIER_BOSS }).setOrigin(1, 0.5);
   }
 
   private drawNode(
@@ -235,64 +283,118 @@ export class TreeMapScene extends Phaser.Scene {
   ) {
     const isShop = node.type === "shop";
     const isBoss = node.type === "boss" || node.level === 5;
-    const nodeW  = isBoss ? BOSS_W : NODE_W;
-    const nodeH  = isBoss ? BOSS_H : NODE_H;
+    const nodeW = isBoss ? BOSS_W : NODE_W;
+    const nodeH = isBoss ? BOSS_H : NODE_H;
 
     const fillColor = isShop
-      ? (state === "completed" ? BG_NODE_SHOP_DONE : state === "available" ? BG_NODE_SHOP : BG_NODE_SHOP_LOCKED)
-      : (state === "completed" ? BG_NODE_DEFEATED  : state === "available" ? BG_NODE_ACTIVE : BG_NODE_LOCKED);
+      ? state === "completed"
+        ? BG_NODE_SHOP_DONE
+        : state === "available"
+          ? BG_NODE_SHOP
+          : BG_NODE_SHOP_LOCKED
+      : state === "completed"
+        ? BG_NODE_DEFEATED
+        : state === "available"
+          ? BG_NODE_ACTIVE
+          : BG_NODE_LOCKED;
     const strokeColor = isShop
-      ? (state === "completed" ? BORDER_SHOP_DONE : state === "available" ? BORDER_SHOP : BORDER_SHOP_LOCKED)
-      : (state === "completed" ? BORDER_DEFEATED  : state === "available" ? BORDER_GOLD_BRIGHT : BORDER_LOCKED);
-    const glowColor  = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
-    const nameColor  = isShop
-      ? (state === "completed" ? TXT_SHOP_DONE : state === "available" ? TXT_SHOP : TXT_SHOP_LOCKED)
-      : (state === "completed" ? TXT_DEFEATED  : state === "available" ? TXT_GOLD : TXT_LOCKED_NAME);
-    const statusLabel = state === "completed" ? "✓ Done"
-      : state === "available" ? (isBoss ? "FINAL BOSS" : isShop ? "Visit" : "Fight!")
-      : "?";
-    const statusColor = state === "completed"
-      ? (isShop ? TXT_SHOP_DONE : TXT_DEFEATED)
-      : state === "available"
-        ? (isBoss ? TXT_BOSS : isShop ? TXT_SHOP : TXT_GOLD_LIGHT)
-        : TXT_LOCKED;
+      ? state === "completed"
+        ? BORDER_SHOP_DONE
+        : state === "available"
+          ? BORDER_SHOP
+          : BORDER_SHOP_LOCKED
+      : state === "completed"
+        ? BORDER_DEFEATED
+        : state === "available"
+          ? BORDER_GOLD_BRIGHT
+          : BORDER_LOCKED;
+    const glowColor = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
+    const nameColor = isShop
+      ? state === "completed"
+        ? TXT_SHOP_DONE
+        : state === "available"
+          ? TXT_SHOP
+          : TXT_SHOP_LOCKED
+      : state === "completed"
+        ? TXT_DEFEATED
+        : state === "available"
+          ? TXT_GOLD
+          : TXT_LOCKED_NAME;
+    const statusLabel =
+      state === "completed"
+        ? "✓ Done"
+        : state === "available"
+          ? isBoss
+            ? "FINAL BOSS"
+            : isShop
+              ? "Visit"
+              : "Fight!"
+          : "?";
+    const statusColor =
+      state === "completed"
+        ? isShop
+          ? TXT_SHOP_DONE
+          : TXT_DEFEATED
+        : state === "available"
+          ? isBoss
+            ? TXT_BOSS
+            : isShop
+              ? TXT_SHOP
+              : TXT_GOLD_LIGHT
+          : TXT_LOCKED;
 
     // ── Container — all children use LOCAL coords ─────────────────────────
     const container = this.add.container(x, y);
 
     if (state === "available") {
       container.add(
-        this.add.rectangle(0, 0, nodeW + 8, nodeH + 8, glowColor, 0.10)
-          .setStrokeStyle(1, glowColor, 0.40),
+        this.add
+          .rectangle(0, 0, nodeW + 8, nodeH + 8, glowColor, 0.1)
+          .setStrokeStyle(1, glowColor, 0.4),
       );
     }
 
-    const bg = this.add.rectangle(0, 0, nodeW, nodeH, fillColor, 0.92)
+    const bg = this.add
+      .rectangle(0, 0, nodeW, nodeH, fillColor, 0.92)
       .setStrokeStyle(state === "available" ? 2 : 1, strokeColor);
     container.add(bg);
 
-    const spriteFrame = isShop ? SHOPKEEPER_FRAME : (node.monsterId ? MONSTER_FRAMES[node.monsterId] : null);
+    const spriteFrame = isShop
+      ? SHOPKEEPER_FRAME
+      : node.monsterId
+        ? MONSTER_FRAMES[node.monsterId]
+        : null;
     if (spriteFrame) {
       container.add(
-        this.add.image(0, -6, spriteFrame.key, spriteFrame.frame)
+        this.add
+          .image(0, -6, spriteFrame.key, spriteFrame.frame)
           .setScale(isBoss ? 2.6 : 2.1)
-          .setAlpha(state === "completed" ? 0.30 : state === "locked" ? 0.20 : 1)
+          .setAlpha(state === "completed" ? 0.3 : state === "locked" ? 0.2 : 1)
           .setOrigin(0.5),
       );
     }
 
     container.add(
-      this.add.text(0, -nodeH / 2 - 14, displayName, {
-        fontSize: "14px", fontFamily: "EnchantedLand", color: nameColor,
-        stroke: "#000000", strokeThickness: 4,
-        shadow: { offsetX: 2, offsetY: 2, color: "#000000", blur: 4, fill: true },
-      }).setOrigin(0.5),
+      this.add
+        .text(0, -nodeH / 2 - 14, displayName, {
+          fontSize: "14px",
+          fontFamily: "EnchantedLand",
+          color: nameColor,
+          stroke: "#000000",
+          strokeThickness: 4,
+          shadow: { offsetX: 2, offsetY: 2, color: "#000000", blur: 4, fill: true },
+        })
+        .setOrigin(0.5),
     );
 
     container.add(
-      this.add.text(0, nodeH / 2 - 12, statusLabel, {
-        fontSize: "12px", fontFamily: "EnchantedLand", color: statusColor,
-      }).setOrigin(0.5),
+      this.add
+        .text(0, nodeH / 2 - 12, statusLabel, {
+          fontSize: "12px",
+          fontFamily: "EnchantedLand",
+          color: statusColor,
+        })
+        .setOrigin(0.5),
     );
 
     // ── Hover expand / shrink ──────────────────────────────────────────────
@@ -302,21 +404,27 @@ export class TreeMapScene extends Phaser.Scene {
       this.children.bringToTop(container);
       this.tweens.killTweensOf(container);
       this.tweens.add({
-        targets: container, scaleX: HOVER_SCALE, scaleY: HOVER_SCALE,
-        duration: 140, ease: "Back.easeOut",
+        targets: container,
+        scaleX: HOVER_SCALE,
+        scaleY: HOVER_SCALE,
+        duration: 140,
+        ease: "Back.easeOut",
       });
     });
     bg.on("pointerout", () => {
       this.tweens.killTweensOf(container);
       this.tweens.add({
-        targets: container, scaleX: 1, scaleY: 1,
-        duration: 110, ease: "Power2",
+        targets: container,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 110,
+        ease: "Power2",
       });
     });
 
     if (state === "available" && !isShop) {
       bg.on("pointerdown", () => {
-        const monster = GameState.runConfig!.monsters.find(m => m.id === node.monsterId);
+        const monster = GameState.runConfig!.monsters.find((m) => m.id === node.monsterId);
         if (!monster) return;
         const monsterIndex = GameState.runConfig!.monsters.indexOf(monster);
         this.scene.stop("MoveManagementScene");

@@ -21,8 +21,8 @@ export const SHOPKEEPER_FRAME = {
 
 export const MONSTER_FRAMES: Record<string, { key: string; frame: number }> = {
   goblin_warrior: { key: "monsters", frame: monsterFrame(0, 2) },
-  goblin_mage:    { key: "monsters", frame: monsterFrame(0, 6) },
-  giant_spider:   { key: "monsters", frame: monsterFrame(6, 8) },
-  witch:          { key: "monsters", frame: monsterFrame(5, 4) },
-  dragon:         { key: "monsters", frame: monsterFrame(8, 2) },
+  goblin_mage: { key: "monsters", frame: monsterFrame(0, 6) },
+  giant_spider: { key: "monsters", frame: monsterFrame(6, 8) },
+  witch: { key: "monsters", frame: monsterFrame(5, 4) },
+  dragon: { key: "monsters", frame: monsterFrame(8, 2) },
 };
