@@ -55,7 +55,7 @@ MOVES: dict[str, dict[str, Any]] = {
     },
     # ── Giant Spider ─────────────────────────────────────────────────────
     "bite": {
-        "id": "bite", "name": "Bite", "moveType": "physical", "baseValue": 18,
+        "id": "bite", "name": "Bite", "moveType": "physical", "baseValue": 22,
         "effects": [], "repeatPenalty": 0.25,
         "description": "Deals moderate physical damage.",
     },
