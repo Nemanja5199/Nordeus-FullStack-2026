@@ -198,19 +198,25 @@ class TestMinimax:
         result = _pick_move(req)
         assert result != "dark_pact"
 
-    def test_pounce_repeated_when_kill_is_near(self):
-        # Spider can nearly kill hero in one pounce; repeat penalty should be ignored
+    def test_repeat_penalty_applies_even_when_kill_is_near(self):
+        # Repeat penalty always applies — pounce (just played 3x, penalty=0.15) should appear
+        # less often than bite even at low hero HP where all damage moves score high.
+        # Hero at 44 HP: pounce deals 32 (no instant kill), bite deals 26 — neither one-shots.
         req = make_request(
             "giant_spider",
             ["bite", "web_throw", "pounce", "skitter"],
             monster_state=make_state(hp=85, max_hp=85, attack=20, defense=10, magic=3),
-            hero_state=make_state(hp=28, max_hp=100),
+            hero_state=make_state(hp=44, max_hp=100),
             hero_moves=HERO_MOVES,
-            last_monster_moves=["pounce"],  # pounce just played, heavy penalty normally
+            last_monster_moves=["pounce", "pounce", "pounce"],
         )
-        results = [_pick_move(req) for _ in range(30)]
+        results = [_pick_move(req) for _ in range(60)]
         pounce_count = results.count("pounce")
-        assert pounce_count > 20, f"pounce should dominate when hero is near-dead, got {pounce_count}/30"
+        bite_count = results.count("bite")
+        assert pounce_count < bite_count, (
+            f"bite should outpace pounce when pounce is penalised, "
+            f"got pounce={pounce_count} bite={bite_count}"
+        )
 
     def test_fallback_to_heuristic_when_no_hero_moves(self):
         # heroMoves=[] means minimax can't run — must fall back gracefully

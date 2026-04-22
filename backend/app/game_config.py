@@ -73,7 +73,7 @@ MOVES: dict[str, dict[str, Any]] = {
     "skitter": {
         "id": "skitter", "name": "Skitter", "moveType": "none", "baseValue": 0,
         "effects": [{"type": "buff", "target": "self", "stat": "defense", "multiplier": 1.5, "turns": 2}],
-        "repeatPenalty": 0.6,
+        "repeatPenalty": 0.4,
         "description": "Raises own Defense by 50% for 2 turns.",
     },
     # ── Dragon (boss — heavy moves have strong cooldown feel) ─────────────

@@ -348,13 +348,9 @@ def _pick_move(req: MonsterMoveRequest) -> str:
         )
 
     # sqrt-compress shifted scores so utility moves aren't crowded out by heavy damage moves.
-    # Skip repeat penalty for moves that lead to a near-certain win — monster should go for the kill.
-    _KILL_THRESHOLD = 800.0
     min_score = min(raw_scores.values())
     weights: dict[str, float] = {
-        move_id: math.sqrt(score - min_score + 1.0) * (
-            1.0 if score >= _KILL_THRESHOLD else _repeat_penalty(move_id, req.lastMonsterMoves)
-        )
+        move_id: math.sqrt(score - min_score + 1.0) * _repeat_penalty(move_id, req.lastMonsterMoves)
         for move_id, score in raw_scores.items()
     }
 
