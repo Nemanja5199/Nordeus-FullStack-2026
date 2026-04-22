@@ -155,14 +155,15 @@ class TestMinimax:
     DRAGON_MOVES  = ["flame_breath", "claw_swipe", "intimidate", "dragon_scales"]
 
     def test_drain_chosen_when_low_hp(self):
-        # Witch at 15/75 HP — drain_life recovers HP and deals damage, best survival move
+        # Witch at 15/75 HP — drain_life is the best survival move; should dominate weighted random
         req = make_request(
             "witch", self.MONSTER_MOVES,
             monster_state=make_state(hp=15, max_hp=75),
             hero_moves=HERO_MOVES,
         )
-        result = _pick_move(req)
-        assert result == "drain_life"
+        results = [_pick_move(req) for _ in range(50)]
+        drain_count = results.count("drain_life")
+        assert drain_count > 20, f"Expected drain_life to dominate at low HP, got {drain_count}/50"
 
     def test_no_rebuff_when_already_buffed(self):
         # goblin_mage with magic buff active — arcane_surge would just extend by 0, waste a turn
