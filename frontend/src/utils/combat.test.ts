@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { getEffectiveStat, applyMove, tickBuffs } from "./combat";
 import type { CombatCharacter, MoveConfig } from "../types/game";
 
