@@ -75,6 +75,7 @@ export class BattleScene extends Phaser.Scene {
   private logLines: Phaser.GameObjects.Text[] = [];
   private moveButtons: Phaser.GameObjects.Container[] = [];
   private monsterIntentMoveId: string | null = null;
+  private monsterMoveHistory: string[] = [];
 
   // HP preview ghosts
   private heroHpGhost!: Phaser.GameObjects.Rectangle;
@@ -570,6 +571,7 @@ export class BattleScene extends Phaser.Scene {
         },
         turnNumber: this.turnNumber,
         heroMoves: this.hero.moves,
+        lastMonsterMoves: this.monsterMoveHistory,
       };
       const resp = await api.getMonsterMove(payload);
       if (this.turnNumber !== capturedTurn) return; // player already moved, discard
@@ -743,6 +745,7 @@ export class BattleScene extends Phaser.Scene {
           },
           turnNumber: this.turnNumber,
           heroMoves: this.hero.moves,
+          lastMonsterMoves: this.monsterMoveHistory,
         };
         const resp = await api.getMonsterMove(payload);
         moveId = resp.moveId;
@@ -754,6 +757,7 @@ export class BattleScene extends Phaser.Scene {
         `${this.monster.name} → ${monsterMove.name}: ${result.logMessage}`,
         this.moveLogColor(monsterMove),
       );
+      this.monsterMoveHistory = [moveId, ...this.monsterMoveHistory].slice(0, 3);
     } catch {
       const fallbackId = this.monster.moves[Math.floor(Math.random() * this.monster.moves.length)];
       const fallbackMove = GameState.runConfig!.moves[fallbackId];
@@ -762,6 +766,7 @@ export class BattleScene extends Phaser.Scene {
         `${this.monster.name} → ${fallbackMove.name}: ${result.logMessage}`,
         this.moveLogColor(fallbackMove),
       );
+      this.monsterMoveHistory = [fallbackId, ...this.monsterMoveHistory].slice(0, 3);
     }
 
     tickBuffs(this.hero);

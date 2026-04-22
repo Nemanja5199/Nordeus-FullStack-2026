@@ -24,6 +24,7 @@ class MonsterMoveRequest(BaseModel):
     heroState: CharacterState
     turnNumber: int
     heroMoves: list[str] = []
+    lastMonsterMoves: list[str] = []  # last 3 moves played, most recent first
 
 
 class MonsterMoveResponse(BaseModel):

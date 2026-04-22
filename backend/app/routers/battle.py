@@ -241,6 +241,21 @@ def _minimax(
 
 _MINIMAX_DEPTH = 3  # expectation nodes can't be pruned; depth 3 keeps tree at ~4^5 = 1024 leaves
 
+_HISTORY_SIZE = 3  # number of past moves tracked for penalty decay
+
+
+def _repeat_penalty(move_id: str, history: list[str]) -> float:
+    """
+    Returns a weight multiplier based on how recently the move was played.
+    history[0] = last turn, history[1] = 2 turns ago, history[2] = 3 turns ago.
+    Penalty decays linearly back to 1.0 as the move recedes into history.
+    """
+    if move_id not in history:
+        return 1.0
+    position = history.index(move_id)
+    base = MOVES[move_id].get("repeatPenalty", 0.4)
+    return base + (1.0 - base) * (position / _HISTORY_SIZE)
+
 
 def _pick_move_heuristic(req: MonsterMoveRequest) -> str:
     moves   = req.monsterMoves
@@ -300,20 +315,34 @@ def _pick_move(req: MonsterMoveRequest) -> str:
     if not req.heroMoves:
         return _pick_move_heuristic(req)
 
-    best_score = -float("inf")
-    best_move = req.monsterMoves[0]
-
+    # Score every move with expectiminimax
+    raw_scores: dict[str, float] = {}
     for move_id in req.monsterMoves:
         m2, h2 = _apply_move_sim(move_id, req.monsterState, req.heroState)
         if h2.hp <= 0:
-            return move_id  # immediate kill — no need to search deeper
-        score = _minimax(m2, h2, _MINIMAX_DEPTH, False, -float("inf"), float("inf"),
-                         req.monsterMoves, req.heroMoves)
-        if score > best_score:
-            best_score = score
-            best_move = move_id
+            return move_id  # immediate kill — no need to search
+        raw_scores[move_id] = _minimax(
+            m2, h2, _MINIMAX_DEPTH, False,
+            -float("inf"), float("inf"),
+            req.monsterMoves, req.heroMoves,
+        )
 
-    return best_move
+    # Shift scores to positive, apply repeat penalty, then pick weighted random
+    min_score = min(raw_scores.values())
+    weights: dict[str, float] = {
+        move_id: (score - min_score + 1.0) * _repeat_penalty(move_id, req.lastMonsterMoves)
+        for move_id, score in raw_scores.items()
+    }
+
+    total = sum(weights.values())
+    roll = random.random() * total
+    cumul = 0.0
+    for move_id, weight in weights.items():
+        cumul += weight
+        if roll <= cumul:
+            return move_id
+
+    return req.monsterMoves[-1]
 
 
 @router.post("/battle/monster-move", response_model=MonsterMoveResponse)

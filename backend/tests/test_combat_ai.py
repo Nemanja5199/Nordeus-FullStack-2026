@@ -4,7 +4,7 @@ from app.models import MonsterMoveRequest, CharacterState, ActiveBuff
 from app.routers.battle import (
     _score_move, _pick_move, _pick_move_heuristic,
     _minimax, _evaluate, _apply_move_sim, _tick_buffs_sim, _get_effective_stat,
-    AI_PROFILES,
+    _repeat_penalty, AI_PROFILES,
 )
 from app.game_config import MOVES
 
@@ -22,7 +22,8 @@ def make_state(hp=100, max_hp=100, attack=15, defense=10, magic=8, buffs=None):
 HERO_MOVES = ["slash", "shield_up", "battle_cry", "second_wind"]
 
 
-def make_request(monster_id, moves, monster_state=None, hero_state=None, turn=1, hero_moves=None):
+def make_request(monster_id, moves, monster_state=None, hero_state=None, turn=1,
+                 hero_moves=None, last_monster_moves=None):
     return MonsterMoveRequest(
         monsterId=monster_id,
         monsterMoves=moves,
@@ -30,6 +31,7 @@ def make_request(monster_id, moves, monster_state=None, hero_state=None, turn=1,
         heroState=hero_state or make_state(),
         turnNumber=turn,
         heroMoves=hero_moves if hero_moves is not None else [],
+        lastMonsterMoves=last_monster_moves or [],
     )
 
 
@@ -228,3 +230,53 @@ class TestMinimax:
             hero_moves=HERO_MOVES,
         )
         assert score == -1000.0
+
+
+# ── Repeat penalty ────────────────────────────────────────────────────────────
+
+class TestRepeatPenalty:
+    def test_no_history_returns_full_weight(self):
+        assert _repeat_penalty("headbutt", []) == 1.0
+
+    def test_just_played_returns_base_penalty(self):
+        # headbutt has repeatPenalty=0.2 in game_config
+        result = _repeat_penalty("headbutt", ["headbutt"])
+        assert result == pytest.approx(0.2)
+
+    def test_two_turns_ago_partially_recovered(self):
+        # position=1 → base + (1-base) * (1/3)
+        base = 0.2
+        expected = base + (1.0 - base) * (1 / 3)
+        assert _repeat_penalty("headbutt", ["rusty_blade", "headbutt"]) == pytest.approx(expected)
+
+    def test_three_turns_ago_mostly_recovered(self):
+        # position=2 → base + (1-base) * (2/3)
+        base = 0.2
+        expected = base + (1.0 - base) * (2 / 3)
+        assert _repeat_penalty("headbutt", ["rusty_blade", "frenzy", "headbutt"]) == pytest.approx(expected)
+
+    def test_flame_breath_has_strong_penalty(self):
+        # flame_breath has repeatPenalty=0.1 — boss move, strong cooldown
+        assert _repeat_penalty("flame_breath", ["flame_breath"]) == pytest.approx(0.1)
+
+    def test_buff_move_has_mild_penalty(self):
+        # frenzy has repeatPenalty=0.6 — mild nudge, almost free to repeat
+        assert _repeat_penalty("frenzy", ["frenzy"]) == pytest.approx(0.6)
+
+    def test_penalty_only_applies_to_matching_move(self):
+        # headbutt in history should not affect rusty_blade
+        assert _repeat_penalty("rusty_blade", ["headbutt"]) == 1.0
+
+    def test_headbutt_less_likely_after_being_played(self):
+        # Run _pick_move 200 times with headbutt as last move
+        # It should appear significantly less than 50% (without penalty it dominates)
+        moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
+        req_fresh = make_request("goblin_warrior", moves, hero_moves=HERO_MOVES, last_monster_moves=[])
+        req_after = make_request("goblin_warrior", moves, hero_moves=HERO_MOVES,
+                                 last_monster_moves=["headbutt"])
+        n = 200
+        fresh_count = sum(1 for _ in range(n) if _pick_move(req_fresh) == "headbutt")
+        after_count = sum(1 for _ in range(n) if _pick_move(req_after) == "headbutt")
+        assert after_count < fresh_count, (
+            f"headbutt should be less frequent after being played: {after_count} vs {fresh_count}"
+        )

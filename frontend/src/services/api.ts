@@ -23,6 +23,7 @@ export interface BattleStatePayload {
   };
   turnNumber: number;
   heroMoves: string[];
+  lastMonsterMoves: string[];
 }
 
 export interface SavePayload {
