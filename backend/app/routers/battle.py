@@ -201,9 +201,11 @@ def _minimax(
     hero_moves: list[str],
 ) -> float:
     """
-    Alpha-beta minimax from the monster's perspective.
-    Monster = maximiser, Hero = minimiser.
-    depth counts full turns (monster + hero). Buffs tick after each full turn.
+    Expectiminimax from the monster's perspective.
+    Monster turn = maximiser with alpha-beta pruning.
+    Hero turn = expectation (uniform average over all hero moves) — models a
+    non-perfect opponent so the monster isn't discouraged from using buffs.
+    depth counts full turns; buffs tick after each full turn.
     """
     if monster.hp <= 0:
         return -1000.0
@@ -213,6 +215,7 @@ def _minimax(
         return _evaluate(monster, hero)
 
     if is_monster_turn:
+        # Maximiser — alpha-beta still valid on max nodes
         best = -float("inf")
         for move_id in monster_moves:
             m2, h2 = _apply_move_sim(move_id, monster, hero)
@@ -223,23 +226,20 @@ def _minimax(
                 break
         return best
     else:
-        worst = float("inf")
+        # Expectation node — average over all hero moves, no pruning
+        total = 0.0
         for move_id in hero_moves:
             h2, m2 = _apply_move_sim(move_id, hero, monster)
             # Buffs tick at the end of each full turn (after both sides have acted)
             m3 = _tick_buffs_sim(m2)
             h3 = _tick_buffs_sim(h2)
-            score = _minimax(m3, h3, depth - 1, True, alpha, beta, monster_moves, hero_moves)
-            worst = min(worst, score)
-            beta = min(beta, score)
-            if beta <= alpha:
-                break
-        return worst
+            total += _minimax(m3, h3, depth - 1, True, alpha, beta, monster_moves, hero_moves)
+        return total / len(hero_moves)
 
 
 # ── Move selection ────────────────────────────────────────────────────────────
 
-_MINIMAX_DEPTH = 6  # 3 full turns lookahead; max 4^6 = 4096 nodes before pruning
+_MINIMAX_DEPTH = 3  # expectation nodes can't be pruned; depth 3 keeps tree at ~4^5 = 1024 leaves
 
 
 def _pick_move_heuristic(req: MonsterMoveRequest) -> str:
