@@ -322,7 +322,9 @@ export class TreeMapScene extends Phaser.Scene {
           : TXT_LOCKED_NAME;
     const statusLabel =
       state === "completed"
-        ? "✓ Done"
+        ? isShop
+          ? "✓ Done"
+          : "Replay"
         : state === "available"
           ? isBoss
             ? "FINAL BOSS"
@@ -369,7 +371,7 @@ export class TreeMapScene extends Phaser.Scene {
         this.add
           .image(0, -6, spriteFrame.key, spriteFrame.frame)
           .setScale(isBoss ? 2.6 : 2.1)
-          .setAlpha(state === "completed" ? 0.3 : state === "locked" ? 0.2 : 1)
+          .setAlpha(state === "completed" ? 0.55 : state === "locked" ? 0.2 : 1)
           .setOrigin(0.5),
       );
     }
@@ -397,8 +399,10 @@ export class TreeMapScene extends Phaser.Scene {
         .setOrigin(0.5),
     );
 
+    const isClickable = (state === "available" || state === "completed") && !isShop;
+
     // ── Hover expand / shrink ──────────────────────────────────────────────
-    bg.setInteractive({ useHandCursor: state === "available" });
+    bg.setInteractive({ useHandCursor: isClickable });
 
     bg.on("pointerover", () => {
       this.children.bringToTop(container);
@@ -422,7 +426,7 @@ export class TreeMapScene extends Phaser.Scene {
       });
     });
 
-    if (state === "available" && !isShop) {
+    if (isClickable) {
       bg.on("pointerdown", () => {
         const monster = GameState.runConfig!.monsters.find((m) => m.id === node.monsterId);
         if (!monster) return;

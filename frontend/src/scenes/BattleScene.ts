@@ -373,9 +373,16 @@ export class BattleScene extends Phaser.Scene {
   private setButtonsEnabled(enabled: boolean) {
     this.moveButtons.forEach((c) => {
       const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
+      const nameTxt = c.getAt(1) as Phaser.GameObjects.Text;
       bg.setAlpha(enabled ? 1 : 0.4);
-      if (!enabled) bg.disableInteractive();
-      else bg.setInteractive({ useHandCursor: true });
+      if (!enabled) {
+        bg.setFillStyle(BG_MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER_LOCKED);
+        nameTxt.setColor(TXT_GOLD_LIGHT);
+        bg.disableInteractive();
+      } else {
+        bg.setInteractive({ useHandCursor: true });
+      }
     });
   }
 
