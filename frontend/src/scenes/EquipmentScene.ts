@@ -1,12 +1,11 @@
 import Phaser from "phaser";
 import { GameState, getGearBonuses } from "../utils/gameState";
-import { createButton, BTN_SM } from "../ui/Button";
 import type { GearItem, GearSlot } from "../types/game";
+import { createModalFooter } from "../ui/ModalFooter";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
   BG_MOVE_EQUIPPED,
-  BG_BTN_CLOSE,
   BORDER_GOLD,
   BORDER_GOLD_BRIGHT,
   BORDER_LOCKED,
@@ -35,7 +34,7 @@ const RARITY_COLOR: Record<string, string> = {
 const CARD_W = 260;
 const CARD_H = 60;
 const CARD_GAP = 10;
-const START_Y = 110;
+const START_Y = 200;
 
 interface EquipmentData {
   returnScene: string;
@@ -53,7 +52,7 @@ export class EquipmentScene extends Phaser.Scene {
     this.returnScene = data.returnScene ?? "TreeMapScene";
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 34, "EQUIPMENT", {
@@ -69,10 +68,10 @@ export class EquipmentScene extends Phaser.Scene {
     const colRight = width * 0.72;
 
     this.add
-      .text(colLeft, 78, "EQUIPPED", { fontSize: "16px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
+      .text(colLeft, 90, "EQUIPPED", { fontSize: "16px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
       .setOrigin(0.5);
     this.add
-      .text(colRight, 78, "INVENTORY", { fontSize: "16px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
+      .text(colRight, 90, "INVENTORY", { fontSize: "16px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
       .setOrigin(0.5);
 
     // Divider
@@ -86,30 +85,19 @@ export class EquipmentScene extends Phaser.Scene {
     if (bonuses.magic) bonusParts.push(`MAG +${bonuses.magic}`);
     if (bonuses.maxHp) bonusParts.push(`HP +${bonuses.maxHp}`);
     this.add
-      .text(colLeft, 92, bonusParts.length ? `Bonuses: ${bonusParts.join("  ")}` : "No gear equipped", {
+      .text(colLeft, 108, bonusParts.length ? `Bonuses: ${bonusParts.join("  ")}` : "No gear equipped", {
         fontSize: "13px",
         color: bonusParts.length ? TXT_GOLD_LIGHT : TXT_MUTED,
       })
       .setOrigin(0.5);
 
-    this.infoText = this.add
-      .text(width / 2, height - 52, "Click an inventory item to equip it. Click an equipped slot to unequip.", {
-        fontSize: "14px",
-        color: TXT_MUTED,
-        wordWrap: { width: width * 0.8 },
-        align: "center",
-      })
-      .setOrigin(0.5);
+    this.infoText = createModalFooter(this, {
+      hint: "Click an inventory item to equip it. Click an equipped slot to unequip.",
+      onClose: () => this.scene.stop(),
+    });
 
     this.buildEquippedSlots(colLeft);
     this.buildInventory(colRight);
-
-    createButton(this, width / 2, height - 22, {
-      ...BTN_SM,
-      label: "CLOSE",
-      color: BG_BTN_CLOSE,
-      onClick: () => this.scene.stop(),
-    });
   }
 
   private buildEquippedSlots(panelX: number) {

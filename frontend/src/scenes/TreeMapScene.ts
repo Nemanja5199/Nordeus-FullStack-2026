@@ -40,7 +40,7 @@ import {
 } from "../ui/colors";
 
 const PANEL_W = 260;
-const PANEL_H = 560;
+const PANEL_H = 640;
 const PANEL_GAP = 16;
 
 const NODE_W = 96;

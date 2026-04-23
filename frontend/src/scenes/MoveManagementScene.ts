@@ -1,11 +1,10 @@
 import Phaser from "phaser";
 import { GameState } from "../utils/gameState";
-import { createButton, BTN_SM } from "../ui/Button";
+import { createModalFooter } from "../ui/ModalFooter";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
   BG_MOVE_EQUIPPED,
-  BG_BTN_CLOSE,
   BORDER_GOLD,
   BORDER_GOLD_BRIGHT,
   BORDER_LOCKED,
@@ -32,7 +31,7 @@ interface MoveManagementData {
 const CARD_W = 270;
 const CARD_H = 58;
 const CARD_GAP = 12;
-const START_Y = 114;
+const START_Y = 200;
 
 export class MoveManagementScene extends Phaser.Scene {
   private selectedLearnedIndex = -1;
@@ -55,7 +54,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
     const { width, height } = this.scale;
 
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 34, "MOVE MANAGEMENT", {
@@ -73,21 +72,21 @@ export class MoveManagementScene extends Phaser.Scene {
     const colStatsX = width * 0.78;
 
     this.add
-      .text(colLearnedX, 78, "LEARNED MOVES", {
+      .text(colLearnedX, 90, "LEARNED MOVES", {
         fontSize: "16px",
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
       .setOrigin(0.5);
     this.add
-      .text(colEquippedX, 78, "EQUIPPED SLOTS", {
+      .text(colEquippedX, 90, "EQUIPPED SLOTS", {
         fontSize: "16px",
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
       .setOrigin(0.5);
     this.add
-      .text(colStatsX, 78, "STAT POINTS", {
+      .text(colStatsX, 90, "STAT POINTS", {
         fontSize: "16px",
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
@@ -115,25 +114,14 @@ export class MoveManagementScene extends Phaser.Scene {
       divAlpha,
     );
 
-    this.infoText = this.add
-      .text(width * 0.32, height - 52, "Hover a move to see its description.", {
-        fontSize: "15px",
-        color: TXT_MUTED,
-        wordWrap: { width: width * 0.6 },
-        align: "center",
-      })
-      .setOrigin(0.5);
+    this.infoText = createModalFooter(this, {
+      hint: "Hover a move to see its description.",
+      onClose: () => this.scene.stop(),
+    });
 
     this.buildLearnedPanel(colLearnedX);
     this.buildEquippedPanel(colEquippedX);
     this.buildStatPanel(colStatsX);
-
-    createButton(this, width / 2, height - 22, {
-      ...BTN_SM,
-      label: "CLOSE",
-      color: BG_BTN_CLOSE,
-      onClick: () => this.scene.stop(),
-    });
   }
 
   private buildLearnedPanel(panelX: number) {
@@ -220,7 +208,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
     // Points badge — sits just below the column header
     this.add
-      .text(panelX, 100, pts > 0 ? `✦ ${pts} to spend` : "no points", {
+      .text(panelX, 112, pts > 0 ? `✦ ${pts} to spend` : "no points", {
         fontSize: "18px",
         fontFamily: "EnchantedLand",
         color: pts > 0 ? TXT_SKILL_POINTS : TXT_MUTED,
@@ -240,7 +228,7 @@ export class MoveManagementScene extends Phaser.Scene {
     ];
 
     // Cards start below the badge — badge is at y=100, badge height ~22, gap 18 → cards from y=140
-    const cardsStartY = 140;
+    const cardsStartY = 156;
 
     stats.forEach(({ label, key, gain, sub }, i) => {
       const y = cardsStartY + cardH / 2 + i * (cardH + gap);
