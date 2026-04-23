@@ -25,6 +25,7 @@ function makeMove(overrides: Partial<MoveConfig> = {}): MoveConfig {
     baseValue: 20,
     effects: [],
     description: "",
+    dropChance: 1.0,
     ...overrides,
   };
 }

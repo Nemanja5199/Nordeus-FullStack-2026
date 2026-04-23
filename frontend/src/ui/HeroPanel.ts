@@ -24,7 +24,7 @@ export interface HeroPanelOptions {
   width: number;
   height: number;
   hero: HeroState;
-  xpPerLevel: number;
+  xpToNextLevel: number;
   moves: Record<string, MoveConfig>;
   onManageMoves: () => void;
 }
@@ -36,7 +36,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
     width: w,
     height: h,
     hero,
-    xpPerLevel,
+    xpToNextLevel,
     moves,
     onManageMoves,
   } = opts;
@@ -84,9 +84,9 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
   });
 
   // XP bar
-  const xpPct = Math.min(1, hero.xp / xpPerLevel);
+  const xpPct = Math.min(1, hero.xp / xpToNextLevel);
   scene.add
-    .text(cx, panelY + 230, `XP  ${hero.xp} / ${xpPerLevel}`, {
+    .text(cx, panelY + 230, `XP  ${hero.xp} / ${xpToNextLevel}`, {
       fontSize: "14px",
       color: TXT_GOLD_MID,
     })

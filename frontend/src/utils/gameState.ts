@@ -114,7 +114,7 @@ class GameStateManager {
 
   addXp(amount: number): boolean {
     this.hero.xp += amount;
-    const needed = this.hero.level * (this.runConfig?.heroDefaults.xpPerLevel ?? 100);
+    const needed = Math.floor(this.hero.level * this.hero.level * 60);
     if (this.hero.xp >= needed) {
       this.levelUp();
       this.saveHero();

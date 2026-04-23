@@ -96,7 +96,7 @@ export class TreeMapScene extends Phaser.Scene {
       width: PANEL_W,
       height: PANEL_H,
       hero: GameState.hero,
-      xpPerLevel: GameState.hero.level * (GameState.runConfig?.heroDefaults.xpPerLevel ?? 100),
+      xpToNextLevel: Math.floor(GameState.hero.level * GameState.hero.level * 60),
       moves: GameState.runConfig?.moves ?? {},
       onManageMoves: () => {
         this.scene.stop("MoveManagementScene");
