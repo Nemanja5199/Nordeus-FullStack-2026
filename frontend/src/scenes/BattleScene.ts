@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { CombatCharacter, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
-import { GameState } from "../utils/gameState";
+import { GameState, getGearBonuses } from "../utils/gameState";
 import { api } from "../services/api";
 import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
 import {
@@ -103,12 +103,18 @@ export class BattleScene extends Phaser.Scene {
     this.nodeId = data.nodeId;
 
     const hs = GameState.hero;
+    const gear = getGearBonuses(hs.equipment ?? {});
+    const effMaxHp = hs.maxHp + (gear.maxHp ?? 0);
     this.hero = {
       id: "hero",
       name: "Knight",
-      hp: hs.currentHp ?? hs.maxHp,
-      maxHp: hs.maxHp,
-      baseStats: { attack: hs.attack, defense: hs.defense, magic: hs.magic },
+      hp: Math.min(hs.currentHp ?? hs.maxHp, effMaxHp),
+      maxHp: effMaxHp,
+      baseStats: {
+        attack: hs.attack + (gear.attack ?? 0),
+        defense: hs.defense + (gear.defense ?? 0),
+        magic: hs.magic + (gear.magic ?? 0),
+      },
       activeBuffs: [],
       moves: hs.equippedMoves,
     };
@@ -811,6 +817,22 @@ export class BattleScene extends Phaser.Scene {
     const baseGold = this.monsterCfg.goldReward ?? 0;
     const goldEarned = Math.floor(baseGold * (0.8 + Math.random() * 0.4));
     GameState.hero.gold = (GameState.hero.gold ?? 0) + goldEarned;
+
+    let droppedItemId: string | null = null;
+    const dropChance = this.monsterCfg.itemDropChance ?? 0;
+    const dropPool = this.monsterCfg.itemDropPool ?? [];
+    if (dropPool.length > 0 && Math.random() < dropChance) {
+      const totalWeight = dropPool.reduce((s, e) => s + e.weight, 0);
+      let roll = Math.random() * totalWeight;
+      for (const entry of dropPool) {
+        roll -= entry.weight;
+        if (roll <= 0) { droppedItemId = entry.itemId; break; }
+      }
+      if (droppedItemId) {
+        const item = GameState.runConfig!.items[droppedItemId];
+        if (item) GameState.addToInventory(item);
+      }
+    }
     GameState.saveHero();
 
     const allMoves = GameState.runConfig!.moves;
@@ -829,6 +851,7 @@ export class BattleScene extends Phaser.Scene {
       learnedMoveId: learnedMove,
       xpGained: xpGain,
       goldEarned,
+      droppedItemId,
       leveledUp: leveled,
       monsterIndex: this.monsterIndex,
       defeatedIds: newDefeated,
@@ -840,6 +863,8 @@ export class BattleScene extends Phaser.Scene {
   private handleDefeat() {
     GameState.hero.currentHp = GameState.hero.maxHp;
     GameState.hero.gold = 0;
+    GameState.hero.equipment = {};
+    GameState.hero.inventory = [];
     GameState.saveHero();
     const xpGain = Math.floor(this.monsterCfg.xpReward * 0.25);
     GameState.addXp(xpGain);

@@ -7,6 +7,7 @@ import type { RunConfig } from "../types/game";
 const MOCK_CONFIG: RunConfig = {
   monsters: [],
   moves: {},
+  items: {},
   seed: 1,
   mapTree: { nodes: {}, roots: [] },
   heroDefaults: {

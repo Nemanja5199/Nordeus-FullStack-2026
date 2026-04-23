@@ -1,6 +1,6 @@
 import random
 from fastapi import APIRouter, Query
-from app.game_config import MONSTERS, MOVES, HERO_DEFAULTS
+from app.game_config import MONSTERS, MOVES, ITEMS, HERO_DEFAULTS
 from app.tree_generator import generate_map_tree
 
 router = APIRouter()
@@ -13,6 +13,7 @@ def get_run_config(seed: int | None = Query(default=None)):
     return {
         "monsters": MONSTERS,
         "moves": MOVES,
+        "items": ITEMS,
         "heroDefaults": HERO_DEFAULTS,
         "mapTree": generate_map_tree(run_seed),
         "seed": run_seed,

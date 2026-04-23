@@ -27,6 +27,7 @@ export interface HeroPanelOptions {
   xpToNextLevel: number;
   moves: Record<string, MoveConfig>;
   onManageMoves: () => void;
+  onManageEquipment?: () => void;
 }
 
 export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): void {
@@ -39,6 +40,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
     xpToNextLevel,
     moves,
     onManageMoves,
+    onManageEquipment,
   } = opts;
   const cx = panelX + w / 2;
   const pad = panelX + 16;
@@ -137,6 +139,21 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
       { fontSize: "12px", color: TXT_MUTED },
     );
   });
+
+  // Equipment button
+  if (onManageEquipment) {
+    const eqBtnY = panelY + h - 58;
+    const eqBg = scene.add
+      .rectangle(cx, eqBtnY, w - 20, 28, BG_BTN, 0.9)
+      .setStrokeStyle(1, BORDER_GOLD)
+      .setInteractive({ useHandCursor: true });
+    const eqTxt = scene.add
+      .text(cx, eqBtnY, "Equipment", { fontSize: "14px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
+      .setOrigin(0.5);
+    eqBg.on("pointerover", () => { eqBg.setFillStyle(BG_BTN_HOVER); eqTxt.setColor(TXT_GOLD); });
+    eqBg.on("pointerout", () => { eqBg.setFillStyle(BG_BTN); eqTxt.setColor(TXT_GOLD_MID); });
+    eqBg.on("pointerdown", onManageEquipment);
+  }
 
   // Manage Moves button
   const btnY = panelY + h - 24;

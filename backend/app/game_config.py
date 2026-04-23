@@ -148,6 +148,74 @@ MOVES: dict[str, dict[str, Any]] = {
     },
 }
 
+ITEMS: dict[str, dict[str, Any]] = {
+    # ── Weapons ──────────────────────────────────────────────────────────────
+    "iron_sword": {
+        "id": "iron_sword", "name": "Iron Sword", "slot": "weapon", "rarity": "common",
+        "statBonuses": {"attack": 4},
+        "description": "A reliable iron blade. +4 Attack.",
+    },
+    "steel_blade": {
+        "id": "steel_blade", "name": "Steel Blade", "slot": "weapon", "rarity": "rare",
+        "statBonuses": {"attack": 8},
+        "description": "Sharp and well-balanced. +8 Attack.",
+    },
+    "arcane_staff": {
+        "id": "arcane_staff", "name": "Arcane Staff", "slot": "weapon", "rarity": "rare",
+        "statBonuses": {"magic": 8},
+        "description": "Channels magical energy. +8 Magic.",
+    },
+    # ── Helmets ───────────────────────────────────────────────────────────────
+    "leather_cap": {
+        "id": "leather_cap", "name": "Leather Cap", "slot": "helmet", "rarity": "common",
+        "statBonuses": {"defense": 3, "magic": 2},
+        "description": "Light head protection. +3 Defense, +2 Magic.",
+    },
+    "iron_helm": {
+        "id": "iron_helm", "name": "Iron Helm", "slot": "helmet", "rarity": "rare",
+        "statBonuses": {"defense": 6, "magic": 4},
+        "description": "Solid iron headgear. +6 Defense, +4 Magic.",
+    },
+    # ── Chestplates ───────────────────────────────────────────────────────────
+    "leather_vest": {
+        "id": "leather_vest", "name": "Leather Vest", "slot": "chestplate", "rarity": "common",
+        "statBonuses": {"maxHp": 15, "defense": 3},
+        "description": "Basic body armor. +15 Max HP, +3 Defense.",
+    },
+    "chain_mail": {
+        "id": "chain_mail", "name": "Chain Mail", "slot": "chestplate", "rarity": "rare",
+        "statBonuses": {"maxHp": 30, "defense": 6},
+        "description": "Interlocked metal rings. +30 Max HP, +6 Defense.",
+    },
+    # ── Gloves ────────────────────────────────────────────────────────────────
+    "gauntlets": {
+        "id": "gauntlets", "name": "Gauntlets", "slot": "gloves", "rarity": "common",
+        "statBonuses": {"attack": 4},
+        "description": "Heavy fighting gloves. +4 Attack.",
+    },
+    "spell_gloves": {
+        "id": "spell_gloves", "name": "Spell Gloves", "slot": "gloves", "rarity": "common",
+        "statBonuses": {"magic": 4},
+        "description": "Woven with arcane thread. +4 Magic.",
+    },
+    # ── Rings ─────────────────────────────────────────────────────────────────
+    "ring_of_strength": {
+        "id": "ring_of_strength", "name": "Ring of Strength", "slot": "ring", "rarity": "common",
+        "statBonuses": {"attack": 4},
+        "description": "Enhances physical power. +4 Attack.",
+    },
+    "ring_of_fortitude": {
+        "id": "ring_of_fortitude", "name": "Ring of Fortitude", "slot": "ring", "rarity": "common",
+        "statBonuses": {"defense": 4},
+        "description": "Toughens the wearer. +4 Defense.",
+    },
+    "arcane_ring": {
+        "id": "arcane_ring", "name": "Arcane Ring", "slot": "ring", "rarity": "rare",
+        "statBonuses": {"magic": 8},
+        "description": "Pulses with magical energy. +8 Magic.",
+    },
+}
+
 # Fixed run order — difficulty scales monster 1 → 5
 MONSTERS: list[dict[str, Any]] = [
     {
@@ -156,6 +224,8 @@ MONSTERS: list[dict[str, Any]] = [
         "moves": ["rusty_blade", "dirty_kick", "frenzy", "headbutt"],
         "xpReward": 80,
         "goldReward": 15,
+        "itemDropChance": 0.25,
+        "itemDropPool": [{"itemId": "iron_sword", "weight": 1}, {"itemId": "gauntlets", "weight": 1}],
     },
     {
         "id": "goblin_mage", "name": "Goblin Mage",
@@ -163,6 +233,8 @@ MONSTERS: list[dict[str, Any]] = [
         "moves": ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
         "xpReward": 120,
         "goldReward": 20,
+        "itemDropChance": 0.25,
+        "itemDropPool": [{"itemId": "leather_cap", "weight": 1}, {"itemId": "arcane_ring", "weight": 1}],
     },
     {
         "id": "giant_spider", "name": "Giant Spider",
@@ -170,6 +242,8 @@ MONSTERS: list[dict[str, Any]] = [
         "moves": ["bite", "web_throw", "pounce", "skitter"],
         "xpReward": 180,
         "goldReward": 30,
+        "itemDropChance": 0.30,
+        "itemDropPool": [{"itemId": "spell_gloves", "weight": 1}, {"itemId": "ring_of_fortitude", "weight": 1}],
     },
     {
         "id": "witch", "name": "Witch",
@@ -177,6 +251,8 @@ MONSTERS: list[dict[str, Any]] = [
         "moves": ["shadow_bolt", "drain_life", "curse", "dark_pact"],
         "xpReward": 280,
         "goldReward": 45,
+        "itemDropChance": 0.30,
+        "itemDropPool": [{"itemId": "iron_helm", "weight": 1}, {"itemId": "arcane_staff", "weight": 1}],
     },
     {
         "id": "dragon", "name": "Dragon",
@@ -184,6 +260,11 @@ MONSTERS: list[dict[str, Any]] = [
         "moves": ["flame_breath", "claw_swipe", "intimidate", "dragon_scales"],
         "xpReward": 500,
         "goldReward": 80,
+        "itemDropChance": 0.50,
+        "itemDropPool": [
+            {"itemId": "steel_blade", "weight": 1}, {"itemId": "chain_mail", "weight": 1},
+            {"itemId": "arcane_ring", "weight": 1}, {"itemId": "iron_helm", "weight": 1},
+        ],
     },
 ]
 

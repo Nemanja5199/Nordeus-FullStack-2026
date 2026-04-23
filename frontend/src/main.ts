@@ -6,6 +6,7 @@ import { BattleScene } from "./scenes/BattleScene";
 import { PostBattleScene } from "./scenes/PostBattleScene";
 import { MoveManagementScene } from "./scenes/MoveManagementScene";
 import { TreeMapScene } from "./scenes/TreeMapScene";
+import { EquipmentScene } from "./scenes/EquipmentScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -18,6 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
     PostBattleScene,
     MoveManagementScene,
     TreeMapScene,
+    EquipmentScene,
   ],
   scale: {
     mode: Phaser.Scale.RESIZE,

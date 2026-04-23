@@ -1,3 +1,22 @@
+export type GearSlot = "weapon" | "helmet" | "chestplate" | "gloves" | "ring";
+export type GearRarity = "common" | "rare" | "epic";
+
+export interface GearStatBonuses {
+  attack?: number;
+  defense?: number;
+  magic?: number;
+  maxHp?: number;
+}
+
+export interface GearItem {
+  id: string;
+  name: string;
+  slot: GearSlot;
+  rarity: GearRarity;
+  statBonuses: GearStatBonuses;
+  description: string;
+}
+
 export interface Stats {
   attack: number;
   defense: number;
@@ -36,6 +55,8 @@ export interface MonsterConfig {
   moves: string[];
   xpReward: number;
   goldReward: number;
+  itemDropChance: number;
+  itemDropPool: { itemId: string; weight: number }[];
 }
 
 export interface HeroDefaults {
@@ -51,6 +72,7 @@ export interface HeroDefaults {
 export interface RunConfig {
   monsters: MonsterConfig[];
   moves: Record<string, MoveConfig>;
+  items: Record<string, GearItem>;
   heroDefaults: HeroDefaults;
   mapTree: import("../utils/mockMapTree").MapTree;
   seed: number;
@@ -66,6 +88,8 @@ export interface HeroState {
   magic: number;
   skillPoints: number;
   gold: number;
+  equipment: Partial<Record<GearSlot, GearItem>>;
+  inventory: GearItem[];
   learnedMoves: string[];
   equippedMoves: string[];
 }

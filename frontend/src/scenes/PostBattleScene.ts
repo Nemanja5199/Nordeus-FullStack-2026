@@ -21,6 +21,7 @@ interface PostBattleData {
   learnedMoveId: string | null;
   xpGained: number;
   goldEarned?: number;
+  droppedItemId?: string | null;
   leveledUp: boolean;
   monsterIndex: number;
   defeatedIds: string[];
@@ -143,6 +144,22 @@ export class PostBattleScene extends Phaser.Scene {
           })
           .setOrigin(0.5);
         y += 30;
+      }
+
+      if (data.droppedItemId) {
+        const item = GameState.runConfig!.items[data.droppedItemId];
+        this.add
+          .text(width / 2, y, `Item found:  ${item.name}  [${item.rarity}]`, {
+            fontSize: "18px",
+            fontFamily: "EnchantedLand",
+            color: item.rarity === "rare" ? "#a78bfa" : TXT_GOLD_MID,
+          })
+          .setOrigin(0.5);
+        y += 28;
+        this.add
+          .text(width / 2, y, item.description, { fontSize: "14px", color: TXT_MUTED })
+          .setOrigin(0.5);
+        y += 28;
       }
     } else {
       this.add

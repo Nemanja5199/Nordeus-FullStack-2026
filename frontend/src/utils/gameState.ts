@@ -1,4 +1,16 @@
-import type { HeroState, RunConfig, RunSave } from "../types/game";
+import type { GearItem, GearSlot, GearStatBonuses, HeroState, RunConfig, RunSave } from "../types/game";
+
+export function getGearBonuses(equipment: Partial<Record<GearSlot, GearItem>>): GearStatBonuses {
+  const bonuses: GearStatBonuses = { attack: 0, defense: 0, magic: 0, maxHp: 0 };
+  for (const item of Object.values(equipment)) {
+    if (!item) continue;
+    bonuses.attack = (bonuses.attack ?? 0) + (item.statBonuses.attack ?? 0);
+    bonuses.defense = (bonuses.defense ?? 0) + (item.statBonuses.defense ?? 0);
+    bonuses.magic = (bonuses.magic ?? 0) + (item.statBonuses.magic ?? 0);
+    bonuses.maxHp = (bonuses.maxHp ?? 0) + (item.statBonuses.maxHp ?? 0);
+  }
+  return bonuses;
+}
 
 const SESSION_KEY = "rpg_session_id";
 const HERO_KEY = "rpg_hero";
@@ -22,6 +34,8 @@ function defaultHero(defaults: {
     magic: defaults.magic,
     skillPoints: 0,
     gold: 0,
+    equipment: {},
+    inventory: [],
     learnedMoves: [...defaults.defaultMoves],
     equippedMoves: [...defaults.defaultMoves],
   };
@@ -52,6 +66,8 @@ class GameStateManager {
     if (this.hero.currentHp === undefined) this.hero.currentHp = this.hero.maxHp;
     if (this.hero.skillPoints === undefined) this.hero.skillPoints = 0;
     if (this.hero.gold === undefined) this.hero.gold = 0;
+    if (this.hero.equipment === undefined) this.hero.equipment = {};
+    if (this.hero.inventory === undefined) this.hero.inventory = [];
   }
 
   saveHero(): void {
@@ -163,6 +179,27 @@ class GameStateManager {
       this.hero.equippedMoves[slot] = moveId;
       this.saveHero();
     }
+  }
+
+  equipItem(item: GearItem): void {
+    const displaced = this.hero.equipment[item.slot];
+    if (displaced) this.hero.inventory.push(displaced);
+    this.hero.equipment[item.slot] = item;
+    this.hero.inventory = this.hero.inventory.filter((i) => i.id !== item.id);
+    this.saveHero();
+  }
+
+  unequipItem(slot: GearSlot): void {
+    const item = this.hero.equipment[slot];
+    if (!item) return;
+    this.hero.inventory.push(item);
+    delete this.hero.equipment[slot];
+    this.saveHero();
+  }
+
+  addToInventory(item: GearItem): void {
+    this.hero.inventory.push(item);
+    this.saveHero();
   }
 
   resetHero(config: RunConfig): void {

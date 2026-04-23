@@ -103,6 +103,11 @@ export class TreeMapScene extends Phaser.Scene {
         this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" });
         this.scene.bringToTop("MoveManagementScene");
       },
+      onManageEquipment: () => {
+        this.scene.stop("EquipmentScene");
+        this.scene.launch("EquipmentScene", { returnScene: "TreeMapScene" });
+        this.scene.bringToTop("EquipmentScene");
+      },
     });
 
     this.drawTree(width, height);
