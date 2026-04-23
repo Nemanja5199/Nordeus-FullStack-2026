@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FONT_MD, FONT_SM } from "../ui/typography";
+import { FONT_MD, FONT_SM, FONT_MAP_TITLE } from "../ui/typography";
 import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
 import { GameState } from "../utils/gameState";
 import { createHeroPanel } from "../ui/HeroPanel";
@@ -39,9 +39,49 @@ import {
   STROKE_TITLE_DARK,
   TXT_BOSS,
   TXT_TIER_BOSS,
+  TXT_BLACK,
 } from "../ui/colors";
 
+interface NodeColors {
+  fillColor: number;
+  strokeColor: number;
+  glowColor: number;
+  nameColor: string;
+  statusLabel: string;
+  statusColor: string;
+}
 
+function getNodeColors(isShop: boolean, isBoss: boolean, state: TreeNodeState): NodeColors {
+  const fillColor = isShop
+    ? state === "completed" ? BG_NODE_SHOP_DONE : state === "available" ? BG_NODE_SHOP : BG_NODE_SHOP_LOCKED
+    : state === "completed" ? BG_NODE_DEFEATED : state === "available" ? BG_NODE_ACTIVE : BG_NODE_LOCKED;
+
+  const strokeColor = isShop
+    ? state === "completed" ? BORDER_SHOP_DONE : state === "available" ? BORDER_SHOP : BORDER_SHOP_LOCKED
+    : state === "completed" ? BORDER_DEFEATED : state === "available" ? BORDER_GOLD_BRIGHT : BORDER_LOCKED;
+
+  const glowColor = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
+
+  const nameColor = isShop
+    ? state === "completed" ? TXT_SHOP_DONE : state === "available" ? TXT_SHOP : TXT_SHOP_LOCKED
+    : state === "completed" ? TXT_DEFEATED : state === "available" ? TXT_GOLD : TXT_LOCKED_NAME;
+
+  const statusLabel =
+    state === "completed"
+      ? isShop ? "✓ Done" : "Replay"
+      : state === "available"
+        ? isBoss ? "FINAL BOSS" : isShop ? "Visit" : "Fight!"
+        : "?";
+
+  const statusColor =
+    state === "completed"
+      ? isShop ? TXT_SHOP_DONE : TXT_DEFEATED
+      : state === "available"
+        ? isBoss ? TXT_BOSS : isShop ? TXT_SHOP : TXT_GOLD_LIGHT
+        : TXT_LOCKED;
+
+  return { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor };
+}
 
 export class TreeMapScene extends Phaser.Scene {
   private heroPanelContainer!: Phaser.GameObjects.Container;
@@ -62,12 +102,12 @@ export class TreeMapScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.06, "The Gauntlet", {
-        fontSize: "76px",
+        fontSize: FONT_MAP_TITLE,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
         stroke: STROKE_TITLE_DARK,
         strokeThickness: 10,
-        shadow: { offsetX: 4, offsetY: 4, color: "#000000", blur: 8, fill: true },
+        shadow: { offsetX: 4, offsetY: 4, color: TXT_BLACK, blur: 8, fill: true },
       })
       .setOrigin(0.5);
 
@@ -299,64 +339,8 @@ export class TreeMapScene extends Phaser.Scene {
     const nodeW = isBoss ? BOSS_W : NODE_W;
     const nodeH = isBoss ? BOSS_H : NODE_H;
 
-    const fillColor = isShop
-      ? state === "completed"
-        ? BG_NODE_SHOP_DONE
-        : state === "available"
-          ? BG_NODE_SHOP
-          : BG_NODE_SHOP_LOCKED
-      : state === "completed"
-        ? BG_NODE_DEFEATED
-        : state === "available"
-          ? BG_NODE_ACTIVE
-          : BG_NODE_LOCKED;
-    const strokeColor = isShop
-      ? state === "completed"
-        ? BORDER_SHOP_DONE
-        : state === "available"
-          ? BORDER_SHOP
-          : BORDER_SHOP_LOCKED
-      : state === "completed"
-        ? BORDER_DEFEATED
-        : state === "available"
-          ? BORDER_GOLD_BRIGHT
-          : BORDER_LOCKED;
-    const glowColor = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
-    const nameColor = isShop
-      ? state === "completed"
-        ? TXT_SHOP_DONE
-        : state === "available"
-          ? TXT_SHOP
-          : TXT_SHOP_LOCKED
-      : state === "completed"
-        ? TXT_DEFEATED
-        : state === "available"
-          ? TXT_GOLD
-          : TXT_LOCKED_NAME;
-    const statusLabel =
-      state === "completed"
-        ? isShop
-          ? "✓ Done"
-          : "Replay"
-        : state === "available"
-          ? isBoss
-            ? "FINAL BOSS"
-            : isShop
-              ? "Visit"
-              : "Fight!"
-          : "?";
-    const statusColor =
-      state === "completed"
-        ? isShop
-          ? TXT_SHOP_DONE
-          : TXT_DEFEATED
-        : state === "available"
-          ? isBoss
-            ? TXT_BOSS
-            : isShop
-              ? TXT_SHOP
-              : TXT_GOLD_LIGHT
-          : TXT_LOCKED;
+    const { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor } =
+      getNodeColors(isShop, isBoss, state);
 
     // ── Container — all children use LOCAL coords ─────────────────────────
     const container = this.add.container(x, y);
@@ -397,7 +381,7 @@ export class TreeMapScene extends Phaser.Scene {
           color: nameColor,
           stroke: "#000000",
           strokeThickness: 4,
-          shadow: { offsetX: 2, offsetY: 2, color: "#000000", blur: 4, fill: true },
+          shadow: { offsetX: 2, offsetY: 2, color: TXT_BLACK, blur: 4, fill: true },
         })
         .setOrigin(0.5),
     );

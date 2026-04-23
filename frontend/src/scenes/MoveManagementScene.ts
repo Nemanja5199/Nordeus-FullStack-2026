@@ -2,7 +2,10 @@ import Phaser from "phaser";
 import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui/typography";
 import { MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../ui/layout";
 import { GameState } from "../utils/gameState";
+import type { MoveConfig } from "../types/game";
+import { buildMoveStatLines } from "../utils/combat";
 import { createModalFooter } from "../ui/ModalFooter";
+import { TooltipManager } from "../ui/TooltipManager";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
@@ -29,14 +32,13 @@ interface MoveManagementData {
   returnScene: string;
 }
 
-// Layout constants
-
 export class MoveManagementScene extends Phaser.Scene {
   private selectedLearnedIndex = -1;
   private selectedEquippedSlot = -1;
   private learnedButtons: Phaser.GameObjects.Container[] = [];
   private equippedButtons: Phaser.GameObjects.Container[] = [];
   private infoText!: Phaser.GameObjects.Text;
+  private tooltip!: TooltipManager;
   private returnScene!: string;
 
   constructor() {
@@ -119,10 +121,30 @@ export class MoveManagementScene extends Phaser.Scene {
         this.scene.stop();
       },
     });
+    this.tooltip = new TooltipManager(this, this.infoText);
 
     this.buildLearnedPanel(colLearnedX);
     this.buildEquippedPanel(colEquippedX);
     this.buildStatPanel(colStatsX);
+  }
+
+  private showMoveTooltip(move: MoveConfig): void {
+    const { width, height } = this.scale;
+    const cx = width / 2;
+    const baseY = height - 148;
+
+    this.tooltip.begin();
+    this.tooltip.addText(cx, baseY, move.description, {
+      fontSize: FONT_SM,
+      color: TXT_MUTED,
+      wordWrap: { width: width * 0.75 },
+      align: "center",
+    });
+    this.tooltip.addHorizontalRow(buildMoveStatLines(move), baseY + 26, FONT_LG);
+  }
+
+  private clearMoveTooltip(): void {
+    this.tooltip.clear();
   }
 
   private buildLearnedPanel(panelX: number) {
@@ -150,14 +172,8 @@ export class MoveManagementScene extends Phaser.Scene {
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => this.selectLearned(i, moveId));
-      bg.on("pointerover", () => {
-        bg.setAlpha(0.7);
-        this.infoText.setText(move.description);
-      });
-      bg.on("pointerout", () => {
-        bg.setAlpha(1);
-        this.infoText.setText("Hover a move to see its description.");
-      });
+      bg.on("pointerover", () => { bg.setAlpha(0.7); this.showMoveTooltip(move); });
+      bg.on("pointerout", () => { bg.setAlpha(1); this.clearMoveTooltip(); });
 
       container.add([bg, nameTxt, typeTxt]);
       this.learnedButtons.push(container);
@@ -187,14 +203,8 @@ export class MoveManagementScene extends Phaser.Scene {
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => this.selectEquipped(slot));
-      bg.on("pointerover", () => {
-        bg.setAlpha(0.7);
-        if (move) this.infoText.setText(move.description);
-      });
-      bg.on("pointerout", () => {
-        bg.setAlpha(1);
-        this.infoText.setText("Hover a move to see its description.");
-      });
+      bg.on("pointerover", () => { bg.setAlpha(0.7); if (move) this.showMoveTooltip(move); });
+      bg.on("pointerout", () => { bg.setAlpha(1); this.clearMoveTooltip(); });
 
       container.add([bg, slotTxt, nameTxt]);
       this.equippedButtons.push(container);

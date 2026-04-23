@@ -12,6 +12,9 @@ import {
   BG_BTN_NEUTRAL,
   BORDER_LOCKED,
   BORDER_SHARD,
+  BORDER_UPGRADE_OWNED,
+  BG_BTN_BUY,
+  BG_BTN_BUY_HOVER,
   TXT_GOLD,
   TXT_GOLD_MID,
   TXT_GOLD_LIGHT,
@@ -19,18 +22,19 @@ import {
   TXT_LOCKED,
   TXT_SHARD,
   TXT_STROKE_HEADER,
+  TXT_STAT_ATTACK,
+  TXT_STAT_MAGIC,
+  TXT_STAT_HP,
+  TXT_STAT_DEFENSE,
 } from "../ui/colors";
+import { UPGRADE_CARD_W as CARD_W, UPGRADE_CARD_H as CARD_H, UPGRADE_CARD_GAP as CARD_GAP } from "../ui/layout";
 import { createButton, BTN_MD } from "../ui/Button";
 
-const CARD_W = 170;
-const CARD_H = 110;
-const CARD_GAP = 14;
-
 const CATEGORIES = [
-  { key: "vitality", label: "VITALITY", color: "#4ade80" },
-  { key: "strength", label: "STRENGTH", color: "#ef4444" },
-  { key: "arcane",   label: "ARCANE",   color: "#a78bfa" },
-  { key: "guard",    label: "GUARD",    color: "#9ca3af" },
+  { key: "vitality", label: "VITALITY", color: TXT_STAT_HP },
+  { key: "strength", label: "STRENGTH", color: TXT_STAT_ATTACK },
+  { key: "arcane",   label: "ARCANE",   color: TXT_STAT_MAGIC },
+  { key: "guard",    label: "GUARD",    color: TXT_STAT_DEFENSE },
 ] as const;
 
 const SPECIALS = ["scholar", "hoarder"];
@@ -122,8 +126,8 @@ export class UpgradesScene extends Phaser.Scene {
   }
 
   private fightAgain() {
-    // Hero was already reset by handleDefeat; tree state is fresh and saved.
-    // Just go straight back in.
+    // Re-apply meta bonuses so any upgrades bought this session take effect.
+    GameState.resetHero(GameState.runConfig!);
     this.scene.start("TreeMapScene");
   }
 
@@ -134,7 +138,7 @@ export class UpgradesScene extends Phaser.Scene {
     const affordable = available; // canBuy already checks shards
 
     const bgColor = purchased ? BG_UPGRADE_PURCHASED : available ? BG_UPGRADE_AVAILABLE : BG_UPGRADE_LOCKED;
-    const borderColor = purchased ? 0x4ade80 : available ? BORDER_SHARD : BORDER_LOCKED;
+    const borderColor = purchased ? BORDER_UPGRADE_OWNED : available ? BORDER_SHARD : BORDER_LOCKED;
 
     const bg = this.add
       .rectangle(cx, cy, CARD_W, CARD_H, bgColor, 0.95)
@@ -147,7 +151,7 @@ export class UpgradesScene extends Phaser.Scene {
       .text(cx, cy - 34, upgrade.name, {
         fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",
-        color: purchased ? "#4ade80" : available ? accentColor : TXT_LOCKED,
+        color: purchased ? TXT_STAT_HP : available ? accentColor : TXT_LOCKED,
       })
       .setOrigin(0.5);
 
@@ -163,11 +167,11 @@ export class UpgradesScene extends Phaser.Scene {
 
     // Status line
     if (purchased) {
-      this.add.text(cx, cy + 20, "✓ Purchased", { fontSize: FONT_SM, color: "#4ade80" }).setOrigin(0.5);
+      this.add.text(cx, cy + 20, "✓ Purchased", { fontSize: FONT_SM, color: TXT_STAT_HP }).setOrigin(0.5);
     } else if (locked) {
       this.add.text(cx, cy + 20, "🔒 Locked", { fontSize: FONT_SM, color: TXT_LOCKED }).setOrigin(0.5);
     } else {
-      const costColor = MetaProgress.shards >= upgrade.cost ? TXT_SHARD : "#ef4444";
+      const costColor = MetaProgress.shards >= upgrade.cost ? TXT_SHARD : TXT_STAT_ATTACK;
       this.add
         .text(cx, cy + 20, `◆ ${upgrade.cost} Shards`, {
           fontSize: FONT_SM,
@@ -180,19 +184,18 @@ export class UpgradesScene extends Phaser.Scene {
     // Buy button
     if (affordable) {
       const btn = this.add
-        .rectangle(cx, cy + 40, CARD_W - 24, 26, 0x2a1040, 0.95)
+        .rectangle(cx, cy + 40, CARD_W - 24, 26, BG_BTN_BUY, 0.95)
         .setStrokeStyle(1, BORDER_SHARD)
         .setInteractive({ useHandCursor: true });
       this.add
         .text(cx, cy + 40, "BUY", { fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_SHARD })
         .setOrigin(0.5);
 
-      btn.on("pointerover", () => btn.setFillStyle(0x3d1a5e));
-      btn.on("pointerout", () => btn.setFillStyle(0x2a1040));
+      btn.on("pointerover", () => btn.setFillStyle(BG_BTN_BUY_HOVER));
+      btn.on("pointerout", () => btn.setFillStyle(BG_BTN_BUY));
       btn.on("pointerdown", () => {
         MetaProgress.buy(upgrade.id);
-        this.children.removeAll(true);
-        this.create();
+        this.scene.restart();
       });
     }
   }

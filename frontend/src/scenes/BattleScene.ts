@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
-import type { CombatCharacter, MonsterConfig } from "../types/game";
+import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
 import { GameState, getGearBonuses } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
@@ -609,12 +609,12 @@ export class BattleScene extends Phaser.Scene {
   private showMovePreview(moveId: string) {
     const move = GameState.runConfig!.moves[moveId];
     if (!move) return;
+    const futureDef = this.previewHeroBuffs(move);
+    const { playerDmg, playerHeal } = this.previewMonsterHp(move);
+    this.previewHeroHp(playerDmg, playerHeal, futureDef);
+  }
 
-    const effAtk = getEffectiveStat(this.hero, "attack");
-    const effMag = getEffectiveStat(this.hero, "magic");
-    const monsterEffDef = getEffectiveStat(this.monster, "defense");
-
-    // ── Apply this move's buffs to get future hero stats ─────────────────
+  private previewHeroBuffs(move: MoveConfig): number {
     let futureAtk = getEffectiveStat(this.hero, "attack");
     let futureDef = getEffectiveStat(this.hero, "defense");
     let futureMag = getEffectiveStat(this.hero, "magic");
@@ -632,8 +632,14 @@ export class BattleScene extends Phaser.Scene {
     if (statsChanged) {
       this.heroStatsText.setText(`ATK ${futureAtk}   DEF ${futureDef}   MAG ${futureMag}`);
     }
+    return futureDef;
+  }
 
-    // ── What the player's move does ───────────────────────────────────────
+  private previewMonsterHp(move: MoveConfig): { playerDmg: number; playerHeal: number } {
+    const effAtk = getEffectiveStat(this.hero, "attack");
+    const effMag = getEffectiveStat(this.hero, "magic");
+    const monsterEffDef = getEffectiveStat(this.monster, "defense");
+
     let playerDmg = 0;
     let playerHeal = 0;
 
@@ -646,7 +652,6 @@ export class BattleScene extends Phaser.Scene {
 
     if (move.effects.some((e) => e.type === "drain")) playerHeal = playerDmg;
 
-    // ── Monster HP ghost (dark overlay on the chunk that would be removed) ─
     if (playerDmg > 0) {
       const futureHp = Math.max(0, this.monster.hp - playerDmg);
       this.monsterHpGhost.setPosition(
@@ -659,7 +664,10 @@ export class BattleScene extends Phaser.Scene {
         .setColor(TXT_INTENT_ATTACK);
     }
 
-    // ── Hero HP ghost — heal gain (green) ─────────────────────────────────
+    return { playerDmg, playerHeal };
+  }
+
+  private previewHeroHp(playerDmg: number, playerHeal: number, futureDef: number): void {
     if (playerHeal > 0) {
       const futureHp = Math.min(this.hero.maxHp, this.hero.hp + playerHeal);
       this.heroHpGhost.setPosition(
@@ -670,10 +678,9 @@ export class BattleScene extends Phaser.Scene {
         .setSize(BAR_W * ((futureHp - this.hero.hp) / this.hero.maxHp), 14)
         .setFillStyle(BAR_HP_HIGH, 0.7);
       this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT_INTENT_HEAL);
-      return; // don't show retaliation on heal turns
+      return;
     }
 
-    // ── Hero HP ghost — monster retaliation using future (buffed) defense ─
     const monsterSurvives = this.monster.hp - playerDmg > 0;
     if (monsterSurvives && this.monsterIntentMoveId) {
       const intentMove = GameState.runConfig!.moves[this.monsterIntentMoveId];

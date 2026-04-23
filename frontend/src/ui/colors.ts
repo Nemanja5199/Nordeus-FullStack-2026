@@ -129,7 +129,44 @@ export const TXT_INTENT_HEAL = "#50aa50"; // green — heal/drain
 
 // ─── Meta-progression (shards) ──────────────────────────────────────────────
 export const TXT_SHARD  = "#c084fc"; // purple — shard currency
-export const BG_UPGRADE_AVAILABLE = 0x1a0f2a; // dark purple card bg
-export const BG_UPGRADE_PURCHASED = 0x0a1f0a; // dark green card bg (owned)
-export const BG_UPGRADE_LOCKED    = 0x100c08; // dim bg (locked)
-export const BORDER_SHARD = 0x9333ea; // purple border
+export const BG_UPGRADE_AVAILABLE  = 0x1a0f2a; // dark purple card bg
+export const BG_UPGRADE_PURCHASED  = 0x0a1f0a; // dark green card bg (owned)
+export const BG_UPGRADE_LOCKED     = 0x100c08; // dim bg (locked)
+export const BORDER_SHARD          = 0x9333ea; // purple border
+export const BORDER_UPGRADE_OWNED  = 0x4ade80; // bright green — purchased upgrade border
+export const BG_BTN_BUY            = 0x2a1040; // dark purple — buy button default
+export const BG_BTN_BUY_HOVER      = 0x3d1a5e; // lighter purple — buy button hover
+
+// ─── Stat colours (equipment tooltips, move previews, upgrade grid) ──────────
+export const TXT_STAT_ATTACK  = "#ef4444"; // red   — ATK
+export const TXT_STAT_DEFENSE = "#9ca3af"; // grey  — DEF
+export const TXT_STAT_MAGIC   = "#a78bfa"; // purple — MAG
+export const TXT_STAT_HP      = "#4ade80"; // green — HP / heal
+export const TXT_MOVE_BUFF    = "#fbbf24"; // amber — self-buff effect
+export const TXT_MOVE_DEBUFF  = "#fb923c"; // orange — enemy debuff effect
+
+// ─── Item rarity colours ──────────────────────────────────────────────────────
+export const TXT_RARITY_EPIC  = "#f97316"; // orange — epic rarity
+// rare reuses TXT_STAT_MAGIC (#a78bfa); common reuses TXT_GOLD_MID
+
+export const RARITY_COLOR: Record<string, string> = {
+  common: "#a07840", // TXT_GOLD_MID value
+  rare:   TXT_STAT_MAGIC,
+  epic:   TXT_RARITY_EPIC,
+};
+
+export const RARITY_COLOR_NUM: Record<string, number> = {
+  common: 0xa07840,
+  rare:   0xa78bfa,
+  epic:   0xf97316,
+};
+
+export const STAT_COLOR: Record<string, string> = {
+  attack:  TXT_STAT_ATTACK,
+  defense: TXT_STAT_DEFENSE,
+  magic:   TXT_STAT_MAGIC,
+  maxHp:   TXT_STAT_HP,
+};
+
+// ─── Generic black (shadow / stroke strings) ─────────────────────────────────
+export const TXT_BLACK = "#000000";

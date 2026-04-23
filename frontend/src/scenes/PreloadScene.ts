@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
+import { FONT_LOAD } from "../ui/typography";
 import { MetaProgress } from "../utils/metaProgress";
 
 export class PreloadScene extends Phaser.Scene {
@@ -13,7 +14,7 @@ export class PreloadScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, BG_DARKEST).setOrigin(0);
     this.add
       .text(width / 2, height / 2 - 40, "Loading...", {
-        fontSize: "28px",
+        fontSize: FONT_LOAD,
         color: TXT_GOLD,
       })
       .setOrigin(0.5);
