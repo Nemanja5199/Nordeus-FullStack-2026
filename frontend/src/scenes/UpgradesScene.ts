@@ -126,8 +126,8 @@ export class UpgradesScene extends Phaser.Scene {
   }
 
   private fightAgain() {
-    // Hero was already reset by handleDefeat; tree state is fresh and saved.
-    // Just go straight back in.
+    // Re-apply meta bonuses so any upgrades bought this session take effect.
+    GameState.resetHero(GameState.runConfig!);
     this.scene.start("TreeMapScene");
   }
 
@@ -195,8 +195,7 @@ export class UpgradesScene extends Phaser.Scene {
       btn.on("pointerout", () => btn.setFillStyle(BG_BTN_BUY));
       btn.on("pointerdown", () => {
         MetaProgress.buy(upgrade.id);
-        this.children.removeAll(true);
-        this.create();
+        this.scene.restart();
       });
     }
   }

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../ui/typography";
 import { GameState } from "../utils/gameState";
+import { MetaProgress } from "../utils/metaProgress";
 import { HERO_FRAME } from "../utils/spriteFrames";
 import type { RunConfig } from "../types/game";
 import { createButton, BTN_MD } from "../ui/Button";
@@ -317,6 +318,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     const cls = CLASSES[this.selectedIndex];
     if (cls.locked) return;
 
+    MetaProgress.resetAll();
     GameState.runConfig = this.runConfig;
     GameState.resetHero(this.runConfig);
     GameState.clearRun();
