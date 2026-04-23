@@ -114,12 +114,19 @@ export class BattleScene extends Phaser.Scene {
     };
 
     const ms = this.monsterCfg.stats;
+    const heroLevel = GameState.hero.level;
+    const scaleFactor = 1 + 0.08 * (heroLevel - 1);
+    const scaledHp = Math.floor(ms.hp * scaleFactor);
     this.monster = {
       id: this.monsterCfg.id,
       name: this.monsterCfg.name,
-      hp: ms.hp,
-      maxHp: ms.hp,
-      baseStats: { attack: ms.attack, defense: ms.defense, magic: ms.magic },
+      hp: scaledHp,
+      maxHp: scaledHp,
+      baseStats: {
+        attack: Math.floor(ms.attack * scaleFactor),
+        defense: Math.floor(ms.defense * scaleFactor),
+        magic: Math.floor(ms.magic * scaleFactor),
+      },
       activeBuffs: [],
       moves: this.monsterCfg.moves,
     };
