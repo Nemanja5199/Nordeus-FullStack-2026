@@ -1,3 +1,15 @@
+export type MetaUpgradeCategory = "maxHp" | "attack" | "defense" | "magic" | "skillPoints" | "gold";
+
+export interface MetaUpgrade {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  bonus: number;
+  category: MetaUpgradeCategory;
+  requires?: string;
+}
+
 export type GearSlot = "weapon" | "helmet" | "chestplate" | "gloves" | "ring";
 export type GearRarity = "common" | "rare" | "epic";
 
@@ -55,6 +67,7 @@ export interface MonsterConfig {
   moves: string[];
   xpReward: number;
   goldReward: number;
+  shardReward: number;
   itemDropChance: number;
   itemDropPool: { itemId: string; weight: number }[];
 }

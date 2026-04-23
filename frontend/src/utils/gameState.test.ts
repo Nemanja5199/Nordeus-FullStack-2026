@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GameState } from "./gameState";
+import { MetaProgress } from "./metaProgress";
 import type { RunConfig } from "../types/game";
 
 // ── Minimal RunConfig stub ────────────────────────────────────────────────────
@@ -23,21 +24,19 @@ const MOCK_CONFIG: RunConfig = {
 
 // ── Setup: reset state and mock localStorage before each test ─────────────────
 
-beforeEach(() => {
+function makeLocalStorage() {
   const store: Record<string, string> = {};
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, val: string) => {
-      store[key] = val;
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      Object.keys(store).forEach((k) => delete store[k]);
-    },
-  });
+  return {
+    getItem: (k: string) => store[k] ?? null,
+    setItem: (k: string, v: string) => { store[k] = v; },
+    removeItem: (k: string) => { delete store[k]; },
+    clear: () => { Object.keys(store).forEach((k) => delete store[k]); },
+  };
+}
 
+beforeEach(() => {
+  vi.stubGlobal("localStorage", makeLocalStorage());
+  MetaProgress.resetAll();
   GameState.runConfig = MOCK_CONFIG;
   GameState.resetHero(MOCK_CONFIG);
   GameState.clearRun();
@@ -188,5 +187,107 @@ describe("GameState.completeNode", () => {
     GameState.completeNode("n2b");
     GameState.completeNode("n3a");
     expect(GameState.completedNodes).toEqual(["n1a", "n2b", "n3a"]);
+  });
+});
+
+// ── resetRunProgress ──────────────────────────────────────────────────────────
+
+describe("GameState.resetRunProgress", () => {
+  beforeEach(() => {
+    GameState.runSeed = 42;
+    GameState.completeNode("n1a");
+    GameState.completeNode("n2b");
+    GameState.currentNode = "n2b";
+  });
+
+  it("clears completedNodes", () => {
+    GameState.resetRunProgress();
+    expect(GameState.completedNodes).toEqual([]);
+  });
+
+  it("clears currentNode", () => {
+    GameState.resetRunProgress();
+    expect(GameState.currentNode).toBeNull();
+  });
+
+  it("preserves runSeed", () => {
+    GameState.resetRunProgress();
+    expect(GameState.runSeed).toBe(42);
+  });
+
+  it("saves fresh tree state to localStorage", () => {
+    GameState.resetRunProgress();
+    const raw = localStorage.getItem("rpg_tree_state");
+    expect(raw).not.toBeNull();
+    const saved = JSON.parse(raw!);
+    expect(saved.completedNodes).toEqual([]);
+    expect(saved.currentNode).toBeNull();
+    expect(saved.runSeed).toBe(42);
+  });
+
+  it("does not remove runConfig", () => {
+    GameState.resetRunProgress();
+    expect(GameState.runConfig).toBe(MOCK_CONFIG);
+  });
+});
+
+// ── defaultHero meta bonuses ──────────────────────────────────────────────────
+
+describe("GameState.resetHero with MetaProgress bonuses", () => {
+  it("applies maxHp bonus to starting hero", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("vitality_1"); // +15 HP
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.maxHp).toBe(100 + 15);
+    expect(GameState.hero.currentHp).toBe(100 + 15);
+  });
+
+  it("applies attack bonus to starting hero", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("strength_1"); // +2 ATK
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.attack).toBe(15 + 2);
+  });
+
+  it("applies defense bonus to starting hero", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("guard_1"); // +2 DEF
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.defense).toBe(10 + 2);
+  });
+
+  it("applies skillPoints bonus to starting hero", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("scholar"); // +1 skill point
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.skillPoints).toBe(1);
+  });
+
+  it("applies gold bonus to starting hero", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("hoarder"); // +25 gold
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.gold).toBe(25);
+  });
+
+  it("stacks multiple bonuses", () => {
+    MetaProgress.shards = 500;
+    MetaProgress.buy("vitality_1"); // +15 HP
+    MetaProgress.buy("strength_1"); // +2 ATK
+    MetaProgress.buy("guard_1");    // +2 DEF
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.maxHp).toBe(100 + 15);
+    expect(GameState.hero.attack).toBe(15 + 2);
+    expect(GameState.hero.defense).toBe(10 + 2);
+  });
+
+  it("no bonuses when nothing purchased", () => {
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.maxHp).toBe(100);
+    expect(GameState.hero.attack).toBe(15);
+    expect(GameState.hero.defense).toBe(10);
+    expect(GameState.hero.magic).toBe(8);
+    expect(GameState.hero.skillPoints).toBe(0);
+    expect(GameState.hero.gold).toBe(0);
   });
 });

@@ -8,11 +8,11 @@ export const MOVE_CARD_GAP    = 12;
 export const MOVE_CARD_START_Y = 200;
 
 // ── Equipment slot cards (left column) ────────────────────────────────────
-export const EQ_CARD_W      = 240;
-export const EQ_CARD_H      = 44;
-export const EQ_CARD_GAP    = 8;
+export const EQ_CARD_W      = 260;
+export const EQ_CARD_H      = 64;
+export const EQ_CARD_GAP    = 12;
 export const EQ_START_Y     = 170;
-export const EQ_ICON_SIZE   = 28;
+export const EQ_ICON_SIZE   = 32;
 
 // ── Inventory grid (right column) ─────────────────────────────────────────
 export const INV_GRID_CELL   = 58;

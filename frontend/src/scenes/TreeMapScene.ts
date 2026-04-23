@@ -44,6 +44,8 @@ import {
 
 
 export class TreeMapScene extends Phaser.Scene {
+  private heroPanelContainer!: Phaser.GameObjects.Container;
+
   constructor() {
     super("TreeMapScene");
   }
@@ -84,7 +86,15 @@ export class TreeMapScene extends Phaser.Scene {
       },
     });
 
-    createHeroPanel(this, {
+    this.heroPanelContainer = this.buildHeroPanel();
+    this.events.on("refreshHeroPanel", this.refreshHeroPanel, this);
+
+    this.drawTree(width, height);
+  }
+
+  private buildHeroPanel(): Phaser.GameObjects.Container {
+    const { height } = this.scale;
+    return createHeroPanel(this, {
       x: PANEL_GAP,
       y: (height - PANEL_H) / 2,
       width: PANEL_W,
@@ -92,6 +102,7 @@ export class TreeMapScene extends Phaser.Scene {
       hero: GameState.hero,
       xpToNextLevel: Math.floor(GameState.hero.level * GameState.hero.level * 60),
       moves: GameState.runConfig?.moves ?? {},
+      items: GameState.runConfig?.items ?? {},
       onManageMoves: () => {
         this.scene.stop("MoveManagementScene");
         this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" });
@@ -103,8 +114,11 @@ export class TreeMapScene extends Phaser.Scene {
         this.scene.bringToTop("EquipmentScene");
       },
     });
+  }
 
-    this.drawTree(width, height);
+  private refreshHeroPanel(): void {
+    this.heroPanelContainer.destroy(true);
+    this.heroPanelContainer = this.buildHeroPanel();
   }
 
   private drawBackground(width: number, height: number) {

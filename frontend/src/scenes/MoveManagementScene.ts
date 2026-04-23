@@ -114,7 +114,10 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.infoText = createModalFooter(this, {
       hint: "Hover a move to see its description.",
-      onClose: () => this.scene.stop(),
+      onClose: () => {
+        this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+        this.scene.stop();
+      },
     });
 
     this.buildLearnedPanel(colLearnedX);

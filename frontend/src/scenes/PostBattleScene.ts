@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { GameState } from "../utils/gameState";
+import { MetaProgress } from "../utils/metaProgress";
 import { createButton, BTN_MD } from "../ui/Button";
 import {
   BG_DARKEST,
@@ -22,6 +23,7 @@ interface PostBattleData {
   learnedMoveId: string | null;
   xpGained: number;
   goldEarned?: number;
+  shardsEarned?: number;
   droppedItemId?: string | null;
   leveledUp: boolean;
   monsterIndex: number;
@@ -75,6 +77,17 @@ export class PostBattleScene extends Phaser.Scene {
             fontSize: FONT_MD,
             fontFamily: "EnchantedLand",
             color: TXT_GOLD,
+          })
+          .setOrigin(0.5);
+        y += 36;
+      }
+
+      if (data.shardsEarned) {
+        this.add
+          .text(width / 2, y, `+${data.shardsEarned} ◆ Shards  (Total: ${MetaProgress.shards})`, {
+            fontSize: FONT_MD,
+            fontFamily: "EnchantedLand",
+            color: "#c084fc",
           })
           .setOrigin(0.5);
         y += 36;
@@ -164,16 +177,17 @@ export class PostBattleScene extends Phaser.Scene {
       }
     } else {
       this.add
-        .text(width / 2, y, `+${data.xpGained} XP earned`, {
+        .text(width / 2, y, `◆ ${MetaProgress.shards} Shards saved`, {
           fontSize: FONT_LG,
-          color: TXT_MUTED,
+          fontFamily: "EnchantedLand",
+          color: "#c084fc",
         })
         .setOrigin(0.5);
       y += 36;
 
       this.add
-        .text(width / 2, y, "Train harder and try again.", {
-          fontSize: FONT_MD,
+        .text(width / 2, y, "Your shards persist — spend them to grow stronger.", {
+          fontSize: FONT_BODY,
           color: TXT_MUTED,
         })
         .setOrigin(0.5);
@@ -209,26 +223,17 @@ export class PostBattleScene extends Phaser.Scene {
     } else {
       createButton(this, width / 2, y, {
         ...BTN_MD,
-        label: "TRY AGAIN",
-        color: BG_BTN_DANGER,
-        onClick: () => {
-          const monster = GameState.runConfig!.monsters[data.monsterIndex];
-          this.scene.start("BattleScene", {
-            monster,
-            monsterIndex: data.monsterIndex,
-            defeatedIds: data.defeatedIds,
-            sourceScene: data.sourceScene,
-            nodeId: data.nodeId,
-          });
-        },
+        label: "UPGRADES",
+        color: BG_BTN_NEUTRAL,
+        onClick: () => this.scene.start("UpgradesScene"),
       });
       y += 60;
 
       createButton(this, width / 2, y, {
         ...BTN_MD,
-        label: "BACK TO MAP",
-        color: BG_BTN_NEUTRAL,
-        onClick: () => this.scene.start("TreeMapScene"),
+        label: "MAIN MENU",
+        color: BG_BTN_DANGER,
+        onClick: () => this.scene.start("MainMenuScene"),
       });
     }
   }
@@ -283,12 +288,12 @@ export class PostBattleScene extends Phaser.Scene {
       width: 360,
       height: 52,
       fontSize: FONT_LG,
-      label: "RETURN TO MAIN MENU",
+      label: "SPEND YOUR SHARDS",
       color: BG_BTN_SUCCESS,
       onClick: () => {
         GameState.resetHero(GameState.runConfig!);
         GameState.clearRun();
-        this.scene.start("MainMenuScene");
+        this.scene.start("UpgradesScene");
       },
     });
   }

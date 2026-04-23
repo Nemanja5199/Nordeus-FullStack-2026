@@ -1,4 +1,5 @@
 import type { GearItem, GearSlot, GearStatBonuses, HeroState, RunConfig, RunSave } from "../types/game";
+import { MetaProgress } from "./metaProgress";
 
 export function getGearBonuses(
   equipment: Partial<Record<GearSlot, string>>,
@@ -29,16 +30,17 @@ function defaultHero(defaults: {
   magic: number;
   defaultMoves: string[];
 }): HeroState {
+  const meta = MetaProgress.getStartingBonuses();
   return {
     level: 1,
     xp: 0,
-    currentHp: defaults.maxHp,
-    maxHp: defaults.maxHp,
-    attack: defaults.attack,
-    defense: defaults.defense,
-    magic: defaults.magic,
-    skillPoints: 0,
-    gold: 0,
+    currentHp: defaults.maxHp + meta.maxHp,
+    maxHp: defaults.maxHp + meta.maxHp,
+    attack: defaults.attack + meta.attack,
+    defense: defaults.defense + meta.defense,
+    magic: defaults.magic + meta.magic,
+    skillPoints: meta.skillPoints,
+    gold: meta.gold,
     equipment: {},
     inventory: [],
     learnedMoves: [...defaults.defaultMoves],
@@ -97,6 +99,16 @@ class GameStateManager {
     this.runSave = null;
     localStorage.removeItem(RUN_KEY);
     this.clearTreeState();
+  }
+
+  // After defeat: wipe the in-fight save but keep a fresh tree state saved
+  // so the player can CONTINUE from the main menu on the same map.
+  resetRunProgress(): void {
+    this.runSave = null;
+    localStorage.removeItem(RUN_KEY);
+    this.completedNodes = [];
+    this.currentNode = null;
+    this.saveTreeState(); // runSeed stays set — same map, fresh progress
   }
 
   saveTreeState(): void {

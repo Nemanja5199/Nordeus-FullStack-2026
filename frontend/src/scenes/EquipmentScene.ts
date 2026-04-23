@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui/typography";
+import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from "../ui/layout";
 import { GameState, getGearBonuses } from "../utils/gameState";
 import type { GearItem, GearSlot } from "../types/game";
@@ -103,7 +103,10 @@ export class EquipmentScene extends Phaser.Scene {
 
     this.hintText = createModalFooter(this, {
       hint: "Hover an item to inspect. Click to equip / unequip.",
-      onClose: () => this.scene.stop(),
+      onClose: () => {
+        this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+        this.scene.stop();
+      },
     });
 
     this.buildEquippedSlots(colLeft);
@@ -182,26 +185,28 @@ export class EquipmentScene extends Phaser.Scene {
         .setStrokeStyle(1, item ? BORDER_GOLD_BRIGHT : BORDER_LOCKED)
         .setInteractive({ useHandCursor: !!item });
 
-      this.add.text(panelX - EQ_CARD_W / 2 + 10, y - 10, SLOT_LABELS[slot], {
-        fontSize: FONT_XS,
+      // Slot label — top-left, clearly separated from content
+      this.add.text(panelX - EQ_CARD_W / 2 + 10, y - EQ_CARD_H / 2 + 7, SLOT_LABELS[slot], {
+        fontSize: FONT_SM,
         color: TXT_MUTED,
       });
 
+      // Icon + item name — lower half of card
+      const iconX = panelX - EQ_CARD_W / 2 + EQ_ICON / 2 + 10;
+      const contentY = y + 12;
       if (item && itemId) {
         const frameKey = itemFrames[itemId];
         if (frameKey && this.textures.exists(frameKey)) {
-          this.add
-            .image(panelX - EQ_CARD_W / 2 + EQ_ICON / 2 + 8, y + 6, frameKey)
-            .setDisplaySize(EQ_ICON, EQ_ICON);
+          this.add.image(iconX, contentY, frameKey).setDisplaySize(EQ_ICON, EQ_ICON);
         }
       }
 
-      const nameX = panelX - EQ_CARD_W / 2 + EQ_ICON + 20;
-      this.add.text(nameX, y + 6, item ? item.name : "(empty)", {
+      const nameX = panelX - EQ_CARD_W / 2 + EQ_ICON + 24;
+      this.add.text(nameX, contentY, item ? item.name : "(empty)", {
         fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",
         color: item ? RARITY_COLOR[item.rarity] ?? TXT_GOLD : TXT_LOCKED,
-      });
+      }).setOrigin(0, 0.5);
 
       if (item) {
         bg.on("pointerover", () => {
@@ -214,6 +219,7 @@ export class EquipmentScene extends Phaser.Scene {
         });
         bg.on("pointerdown", () => {
           GameState.unequipItem(slot);
+          this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
           this.children.removeAll(true);
           this.create({ returnScene: this.returnScene });
         });
@@ -275,6 +281,7 @@ export class EquipmentScene extends Phaser.Scene {
       });
       bg.on("pointerdown", () => {
         GameState.equipItem(itemId);
+        this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
         this.children.removeAll(true);
         this.create({ returnScene: this.returnScene });
       });

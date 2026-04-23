@@ -4,6 +4,7 @@ import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/
 import type { CombatCharacter, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
 import { GameState, getGearBonuses } from "../utils/gameState";
+import { MetaProgress } from "../utils/metaProgress";
 import { api } from "../services/api";
 import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
 import {
@@ -818,6 +819,9 @@ export class BattleScene extends Phaser.Scene {
     const goldEarned = Math.floor(baseGold * (0.8 + Math.random() * 0.4));
     GameState.hero.gold = (GameState.hero.gold ?? 0) + goldEarned;
 
+    const shardsEarned = this.monsterCfg.shardReward ?? 0;
+    MetaProgress.addShards(shardsEarned);
+
     let droppedItemId: string | null = null;
     const dropChance = this.monsterCfg.itemDropChance ?? 0;
     const dropPool = this.monsterCfg.itemDropPool ?? [];
@@ -850,6 +854,7 @@ export class BattleScene extends Phaser.Scene {
       learnedMoveId: learnedMove,
       xpGained: xpGain,
       goldEarned,
+      shardsEarned,
       droppedItemId,
       leveledUp: leveled,
       monsterIndex: this.monsterIndex,
@@ -860,18 +865,14 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleDefeat() {
-    GameState.hero.currentHp = GameState.hero.maxHp;
-    GameState.hero.gold = 0;
-    GameState.hero.equipment = {};
-    GameState.hero.inventory = [];
-    GameState.saveHero();
-    const xpGain = Math.floor(this.monsterCfg.xpReward * 0.25);
-    GameState.addXp(xpGain);
+    // Full run reset — hero returns to level 1 with meta bonuses applied
+    if (GameState.runConfig) GameState.resetHero(GameState.runConfig);
+    GameState.resetRunProgress(); // saves fresh tree state so CONTINUE works from main menu
 
     this.scene.start("PostBattleScene", {
       won: false,
       learnedMoveId: null,
-      xpGained: xpGain,
+      xpGained: 0,
       leveledUp: false,
       monsterIndex: this.monsterIndex,
       defeatedIds: this.defeatedIds,

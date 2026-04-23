@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
+import { MetaProgress } from "../utils/metaProgress";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -55,6 +56,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create() {
+    MetaProgress.load();
     this.scene.start("MainMenuScene");
   }
 }
