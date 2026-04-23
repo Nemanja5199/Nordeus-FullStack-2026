@@ -3,7 +3,7 @@ import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui
 import { MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../ui/layout";
 import { GameState } from "../utils/gameState";
 import type { MoveConfig } from "../types/game";
-import { TXT_STAT_ATTACK, TXT_STAT_MAGIC, TXT_STAT_HP, TXT_MOVE_BUFF, TXT_MOVE_DEBUFF, TXT_SHARD } from "../ui/colors";
+import { buildMoveStatLines } from "../utils/combat";
 import { createModalFooter } from "../ui/ModalFooter";
 import { TooltipManager } from "../ui/TooltipManager";
 import {
@@ -30,39 +30,6 @@ import {
 
 interface MoveManagementData {
   returnScene: string;
-}
-
-// Layout constants
-
-const STAT_LABEL: Record<string, string> = { attack: "ATK", defense: "DEF", magic: "MAG" };
-
-function buildMoveStatLines(move: MoveConfig): { text: string; color: string }[] {
-  const lines: { text: string; color: string }[] = [];
-
-  if (move.baseValue > 0) {
-    if (move.moveType === "physical")
-      lines.push({ text: `⚔  ${move.baseValue} physical dmg`, color: TXT_STAT_ATTACK });
-    else if (move.moveType === "magic")
-      lines.push({ text: `✦  ${move.baseValue} magic dmg`, color: TXT_STAT_MAGIC });
-    else if (move.moveType === "heal")
-      lines.push({ text: `♥  ${move.baseValue} HP restored`, color: TXT_STAT_HP });
-  }
-
-  for (const fx of move.effects) {
-    if (fx.type === "buff" && fx.stat) {
-      const pct = Math.round((fx.multiplier! - 1) * 100);
-      lines.push({ text: `▲  ${STAT_LABEL[fx.stat]} +${pct}%  (${fx.turns}t)`, color: TXT_MOVE_BUFF });
-    } else if (fx.type === "debuff" && fx.stat) {
-      const pct = Math.round((1 - fx.multiplier!) * 100);
-      lines.push({ text: `▼  Enemy ${STAT_LABEL[fx.stat]} -${pct}%  (${fx.turns}t)`, color: TXT_MOVE_DEBUFF });
-    } else if (fx.type === "drain") {
-      lines.push({ text: `↺  Drain: heal for dmg dealt`, color: TXT_SHARD });
-    } else if (fx.type === "hp_cost" && fx.value) {
-      lines.push({ text: `↓  Costs ${fx.value} HP`, color: TXT_STAT_ATTACK });
-    }
-  }
-
-  return lines;
 }
 
 export class MoveManagementScene extends Phaser.Scene {

@@ -15,7 +15,6 @@ import {
   TXT_GOLD,
   TXT_GOLD_LIGHT,
   TXT_GOLD_MID,
-  TXT_MUTED,
   BAR_XP_FILL,
   TXT_SKILL_POINTS,
 } from "./colors";
@@ -101,8 +100,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     if (!move) return;
     const rowY = panelY + 332 + i * 56;
     add(scene.add.rectangle(cx, rowY + 18, w - 16, 44, BG_ROW, 0.85).setOrigin(0.5).setStrokeStyle(1, BORDER_ROW));
-    add(scene.add.text(pad, rowY + 6, move.name, { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_LIGHT }));
-    add(scene.add.text(pad, rowY + 26, `[${move.moveType}]  ${move.description.slice(0, 20)}${move.description.length > 20 ? "…" : ""}`, { fontSize: FONT_SM, color: TXT_MUTED }));
+    add(scene.add.text(pad, rowY + 18, move.name, { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_LIGHT }).setOrigin(0, 0.5));
   });
 
   // Equipment button

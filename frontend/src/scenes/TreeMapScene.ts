@@ -42,7 +42,46 @@ import {
   TXT_BLACK,
 } from "../ui/colors";
 
+interface NodeColors {
+  fillColor: number;
+  strokeColor: number;
+  glowColor: number;
+  nameColor: string;
+  statusLabel: string;
+  statusColor: string;
+}
 
+function getNodeColors(isShop: boolean, isBoss: boolean, state: TreeNodeState): NodeColors {
+  const fillColor = isShop
+    ? state === "completed" ? BG_NODE_SHOP_DONE : state === "available" ? BG_NODE_SHOP : BG_NODE_SHOP_LOCKED
+    : state === "completed" ? BG_NODE_DEFEATED : state === "available" ? BG_NODE_ACTIVE : BG_NODE_LOCKED;
+
+  const strokeColor = isShop
+    ? state === "completed" ? BORDER_SHOP_DONE : state === "available" ? BORDER_SHOP : BORDER_SHOP_LOCKED
+    : state === "completed" ? BORDER_DEFEATED : state === "available" ? BORDER_GOLD_BRIGHT : BORDER_LOCKED;
+
+  const glowColor = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
+
+  const nameColor = isShop
+    ? state === "completed" ? TXT_SHOP_DONE : state === "available" ? TXT_SHOP : TXT_SHOP_LOCKED
+    : state === "completed" ? TXT_DEFEATED : state === "available" ? TXT_GOLD : TXT_LOCKED_NAME;
+
+  const statusLabel =
+    state === "completed"
+      ? isShop ? "✓ Done" : "Replay"
+      : state === "available"
+        ? isBoss ? "FINAL BOSS" : isShop ? "Visit" : "Fight!"
+        : "?";
+
+  const statusColor =
+    state === "completed"
+      ? isShop ? TXT_SHOP_DONE : TXT_DEFEATED
+      : state === "available"
+        ? isBoss ? TXT_BOSS : isShop ? TXT_SHOP : TXT_GOLD_LIGHT
+        : TXT_LOCKED;
+
+  return { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor };
+}
 
 export class TreeMapScene extends Phaser.Scene {
   private heroPanelContainer!: Phaser.GameObjects.Container;
@@ -300,64 +339,8 @@ export class TreeMapScene extends Phaser.Scene {
     const nodeW = isBoss ? BOSS_W : NODE_W;
     const nodeH = isBoss ? BOSS_H : NODE_H;
 
-    const fillColor = isShop
-      ? state === "completed"
-        ? BG_NODE_SHOP_DONE
-        : state === "available"
-          ? BG_NODE_SHOP
-          : BG_NODE_SHOP_LOCKED
-      : state === "completed"
-        ? BG_NODE_DEFEATED
-        : state === "available"
-          ? BG_NODE_ACTIVE
-          : BG_NODE_LOCKED;
-    const strokeColor = isShop
-      ? state === "completed"
-        ? BORDER_SHOP_DONE
-        : state === "available"
-          ? BORDER_SHOP
-          : BORDER_SHOP_LOCKED
-      : state === "completed"
-        ? BORDER_DEFEATED
-        : state === "available"
-          ? BORDER_GOLD_BRIGHT
-          : BORDER_LOCKED;
-    const glowColor = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
-    const nameColor = isShop
-      ? state === "completed"
-        ? TXT_SHOP_DONE
-        : state === "available"
-          ? TXT_SHOP
-          : TXT_SHOP_LOCKED
-      : state === "completed"
-        ? TXT_DEFEATED
-        : state === "available"
-          ? TXT_GOLD
-          : TXT_LOCKED_NAME;
-    const statusLabel =
-      state === "completed"
-        ? isShop
-          ? "✓ Done"
-          : "Replay"
-        : state === "available"
-          ? isBoss
-            ? "FINAL BOSS"
-            : isShop
-              ? "Visit"
-              : "Fight!"
-          : "?";
-    const statusColor =
-      state === "completed"
-        ? isShop
-          ? TXT_SHOP_DONE
-          : TXT_DEFEATED
-        : state === "available"
-          ? isBoss
-            ? TXT_BOSS
-            : isShop
-              ? TXT_SHOP
-              : TXT_GOLD_LIGHT
-          : TXT_LOCKED;
+    const { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor } =
+      getNodeColors(isShop, isBoss, state);
 
     // ── Container — all children use LOCAL coords ─────────────────────────
     const container = this.add.container(x, y);
