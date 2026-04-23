@@ -83,6 +83,15 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
       .setOrigin(0, 0.5);
   });
 
+  // Gold
+  scene.add
+    .text(cx, panelY + 218, `Gold: ${hero.gold ?? 0}`, {
+      fontSize: "15px",
+      fontFamily: "EnchantedLand",
+      color: TXT_GOLD,
+    })
+    .setOrigin(0.5);
+
   // XP bar
   const xpPct = Math.min(1, hero.xp / xpToNextLevel);
   scene.add

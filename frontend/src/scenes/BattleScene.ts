@@ -808,6 +808,11 @@ export class BattleScene extends Phaser.Scene {
     const xpGain = this.monsterCfg.xpReward;
     const leveled = GameState.addXp(xpGain);
 
+    const baseGold = this.monsterCfg.goldReward ?? 0;
+    const goldEarned = Math.floor(baseGold * (0.8 + Math.random() * 0.4));
+    GameState.hero.gold = (GameState.hero.gold ?? 0) + goldEarned;
+    GameState.saveHero();
+
     const allMoves = GameState.runConfig!.moves;
     const learned = GameState.hero.learnedMoves;
     const notKnown = this.monsterCfg.moves.filter((id) => !learned.includes(id));
@@ -823,6 +828,7 @@ export class BattleScene extends Phaser.Scene {
       won: true,
       learnedMoveId: learnedMove,
       xpGained: xpGain,
+      goldEarned,
       leveledUp: leveled,
       monsterIndex: this.monsterIndex,
       defeatedIds: newDefeated,
@@ -833,6 +839,8 @@ export class BattleScene extends Phaser.Scene {
 
   private handleDefeat() {
     GameState.hero.currentHp = GameState.hero.maxHp;
+    GameState.hero.gold = 0;
+    GameState.saveHero();
     const xpGain = Math.floor(this.monsterCfg.xpReward * 0.25);
     GameState.addXp(xpGain);
 

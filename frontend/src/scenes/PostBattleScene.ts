@@ -20,6 +20,7 @@ interface PostBattleData {
   won: boolean;
   learnedMoveId: string | null;
   xpGained: number;
+  goldEarned?: number;
   leveledUp: boolean;
   monsterIndex: number;
   defeatedIds: string[];
@@ -64,7 +65,18 @@ export class PostBattleScene extends Phaser.Scene {
           color: TXT_GOLD_MID,
         })
         .setOrigin(0.5);
-      y += 40;
+      y += 36;
+
+      if (data.goldEarned) {
+        this.add
+          .text(width / 2, y, `+${data.goldEarned} Gold  (Total: ${GameState.hero.gold})`, {
+            fontSize: "18px",
+            fontFamily: "EnchantedLand",
+            color: TXT_GOLD,
+          })
+          .setOrigin(0.5);
+        y += 36;
+      }
 
       if (data.leveledUp) {
         this.add

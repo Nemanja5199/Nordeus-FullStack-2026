@@ -155,30 +155,35 @@ MONSTERS: list[dict[str, Any]] = [
         "stats": {"hp": 65, "attack": 12, "defense": 5, "magic": 2},
         "moves": ["rusty_blade", "dirty_kick", "frenzy", "headbutt"],
         "xpReward": 80,
+        "goldReward": 15,
     },
     {
         "id": "goblin_mage", "name": "Goblin Mage",
         "stats": {"hp": 55, "attack": 8, "defense": 4, "magic": 16},
         "moves": ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
         "xpReward": 120,
+        "goldReward": 20,
     },
     {
         "id": "giant_spider", "name": "Giant Spider",
         "stats": {"hp": 85, "attack": 20, "defense": 10, "magic": 3},
         "moves": ["bite", "web_throw", "pounce", "skitter"],
         "xpReward": 180,
+        "goldReward": 30,
     },
     {
         "id": "witch", "name": "Witch",
         "stats": {"hp": 75, "attack": 10, "defense": 7, "magic": 22},
         "moves": ["shadow_bolt", "drain_life", "curse", "dark_pact"],
         "xpReward": 280,
+        "goldReward": 45,
     },
     {
         "id": "dragon", "name": "Dragon",
         "stats": {"hp": 130, "attack": 25, "defense": 14, "magic": 22},
         "moves": ["flame_breath", "claw_swipe", "intimidate", "dragon_scales"],
         "xpReward": 500,
+        "goldReward": 80,
     },
 ]
 

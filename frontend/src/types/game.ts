@@ -35,6 +35,7 @@ export interface MonsterConfig {
   stats: { hp: number; attack: number; defense: number; magic: number };
   moves: string[];
   xpReward: number;
+  goldReward: number;
 }
 
 export interface HeroDefaults {
@@ -64,6 +65,7 @@ export interface HeroState {
   defense: number;
   magic: number;
   skillPoints: number;
+  gold: number;
   learnedMoves: string[];
   equippedMoves: string[];
 }

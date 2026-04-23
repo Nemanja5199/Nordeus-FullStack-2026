@@ -21,6 +21,7 @@ function defaultHero(defaults: {
     defense: defaults.defense,
     magic: defaults.magic,
     skillPoints: 0,
+    gold: 0,
     learnedMoves: [...defaults.defaultMoves],
     equippedMoves: [...defaults.defaultMoves],
   };
@@ -50,6 +51,7 @@ class GameStateManager {
     this.hero = raw ? JSON.parse(raw) : defaultHero(config.heroDefaults);
     if (this.hero.currentHp === undefined) this.hero.currentHp = this.hero.maxHp;
     if (this.hero.skillPoints === undefined) this.hero.skillPoints = 0;
+    if (this.hero.gold === undefined) this.hero.gold = 0;
   }
 
   saveHero(): void {
