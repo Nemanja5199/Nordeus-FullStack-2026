@@ -104,7 +104,7 @@ def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
         elif b.multiplier < 1.0:
             buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
 
-    return hp_score + buff_score * 2.0
+    return hp_score + buff_score * 4.0
 
 
 def _minimax(

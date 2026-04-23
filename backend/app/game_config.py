@@ -28,12 +28,12 @@ MOVES: dict[str, dict[str, Any]] = {
     },
     # ── Witch ────────────────────────────────────────────────────────────
     "shadow_bolt": {
-        "id": "shadow_bolt", "name": "Shadow Bolt", "moveType": "magic", "baseValue": 28,
+        "id": "shadow_bolt", "name": "Shadow Bolt", "moveType": "magic", "baseValue": 22,
         "effects": [], "repeatPenalty": 0.15, "dropChance": 0.25,
         "description": "Deals heavy magic damage.",
     },
     "drain_life": {
-        "id": "drain_life", "name": "Drain Life", "moveType": "magic", "baseValue": 12,
+        "id": "drain_life", "name": "Drain Life", "moveType": "magic", "baseValue": 4,
         "effects": [{"type": "drain", "target": "self"}],
         "repeatPenalty": 0.4, "dropChance": 0.30,
         "description": "Deals light magic damage and heals self for the same amount.",
@@ -72,13 +72,13 @@ MOVES: dict[str, dict[str, Any]] = {
     },
     "skitter": {
         "id": "skitter", "name": "Skitter", "moveType": "none", "baseValue": 0,
-        "effects": [{"type": "buff", "target": "self", "stat": "defense", "multiplier": 1.5, "turns": 2}],
+        "effects": [{"type": "buff", "target": "self", "stat": "defense", "multiplier": 1.25, "turns": 2}],
         "repeatPenalty": 0.4, "dropChance": 0.60,
-        "description": "Raises own Defense by 50% for 2 turns.",
+        "description": "Raises own Defense by 25% for 2 turns.",
     },
     # ── Dragon (boss — heavy moves have strong cooldown feel) ─────────────
     "flame_breath": {
-        "id": "flame_breath", "name": "Flame Breath", "moveType": "magic", "baseValue": 32,
+        "id": "flame_breath", "name": "Flame Breath", "moveType": "magic", "baseValue": 22,
         "effects": [], "repeatPenalty": 0.15, "dropChance": 0.15,
         "description": "Deals heavy magic damage that ignores Defense.",
     },
@@ -124,7 +124,7 @@ MOVES: dict[str, dict[str, Any]] = {
     },
     # ── Goblin Mage ──────────────────────────────────────────────────────
     "firebolt": {
-        "id": "firebolt", "name": "Firebolt", "moveType": "magic", "baseValue": 18,
+        "id": "firebolt", "name": "Firebolt", "moveType": "magic", "baseValue": 16,
         "effects": [], "repeatPenalty": 0.25, "dropChance": 0.60,
         "description": "Deals moderate magic damage.",
     },
@@ -220,7 +220,7 @@ ITEMS: dict[str, dict[str, Any]] = {
 MONSTERS: list[dict[str, Any]] = [
     {
         "id": "goblin_warrior", "name": "Goblin Warrior",
-        "stats": {"hp": 65, "attack": 12, "defense": 5, "magic": 2},
+        "stats": {"hp": 105, "attack": 18, "defense": 8, "magic": 2},
         "moves": ["rusty_blade", "dirty_kick", "frenzy", "headbutt"],
         "xpReward": 80,
         "goldReward": 15,
@@ -230,7 +230,7 @@ MONSTERS: list[dict[str, Any]] = [
     },
     {
         "id": "goblin_mage", "name": "Goblin Mage",
-        "stats": {"hp": 55, "attack": 8, "defense": 4, "magic": 16},
+        "stats": {"hp": 75, "attack": 8, "defense": 8, "magic": 15},
         "moves": ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
         "xpReward": 120,
         "goldReward": 20,
@@ -240,7 +240,7 @@ MONSTERS: list[dict[str, Any]] = [
     },
     {
         "id": "giant_spider", "name": "Giant Spider",
-        "stats": {"hp": 85, "attack": 20, "defense": 10, "magic": 3},
+        "stats": {"hp": 85, "attack": 22, "defense": 10, "magic": 3},
         "moves": ["bite", "web_throw", "pounce", "skitter"],
         "xpReward": 180,
         "goldReward": 30,
@@ -250,7 +250,7 @@ MONSTERS: list[dict[str, Any]] = [
     },
     {
         "id": "witch", "name": "Witch",
-        "stats": {"hp": 75, "attack": 10, "defense": 7, "magic": 22},
+        "stats": {"hp": 75, "attack": 10, "defense": 7, "magic": 14},
         "moves": ["shadow_bolt", "drain_life", "curse", "dark_pact"],
         "xpReward": 280,
         "goldReward": 45,
@@ -260,7 +260,7 @@ MONSTERS: list[dict[str, Any]] = [
     },
     {
         "id": "dragon", "name": "Dragon",
-        "stats": {"hp": 130, "attack": 25, "defense": 14, "magic": 22},
+        "stats": {"hp": 130, "attack": 22, "defense": 12, "magic": 16},
         "moves": ["flame_breath", "claw_swipe", "intimidate", "dragon_scales"],
         "xpReward": 500,
         "goldReward": 80,
