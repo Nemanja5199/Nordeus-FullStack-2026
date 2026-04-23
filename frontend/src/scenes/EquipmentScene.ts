@@ -4,6 +4,7 @@ import { EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON,
 import { GameState, getGearBonuses } from "../utils/gameState";
 import type { GearItem, GearSlot } from "../types/game";
 import { createModalFooter } from "../ui/ModalFooter";
+import { TooltipManager } from "../ui/TooltipManager";
 import { itemFrames } from "../utils/itemFrames";
 import {
   BG_DARKEST,
@@ -39,7 +40,7 @@ interface EquipmentData {
 export class EquipmentScene extends Phaser.Scene {
   private returnScene!: string;
   private hintText!: Phaser.GameObjects.Text;
-  private tooltipObjects: Phaser.GameObjects.Text[] = [];
+  private tooltip!: TooltipManager;
 
   constructor() {
     super("EquipmentScene");
@@ -47,7 +48,6 @@ export class EquipmentScene extends Phaser.Scene {
 
   create(data: EquipmentData) {
     this.returnScene = data.returnScene ?? "TreeMapScene";
-    this.tooltipObjects = [];
 
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
@@ -96,69 +96,40 @@ export class EquipmentScene extends Phaser.Scene {
         this.scene.stop();
       },
     });
+    this.tooltip = new TooltipManager(this, this.hintText);
 
     this.buildEquippedSlots(colLeft);
     this.buildInventoryGrid(colRight);
   }
 
-  private showItemTooltip(item: GearItem) {
-    this.tooltipObjects.forEach((t) => t.destroy());
-    this.tooltipObjects = [];
-    this.hintText.setVisible(false);
-
+  private showItemTooltip(item: GearItem): void {
     const { width, height } = this.scale;
     const cx = width / 2;
     const baseY = height - 150;
 
-    // Item name
-    this.tooltipObjects.push(
-      this.add
-        .text(cx, baseY, item.name, {
-          fontSize: FONT_MD,
-          fontFamily: "EnchantedLand",
-          color: RARITY_COLOR[item.rarity] ?? TXT_GOLD,
-        })
-        .setOrigin(0.5),
-    );
+    this.tooltip.begin();
 
-    // Stat bonuses — each colored, laid out horizontally
-    const statParts: { label: string; color: string }[] = [];
-    if (item.statBonuses.attack) statParts.push({ label: `ATK +${item.statBonuses.attack}`, color: STAT_COLOR.attack });
-    if (item.statBonuses.defense) statParts.push({ label: `DEF +${item.statBonuses.defense}`, color: STAT_COLOR.defense });
-    if (item.statBonuses.magic) statParts.push({ label: `MAG +${item.statBonuses.magic}`, color: STAT_COLOR.magic });
-    if (item.statBonuses.maxHp) statParts.push({ label: `HP +${item.statBonuses.maxHp}`, color: STAT_COLOR.maxHp });
+    this.tooltip.addText(cx, baseY, item.name, {
+      fontSize: FONT_MD,
+      fontFamily: "EnchantedLand",
+      color: RARITY_COLOR[item.rarity] ?? TXT_GOLD,
+    });
 
-    if (statParts.length > 0) {
-      const spacing = 90;
-      const startX = cx - ((statParts.length - 1) * spacing) / 2;
-      statParts.forEach((p, i) => {
-        this.tooltipObjects.push(
-          this.add
-            .text(startX + i * spacing, baseY + 22, p.label, {
-              fontSize: FONT_BODY,
-              fontFamily: "EnchantedLand",
-              color: p.color,
-            })
-            .setOrigin(0.5),
-        );
-      });
-    }
+    const statParts: { text: string; color: string }[] = [];
+    if (item.statBonuses.attack) statParts.push({ text: `ATK +${item.statBonuses.attack}`, color: STAT_COLOR.attack });
+    if (item.statBonuses.defense) statParts.push({ text: `DEF +${item.statBonuses.defense}`, color: STAT_COLOR.defense });
+    if (item.statBonuses.magic) statParts.push({ text: `MAG +${item.statBonuses.magic}`, color: STAT_COLOR.magic });
+    if (item.statBonuses.maxHp) statParts.push({ text: `HP +${item.statBonuses.maxHp}`, color: STAT_COLOR.maxHp });
+    this.tooltip.addHorizontalRow(statParts, baseY + 22, FONT_BODY, 90);
 
-    // Description
-    this.tooltipObjects.push(
-      this.add
-        .text(cx, baseY + 44, item.description, {
-          fontSize: FONT_SM,
-          color: TXT_MUTED,
-        })
-        .setOrigin(0.5),
-    );
+    this.tooltip.addText(cx, baseY + 44, item.description, {
+      fontSize: FONT_SM,
+      color: TXT_MUTED,
+    });
   }
 
-  private clearItemTooltip() {
-    this.tooltipObjects.forEach((t) => t.destroy());
-    this.tooltipObjects = [];
-    this.hintText.setVisible(true);
+  private clearItemTooltip(): void {
+    this.tooltip.clear();
   }
 
   private buildEquippedSlots(panelX: number) {

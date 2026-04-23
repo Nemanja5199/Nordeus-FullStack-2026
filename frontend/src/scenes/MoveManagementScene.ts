@@ -5,6 +5,7 @@ import { GameState } from "../utils/gameState";
 import type { MoveConfig } from "../types/game";
 import { TXT_STAT_ATTACK, TXT_STAT_MAGIC, TXT_STAT_HP, TXT_MOVE_BUFF, TXT_MOVE_DEBUFF, TXT_SHARD } from "../ui/colors";
 import { createModalFooter } from "../ui/ModalFooter";
+import { TooltipManager } from "../ui/TooltipManager";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
@@ -70,7 +71,7 @@ export class MoveManagementScene extends Phaser.Scene {
   private learnedButtons: Phaser.GameObjects.Container[] = [];
   private equippedButtons: Phaser.GameObjects.Container[] = [];
   private infoText!: Phaser.GameObjects.Text;
-  private tooltipObjects: Phaser.GameObjects.Text[] = [];
+  private tooltip!: TooltipManager;
   private returnScene!: string;
 
   constructor() {
@@ -83,7 +84,6 @@ export class MoveManagementScene extends Phaser.Scene {
     this.selectedEquippedSlot = -1;
     this.learnedButtons = [];
     this.equippedButtons = [];
-    this.tooltipObjects = [];
 
     const { width, height } = this.scale;
 
@@ -154,6 +154,7 @@ export class MoveManagementScene extends Phaser.Scene {
         this.scene.stop();
       },
     });
+    this.tooltip = new TooltipManager(this, this.infoText);
 
     this.buildLearnedPanel(colLearnedX);
     this.buildEquippedPanel(colEquippedX);
@@ -161,43 +162,22 @@ export class MoveManagementScene extends Phaser.Scene {
   }
 
   private showMoveTooltip(move: MoveConfig): void {
-    this.tooltipObjects.forEach((t) => t.destroy());
-    this.tooltipObjects = [];
-    this.infoText.setVisible(false);
-
     const { width, height } = this.scale;
     const cx = width / 2;
     const baseY = height - 148;
 
-    this.tooltipObjects.push(
-      this.add.text(cx, baseY, move.description, {
-        fontSize: FONT_SM,
-        color: TXT_MUTED,
-        wordWrap: { width: width * 0.75 },
-        align: "center",
-      }).setOrigin(0.5),
-    );
-
-    const lines = buildMoveStatLines(move);
-    if (lines.length > 0) {
-      const spacing = Math.min(200, (width * 0.8) / lines.length);
-      const startX = cx - ((lines.length - 1) * spacing) / 2;
-      lines.forEach((line, i) => {
-        this.tooltipObjects.push(
-          this.add.text(startX + i * spacing, baseY + 26, line.text, {
-            fontSize: FONT_LG,
-            fontFamily: "EnchantedLand",
-            color: line.color,
-          }).setOrigin(0.5),
-        );
-      });
-    }
+    this.tooltip.begin();
+    this.tooltip.addText(cx, baseY, move.description, {
+      fontSize: FONT_SM,
+      color: TXT_MUTED,
+      wordWrap: { width: width * 0.75 },
+      align: "center",
+    });
+    this.tooltip.addHorizontalRow(buildMoveStatLines(move), baseY + 26, FONT_LG);
   }
 
   private clearMoveTooltip(): void {
-    this.tooltipObjects.forEach((t) => t.destroy());
-    this.tooltipObjects = [];
-    this.infoText.setVisible(true);
+    this.tooltip.clear();
   }
 
   private buildLearnedPanel(panelX: number) {
