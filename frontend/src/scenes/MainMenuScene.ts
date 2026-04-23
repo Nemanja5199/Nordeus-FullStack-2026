@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FONT_MD } from "../ui/typography";
+import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE } from "../ui/typography";
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
 import { createButton, BTN_LG } from "../ui/Button";
@@ -37,7 +37,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.22, "RPG Gauntlet", {
-        fontSize: "100px",
+        fontSize: FONT_GAME_TITLE,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
         stroke: TXT_STROKE_TITLE,
@@ -47,7 +47,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.36, "Five monsters. One hero.\nCan you survive the gauntlet?", {
-        fontSize: "40px",
+        fontSize: FONT_TAGLINE,
         fontFamily: "EnchantedLand",
         color: TXT_TAGLINE,
         align: "center",

@@ -75,10 +75,6 @@ class GameStateManager {
     if (this.hero.gold === undefined) this.hero.gold = 0;
     if (this.hero.equipment === undefined) this.hero.equipment = {};
     if (this.hero.inventory === undefined) this.hero.inventory = [];
-
-    // DEV: seed inventory for testing equipment UI
-    const testIds = ["iron_sword", "leather_cap", "leather_vest", "gauntlets", "ring_of_strength", "arcane_ring", "steel_blade"];
-    this.hero.inventory = testIds.filter((id) => config.items[id]);
   }
 
   saveHero(): void {
@@ -227,9 +223,6 @@ class GameStateManager {
 
   resetHero(config: RunConfig): void {
     this.hero = defaultHero(config.heroDefaults);
-    // DEV: seed inventory for testing equipment UI
-    const testIds = ["iron_sword", "leather_cap", "leather_vest", "gauntlets", "ring_of_strength", "arcane_ring", "steel_blade"];
-    this.hero.inventory = testIds.filter((id) => config.items[id]);
     this.saveHero();
   }
 }

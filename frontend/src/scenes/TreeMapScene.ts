@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FONT_MD, FONT_SM } from "../ui/typography";
+import { FONT_MD, FONT_SM, FONT_MAP_TITLE } from "../ui/typography";
 import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
 import { GameState } from "../utils/gameState";
 import { createHeroPanel } from "../ui/HeroPanel";
@@ -39,6 +39,7 @@ import {
   STROKE_TITLE_DARK,
   TXT_BOSS,
   TXT_TIER_BOSS,
+  TXT_BLACK,
 } from "../ui/colors";
 
 
@@ -62,12 +63,12 @@ export class TreeMapScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.06, "The Gauntlet", {
-        fontSize: "76px",
+        fontSize: FONT_MAP_TITLE,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
         stroke: STROKE_TITLE_DARK,
         strokeThickness: 10,
-        shadow: { offsetX: 4, offsetY: 4, color: "#000000", blur: 8, fill: true },
+        shadow: { offsetX: 4, offsetY: 4, color: TXT_BLACK, blur: 8, fill: true },
       })
       .setOrigin(0.5);
 
@@ -397,7 +398,7 @@ export class TreeMapScene extends Phaser.Scene {
           color: nameColor,
           stroke: "#000000",
           strokeThickness: 4,
-          shadow: { offsetX: 2, offsetY: 2, color: "#000000", blur: 4, fill: true },
+          shadow: { offsetX: 2, offsetY: 2, color: TXT_BLACK, blur: 4, fill: true },
         })
         .setOrigin(0.5),
     );

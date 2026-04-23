@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
+import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_SCENE_TITLE, FONT_CONQUEST } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
 import { createButton, BTN_MD } from "../ui/Button";
@@ -16,6 +16,9 @@ import {
   TXT_HERO,
   TXT_DEFEATED,
   TXT_DEFEAT,
+  TXT_SHARD,
+  RARITY_COLOR,
+  TXT_BLACK,
 } from "../ui/colors";
 
 interface PostBattleData {
@@ -52,10 +55,10 @@ export class PostBattleScene extends Phaser.Scene {
     const titleText = data.won ? "VICTORY!" : "DEFEATED";
     this.add
       .text(width / 2, height * 0.18, titleText, {
-        fontSize: "56px",
+        fontSize: FONT_SCENE_TITLE,
         fontFamily: "EnchantedLand",
         color: titleColor,
-        stroke: "#000000",
+        stroke: TXT_BLACK,
         strokeThickness: 6,
       })
       .setOrigin(0.5);
@@ -87,7 +90,7 @@ export class PostBattleScene extends Phaser.Scene {
           .text(width / 2, y, `+${data.shardsEarned} ◆ Shards  (Total: ${MetaProgress.shards})`, {
             fontSize: FONT_MD,
             fontFamily: "EnchantedLand",
-            color: "#c084fc",
+            color: TXT_SHARD,
           })
           .setOrigin(0.5);
         y += 36;
@@ -166,7 +169,7 @@ export class PostBattleScene extends Phaser.Scene {
           .text(width / 2, y, `Item found:  ${item.name}  [${item.rarity}]`, {
             fontSize: FONT_MD,
             fontFamily: "EnchantedLand",
-            color: item.rarity === "rare" ? "#a78bfa" : TXT_GOLD_MID,
+            color: RARITY_COLOR[item.rarity] ?? TXT_GOLD_MID,
           })
           .setOrigin(0.5);
         y += 28;
@@ -180,7 +183,7 @@ export class PostBattleScene extends Phaser.Scene {
         .text(width / 2, y, `◆ ${MetaProgress.shards} Shards saved`, {
           fontSize: FONT_LG,
           fontFamily: "EnchantedLand",
-          color: "#c084fc",
+          color: TXT_SHARD,
         })
         .setOrigin(0.5);
       y += 36;
@@ -241,10 +244,10 @@ export class PostBattleScene extends Phaser.Scene {
   private buildConquestScreen(width: number, height: number) {
     this.add
       .text(width / 2, height * 0.22, "GAUNTLET CONQUERED!", {
-        fontSize: "62px",
+        fontSize: FONT_CONQUEST,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
-        stroke: "#000000",
+        stroke: TXT_BLACK,
         strokeThickness: 8,
       })
       .setOrigin(0.5);

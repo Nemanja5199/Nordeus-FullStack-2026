@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FONT_LG, FONT_SM, FONT_XS } from "../ui/typography";
+import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { HERO_FRAME } from "../utils/spriteFrames";
 import type { RunConfig } from "../types/game";
@@ -105,7 +105,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.08, "Choose Your Hero", {
-        fontSize: "56px",
+        fontSize: FONT_SCENE_TITLE,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
         stroke: TXT_STROKE_TITLE,

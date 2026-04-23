@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui/typography";
 import { MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../ui/layout";
 import { GameState } from "../utils/gameState";
+import type { MoveConfig } from "../types/game";
+import { TXT_STAT_ATTACK, TXT_STAT_MAGIC, TXT_STAT_HP, TXT_MOVE_BUFF, TXT_MOVE_DEBUFF, TXT_SHARD } from "../ui/colors";
 import { createModalFooter } from "../ui/ModalFooter";
 import {
   BG_DARKEST,
@@ -31,12 +33,44 @@ interface MoveManagementData {
 
 // Layout constants
 
+const STAT_LABEL: Record<string, string> = { attack: "ATK", defense: "DEF", magic: "MAG" };
+
+function buildMoveStatLines(move: MoveConfig): { text: string; color: string }[] {
+  const lines: { text: string; color: string }[] = [];
+
+  if (move.baseValue > 0) {
+    if (move.moveType === "physical")
+      lines.push({ text: `⚔  ${move.baseValue} physical dmg`, color: TXT_STAT_ATTACK });
+    else if (move.moveType === "magic")
+      lines.push({ text: `✦  ${move.baseValue} magic dmg`, color: TXT_STAT_MAGIC });
+    else if (move.moveType === "heal")
+      lines.push({ text: `♥  ${move.baseValue} HP restored`, color: TXT_STAT_HP });
+  }
+
+  for (const fx of move.effects) {
+    if (fx.type === "buff" && fx.stat) {
+      const pct = Math.round((fx.multiplier! - 1) * 100);
+      lines.push({ text: `▲  ${STAT_LABEL[fx.stat]} +${pct}%  (${fx.turns}t)`, color: TXT_MOVE_BUFF });
+    } else if (fx.type === "debuff" && fx.stat) {
+      const pct = Math.round((1 - fx.multiplier!) * 100);
+      lines.push({ text: `▼  Enemy ${STAT_LABEL[fx.stat]} -${pct}%  (${fx.turns}t)`, color: TXT_MOVE_DEBUFF });
+    } else if (fx.type === "drain") {
+      lines.push({ text: `↺  Drain: heal for dmg dealt`, color: TXT_SHARD });
+    } else if (fx.type === "hp_cost" && fx.value) {
+      lines.push({ text: `↓  Costs ${fx.value} HP`, color: TXT_STAT_ATTACK });
+    }
+  }
+
+  return lines;
+}
+
 export class MoveManagementScene extends Phaser.Scene {
   private selectedLearnedIndex = -1;
   private selectedEquippedSlot = -1;
   private learnedButtons: Phaser.GameObjects.Container[] = [];
   private equippedButtons: Phaser.GameObjects.Container[] = [];
   private infoText!: Phaser.GameObjects.Text;
+  private tooltipObjects: Phaser.GameObjects.Text[] = [];
   private returnScene!: string;
 
   constructor() {
@@ -49,6 +83,7 @@ export class MoveManagementScene extends Phaser.Scene {
     this.selectedEquippedSlot = -1;
     this.learnedButtons = [];
     this.equippedButtons = [];
+    this.tooltipObjects = [];
 
     const { width, height } = this.scale;
 
@@ -125,6 +160,46 @@ export class MoveManagementScene extends Phaser.Scene {
     this.buildStatPanel(colStatsX);
   }
 
+  private showMoveTooltip(move: MoveConfig): void {
+    this.tooltipObjects.forEach((t) => t.destroy());
+    this.tooltipObjects = [];
+    this.infoText.setVisible(false);
+
+    const { width, height } = this.scale;
+    const cx = width / 2;
+    const baseY = height - 148;
+
+    this.tooltipObjects.push(
+      this.add.text(cx, baseY, move.description, {
+        fontSize: FONT_SM,
+        color: TXT_MUTED,
+        wordWrap: { width: width * 0.75 },
+        align: "center",
+      }).setOrigin(0.5),
+    );
+
+    const lines = buildMoveStatLines(move);
+    if (lines.length > 0) {
+      const spacing = Math.min(200, (width * 0.8) / lines.length);
+      const startX = cx - ((lines.length - 1) * spacing) / 2;
+      lines.forEach((line, i) => {
+        this.tooltipObjects.push(
+          this.add.text(startX + i * spacing, baseY + 26, line.text, {
+            fontSize: FONT_LG,
+            fontFamily: "EnchantedLand",
+            color: line.color,
+          }).setOrigin(0.5),
+        );
+      });
+    }
+  }
+
+  private clearMoveTooltip(): void {
+    this.tooltipObjects.forEach((t) => t.destroy());
+    this.tooltipObjects = [];
+    this.infoText.setVisible(true);
+  }
+
   private buildLearnedPanel(panelX: number) {
     GameState.hero.learnedMoves.forEach((moveId, i) => {
       const move = GameState.runConfig!.moves[moveId];
@@ -150,14 +225,8 @@ export class MoveManagementScene extends Phaser.Scene {
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => this.selectLearned(i, moveId));
-      bg.on("pointerover", () => {
-        bg.setAlpha(0.7);
-        this.infoText.setText(move.description);
-      });
-      bg.on("pointerout", () => {
-        bg.setAlpha(1);
-        this.infoText.setText("Hover a move to see its description.");
-      });
+      bg.on("pointerover", () => { bg.setAlpha(0.7); this.showMoveTooltip(move); });
+      bg.on("pointerout", () => { bg.setAlpha(1); this.clearMoveTooltip(); });
 
       container.add([bg, nameTxt, typeTxt]);
       this.learnedButtons.push(container);
@@ -187,14 +256,8 @@ export class MoveManagementScene extends Phaser.Scene {
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => this.selectEquipped(slot));
-      bg.on("pointerover", () => {
-        bg.setAlpha(0.7);
-        if (move) this.infoText.setText(move.description);
-      });
-      bg.on("pointerout", () => {
-        bg.setAlpha(1);
-        this.infoText.setText("Hover a move to see its description.");
-      });
+      bg.on("pointerover", () => { bg.setAlpha(0.7); if (move) this.showMoveTooltip(move); });
+      bg.on("pointerout", () => { bg.setAlpha(1); this.clearMoveTooltip(); });
 
       container.add([bg, slotTxt, nameTxt]);
       this.equippedButtons.push(container);

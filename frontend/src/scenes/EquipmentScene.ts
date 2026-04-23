@@ -18,6 +18,9 @@ import {
   TXT_MUTED,
   TXT_LOCKED,
   TXT_STROKE_HEADER,
+  RARITY_COLOR,
+  RARITY_COLOR_NUM,
+  STAT_COLOR,
 } from "../ui/colors";
 
 const SLOTS: GearSlot[] = ["weapon", "helmet", "chestplate", "gloves", "ring"];
@@ -28,21 +31,6 @@ const SLOT_LABELS: Record<GearSlot, string> = {
   gloves: "Gloves",
   ring: "Ring",
 };
-const RARITY_COLOR: Record<string, string> = {
-  common: TXT_GOLD_MID,
-  rare: "#a78bfa",
-  epic: "#f97316",
-};
-const STAT_COLOR = {
-  attack: "#ef4444",
-  defense: "#9ca3af",
-  magic: "#a78bfa",
-  maxHp: "#4ade80",
-};
-
-// Equipped column
-
-// Inventory grid
 
 interface EquipmentData {
   returnScene: string;
@@ -267,7 +255,7 @@ export class EquipmentScene extends Phaser.Scene {
         cy + GRID_CELL / 2 - 6,
         GRID_CELL - 4,
         8,
-        parseInt((RARITY_COLOR[item.rarity] ?? TXT_GOLD).replace("#", ""), 16),
+        RARITY_COLOR_NUM[item.rarity] ?? 0xc8a035,
         0.8,
       );
 
