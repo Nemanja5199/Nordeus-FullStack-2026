@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { createButton, BTN_MD } from "../ui/Button";
 import {
@@ -62,7 +63,7 @@ export class PostBattleScene extends Phaser.Scene {
     if (data.won) {
       this.add
         .text(width / 2, y, `+${data.xpGained} XP earned`, {
-          fontSize: "22px",
+          fontSize: FONT_LG,
           color: TXT_GOLD_MID,
         })
         .setOrigin(0.5);
@@ -71,7 +72,7 @@ export class PostBattleScene extends Phaser.Scene {
       if (data.goldEarned) {
         this.add
           .text(width / 2, y, `+${data.goldEarned} Gold  (Total: ${GameState.hero.gold})`, {
-            fontSize: "18px",
+            fontSize: FONT_MD,
             fontFamily: "EnchantedLand",
             color: TXT_GOLD,
           })
@@ -82,7 +83,7 @@ export class PostBattleScene extends Phaser.Scene {
       if (data.leveledUp) {
         this.add
           .text(width / 2, y, `LEVEL UP!  Now Lv.${GameState.hero.level}`, {
-            fontSize: "26px",
+            fontSize: FONT_LG,
             fontFamily: "EnchantedLand",
             color: TXT_GOLD,
           })
@@ -91,7 +92,7 @@ export class PostBattleScene extends Phaser.Scene {
 
         this.add
           .text(width / 2, y, `+3 Skill Points — allocate them in Manage Moves`, {
-            fontSize: "16px",
+            fontSize: FONT_BODY,
             color: TXT_HERO,
           })
           .setOrigin(0.5);
@@ -109,14 +110,14 @@ export class PostBattleScene extends Phaser.Scene {
 
         this.add
           .text(width / 2, y + 14, `New move learned:  ${move.name}`, {
-            fontSize: "19px",
+            fontSize: FONT_MD,
             fontFamily: "EnchantedLand",
             color: TXT_DEFEATED,
           })
           .setOrigin(0.5);
         this.add
           .text(width / 2, y + 34, `[${move.moveType}]`, {
-            fontSize: "12px",
+            fontSize: FONT_SM,
             color: TXT_MUTED,
           })
           .setOrigin(0.5);
@@ -124,7 +125,7 @@ export class PostBattleScene extends Phaser.Scene {
         // Description shows on hover
         const descText = this.add
           .text(width / 2, y + cardH + 16, "", {
-            fontSize: "14px",
+            fontSize: FONT_SM,
             color: TXT_HERO,
             wordWrap: { width: 380 },
             align: "center",
@@ -139,7 +140,7 @@ export class PostBattleScene extends Phaser.Scene {
       } else {
         this.add
           .text(width / 2, y, "No new moves to learn from this monster.", {
-            fontSize: "16px",
+            fontSize: FONT_BODY,
             color: TXT_MUTED,
           })
           .setOrigin(0.5);
@@ -150,21 +151,21 @@ export class PostBattleScene extends Phaser.Scene {
         const item = GameState.runConfig!.items[data.droppedItemId];
         this.add
           .text(width / 2, y, `Item found:  ${item.name}  [${item.rarity}]`, {
-            fontSize: "18px",
+            fontSize: FONT_MD,
             fontFamily: "EnchantedLand",
             color: item.rarity === "rare" ? "#a78bfa" : TXT_GOLD_MID,
           })
           .setOrigin(0.5);
         y += 28;
         this.add
-          .text(width / 2, y, item.description, { fontSize: "14px", color: TXT_MUTED })
+          .text(width / 2, y, item.description, { fontSize: FONT_SM, color: TXT_MUTED })
           .setOrigin(0.5);
         y += 28;
       }
     } else {
       this.add
         .text(width / 2, y, `+${data.xpGained} XP earned`, {
-          fontSize: "22px",
+          fontSize: FONT_LG,
           color: TXT_MUTED,
         })
         .setOrigin(0.5);
@@ -172,7 +173,7 @@ export class PostBattleScene extends Phaser.Scene {
 
       this.add
         .text(width / 2, y, "Train harder and try again.", {
-          fontSize: "18px",
+          fontSize: FONT_MD,
           color: TXT_MUTED,
         })
         .setOrigin(0.5);
@@ -249,7 +250,7 @@ export class PostBattleScene extends Phaser.Scene {
         height * 0.38,
         "You have defeated every monster and proven\nyourself the greatest warrior in the land.",
         {
-          fontSize: "22px",
+          fontSize: FONT_LG,
           fontFamily: "EnchantedLand",
           color: TXT_HERO,
           align: "center",
@@ -259,7 +260,7 @@ export class PostBattleScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.52, `Final level: ${GameState.hero.level}`, {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         color: TXT_GOLD_MID,
       })
       .setOrigin(0.5);
@@ -270,7 +271,7 @@ export class PostBattleScene extends Phaser.Scene {
         height * 0.62,
         "Your legend will be remembered.\nA new challenger may now begin.",
         {
-          fontSize: "16px",
+          fontSize: FONT_BODY,
           color: TXT_MUTED,
           align: "center",
         },
@@ -281,7 +282,7 @@ export class PostBattleScene extends Phaser.Scene {
       ...BTN_MD,
       width: 360,
       height: 52,
-      fontSize: "20px",
+      fontSize: FONT_LG,
       label: "RETURN TO MAIN MENU",
       color: BG_BTN_SUCCESS,
       onClick: () => {

@@ -1,8 +1,13 @@
 import type { GearItem, GearSlot, GearStatBonuses, HeroState, RunConfig, RunSave } from "../types/game";
 
-export function getGearBonuses(equipment: Partial<Record<GearSlot, GearItem>>): GearStatBonuses {
+export function getGearBonuses(
+  equipment: Partial<Record<GearSlot, string>>,
+  items: Record<string, GearItem>,
+): GearStatBonuses {
   const bonuses: GearStatBonuses = { attack: 0, defense: 0, magic: 0, maxHp: 0 };
-  for (const item of Object.values(equipment)) {
+  for (const itemId of Object.values(equipment)) {
+    if (!itemId) continue;
+    const item = items[itemId];
     if (!item) continue;
     bonuses.attack = (bonuses.attack ?? 0) + (item.statBonuses.attack ?? 0);
     bonuses.defense = (bonuses.defense ?? 0) + (item.statBonuses.defense ?? 0);
@@ -68,6 +73,10 @@ class GameStateManager {
     if (this.hero.gold === undefined) this.hero.gold = 0;
     if (this.hero.equipment === undefined) this.hero.equipment = {};
     if (this.hero.inventory === undefined) this.hero.inventory = [];
+
+    // DEV: seed inventory for testing equipment UI
+    const testIds = ["iron_sword", "leather_cap", "leather_vest", "gauntlets", "ring_of_strength", "arcane_ring", "steel_blade"];
+    this.hero.inventory = testIds.filter((id) => config.items[id]);
   }
 
   saveHero(): void {
@@ -181,29 +190,34 @@ class GameStateManager {
     }
   }
 
-  equipItem(item: GearItem): void {
+  equipItem(itemId: string): void {
+    const item = this.runConfig!.items[itemId];
+    if (!item) return;
     const displaced = this.hero.equipment[item.slot];
     if (displaced) this.hero.inventory.push(displaced);
-    this.hero.equipment[item.slot] = item;
-    this.hero.inventory = this.hero.inventory.filter((i) => i.id !== item.id);
+    this.hero.equipment[item.slot] = itemId;
+    this.hero.inventory = this.hero.inventory.filter((id) => id !== itemId);
     this.saveHero();
   }
 
   unequipItem(slot: GearSlot): void {
-    const item = this.hero.equipment[slot];
-    if (!item) return;
-    this.hero.inventory.push(item);
+    const itemId = this.hero.equipment[slot];
+    if (!itemId) return;
+    this.hero.inventory.push(itemId);
     delete this.hero.equipment[slot];
     this.saveHero();
   }
 
-  addToInventory(item: GearItem): void {
-    this.hero.inventory.push(item);
+  addToInventory(itemId: string): void {
+    this.hero.inventory.push(itemId);
     this.saveHero();
   }
 
   resetHero(config: RunConfig): void {
     this.hero = defaultHero(config.heroDefaults);
+    // DEV: seed inventory for testing equipment UI
+    const testIds = ["iron_sword", "leather_cap", "leather_vest", "gauntlets", "ring_of_strength", "arcane_ring", "steel_blade"];
+    this.hero.inventory = testIds.filter((id) => config.items[id]);
     this.saveHero();
   }
 }

@@ -88,8 +88,8 @@ export interface HeroState {
   magic: number;
   skillPoints: number;
   gold: number;
-  equipment: Partial<Record<GearSlot, GearItem>>;
-  inventory: GearItem[];
+  equipment: Partial<Record<GearSlot, string>>;
+  inventory: string[];
   learnedMoves: string[];
   equippedMoves: string[];
 }

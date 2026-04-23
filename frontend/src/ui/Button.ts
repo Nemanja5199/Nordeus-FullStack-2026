@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { TXT_GOLD, TXT_GOLD_LIGHT } from "./colors";
+import { FONT_LG, FONT_MD } from "./typography";
 
 export interface ButtonOptions {
   label: string;
@@ -13,9 +14,9 @@ export interface ButtonOptions {
 }
 
 // Size presets
-export const BTN_LG: Partial<ButtonOptions> = { width: 280, height: 52, fontSize: "22px" };
-export const BTN_MD: Partial<ButtonOptions> = { width: 240, height: 48, fontSize: "20px" };
-export const BTN_SM: Partial<ButtonOptions> = { width: 180, height: 42, fontSize: "18px" };
+export const BTN_LG: Partial<ButtonOptions> = { width: 280, height: 52, fontSize: FONT_LG };
+export const BTN_MD: Partial<ButtonOptions> = { width: 240, height: 48, fontSize: FONT_LG };
+export const BTN_SM: Partial<ButtonOptions> = { width: 180, height: 42, fontSize: FONT_MD };
 
 export function createButton(
   scene: Phaser.Scene,
@@ -25,7 +26,7 @@ export function createButton(
 ): Phaser.GameObjects.Container {
   const w = opts.width ?? 240;
   const h = opts.height ?? 48;
-  const fs = opts.fontSize ?? "20px";
+  const fs = opts.fontSize ?? FONT_LG;
 
   const bg = scene.add
     .rectangle(0, 0, w, h, opts.color, 0.9)

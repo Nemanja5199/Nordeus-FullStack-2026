@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { FONT_MD, FONT_SM } from "../ui/typography";
+import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
 import { GameState } from "../utils/gameState";
 import { createHeroPanel } from "../ui/HeroPanel";
 import { createButton, BTN_SM } from "../ui/Button";
@@ -39,15 +41,7 @@ import {
   TXT_TIER_BOSS,
 } from "../ui/colors";
 
-const PANEL_W = 260;
-const PANEL_H = 640;
-const PANEL_GAP = 16;
 
-const NODE_W = 96;
-const NODE_H = 84;
-const BOSS_W = 120;
-const BOSS_H = 98;
-const HOVER_SCALE = 1.35;
 
 export class TreeMapScene extends Phaser.Scene {
   constructor() {
@@ -79,7 +73,7 @@ export class TreeMapScene extends Phaser.Scene {
       ...BTN_SM,
       width: 120,
       height: 45,
-      fontSize: "17px",
+      fontSize: FONT_MD,
       label: "SAVE & EXIT",
       color: BG_BTN_CLOSE,
       onClick: () => {
@@ -267,7 +261,7 @@ export class TreeMapScene extends Phaser.Scene {
     byLevel: Record<number, string[]>,
   ) {
     const labelX = treeRight - 4;
-    const style = { fontSize: "12px", fontFamily: "EnchantedLand", color: TXT_MUTED };
+    const style = { fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_MUTED };
 
     const yAt = (level: number) => positions[byLevel[level]?.[0]]?.y ?? 0;
     const y12 = (yAt(1) + yAt(2)) / 2;
@@ -384,7 +378,7 @@ export class TreeMapScene extends Phaser.Scene {
     container.add(
       this.add
         .text(0, -nodeH / 2 - 14, displayName, {
-          fontSize: "14px",
+          fontSize: FONT_SM,
           fontFamily: "EnchantedLand",
           color: nameColor,
           stroke: "#000000",
@@ -397,7 +391,7 @@ export class TreeMapScene extends Phaser.Scene {
     container.add(
       this.add
         .text(0, nodeH / 2 - 12, statusLabel, {
-          fontSize: "12px",
+          fontSize: FONT_SM,
           fontFamily: "EnchantedLand",
           color: statusColor,
         })

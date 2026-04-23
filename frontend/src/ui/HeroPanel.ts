@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { HeroState, MoveConfig } from "../types/game";
 import { HERO_FRAME } from "../utils/spriteFrames";
+import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "./typography";
 import {
   BG_PANEL,
   BG_ROW,
@@ -55,7 +56,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
   // Title
   scene.add
     .text(cx, panelY + 26, `Knight  Lv.${hero.level}`, {
-      fontSize: "20px",
+      fontSize: FONT_LG,
       fontFamily: "EnchantedLand",
       color: TXT_GOLD,
     })
@@ -81,14 +82,14 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
     const sy = panelY + 158 + Math.floor(i / 2) * 34;
     scene.add.image(sx, sy, s.key).setScale(0.68).setOrigin(0.5);
     scene.add
-      .text(sx + 18, sy, `${s.val}`, { fontSize: "16px", color: TXT_GOLD_LIGHT })
+      .text(sx + 18, sy, `${s.val}`, { fontSize: FONT_BODY, color: TXT_GOLD_LIGHT })
       .setOrigin(0, 0.5);
   });
 
   // Gold
   scene.add
     .text(cx, panelY + 230, `Gold: ${hero.gold ?? 0}`, {
-      fontSize: "15px",
+      fontSize: FONT_BODY,
       fontFamily: "EnchantedLand",
       color: TXT_GOLD,
     })
@@ -98,7 +99,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
   const xpPct = Math.min(1, hero.xp / xpToNextLevel);
   scene.add
     .text(cx, panelY + 254, `XP  ${hero.xp} / ${xpToNextLevel}`, {
-      fontSize: "14px",
+      fontSize: FONT_SM,
       color: TXT_GOLD_MID,
     })
     .setOrigin(0.5);
@@ -111,7 +112,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
   // Equipped moves header
   scene.add
     .text(cx, panelY + 312, "Equipped Moves", {
-      fontSize: "17px",
+      fontSize: FONT_MD,
       fontFamily: "EnchantedLand",
       color: TXT_GOLD,
     })
@@ -128,7 +129,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
       .setStrokeStyle(1, BORDER_ROW);
 
     scene.add.text(pad, rowY + 6, move.name, {
-      fontSize: "15px",
+      fontSize: FONT_BODY,
       fontFamily: "EnchantedLand",
       color: TXT_GOLD_LIGHT,
     });
@@ -136,7 +137,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
       pad,
       rowY + 26,
       `[${move.moveType}]  ${move.description.slice(0, 20)}${move.description.length > 20 ? "…" : ""}`,
-      { fontSize: "12px", color: TXT_MUTED },
+      { fontSize: FONT_SM, color: TXT_MUTED },
     );
   });
 
@@ -148,7 +149,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
       .setStrokeStyle(1, BORDER_GOLD)
       .setInteractive({ useHandCursor: true });
     const eqTxt = scene.add
-      .text(cx, eqBtnY, "Equipment", { fontSize: "17px", fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
+      .text(cx, eqBtnY, "Equipment", { fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
       .setOrigin(0.5);
     eqBg.on("pointerover", () => { eqBg.setFillStyle(BG_BTN_HOVER); eqTxt.setColor(TXT_GOLD); });
     eqBg.on("pointerout", () => { eqBg.setFillStyle(BG_BTN); eqTxt.setColor(TXT_GOLD_MID); });
@@ -165,7 +166,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): vo
   const btnLabel = hasPoints ? `Manage Moves  ✦ ${hero.skillPoints}` : "Manage Moves";
   const btnTxt = scene.add
     .text(cx, btnY, btnLabel, {
-      fontSize: "17px",
+      fontSize: FONT_MD,
       fontFamily: "EnchantedLand",
       color: hasPoints ? TXT_SKILL_POINTS : TXT_GOLD_MID,
     })
