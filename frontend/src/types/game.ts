@@ -26,6 +26,7 @@ export interface MoveConfig {
   baseValue: number;
   effects: MoveEffect[];
   description: string;
+  dropChance: number;
 }
 
 export interface MonsterConfig {

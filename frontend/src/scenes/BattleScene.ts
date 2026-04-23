@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { CombatCharacter, MonsterConfig } from "../types/game";
-import { applyMove, tickBuffs, getEffectiveStat } from "../utils/combat";
+import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
 import { GameState } from "../utils/gameState";
 import { api } from "../services/api";
 import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
@@ -801,11 +801,12 @@ export class BattleScene extends Phaser.Scene {
     const xpGain = this.monsterCfg.xpReward;
     const leveled = GameState.addXp(xpGain);
 
-    const newMoves = this.monsterCfg.moves.filter(
-      (id) => !GameState.hero.learnedMoves.includes(id),
-    );
-    const learnedMove =
-      newMoves.length > 0 ? newMoves[Math.floor(Math.random() * newMoves.length)] : null;
+    const allMoves = GameState.runConfig!.moves;
+    const learned = GameState.hero.learnedMoves;
+    const notKnown = this.monsterCfg.moves.filter((id) => !learned.includes(id));
+    const genuinelyNew = notKnown.filter((id) => !hasSimilarMove(allMoves[id], learned, allMoves));
+    const dropped = genuinelyNew.filter((id) => Math.random() < (allMoves[id]?.dropChance ?? 1));
+    const learnedMove = dropped.length > 0 ? dropped[Math.floor(Math.random() * dropped.length)] : null;
     if (learnedMove) GameState.learnMove(learnedMove);
 
     const newDefeated = [...this.defeatedIds, this.monsterCfg.id];
