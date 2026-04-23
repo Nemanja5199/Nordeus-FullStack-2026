@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
+import { MetaProgress } from "../utils/metaProgress";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -38,9 +39,24 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image("stat_atk", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");
     this.load.image("stat_def", "/assets/Items Assets/Weapon & Tool/Iron Shield.png");
     this.load.image("stat_mag", "/assets/Items Assets/Weapon & Tool/Magic Wand.png");
+
+    // Item icons
+    this.load.image("item_iron_sword", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");
+    this.load.image("item_steel_blade", "/assets/Items Assets/Weapon & Tool/Silver Sword.png");
+    this.load.image("item_arcane_staff", "/assets/Items Assets/Weapon & Tool/Emerald Staff.png");
+    this.load.image("item_leather_cap", "/assets/Items Assets/Equipment/Leather Helmet.png");
+    this.load.image("item_iron_helm", "/assets/Items Assets/Equipment/Iron Helmet.png");
+    this.load.image("item_leather_vest", "/assets/Items Assets/Equipment/Leather Armor.png");
+    this.load.image("item_chain_mail", "/assets/Items Assets/Equipment/Iron Armor.png");
+    this.load.image("item_gauntlets", "/assets/Items Assets/Equipment/Iron Boot.png");
+    this.load.image("item_spell_gloves", "/assets/Items Assets/Equipment/Leather Boot.png");
+    this.load.image("item_ring_of_strength", "/assets/Items Assets/Ore & Gem/Ruby.png");
+    this.load.image("item_ring_of_fortitude", "/assets/Items Assets/Ore & Gem/Diamond.png");
+    this.load.image("item_arcane_ring", "/assets/Items Assets/Ore & Gem/Crystal.png");
   }
 
   create() {
+    MetaProgress.load();
     this.scene.start("MainMenuScene");
   }
 }

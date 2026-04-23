@@ -19,7 +19,21 @@
       "Bash(pip install *)",
       "Bash(.venv/bin/python -c ' *)",
       "Bash(.venv/bin/pip install *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git *)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python3 -m pytest tests/ -v)",
+      "Bash(pip3 install *)",
+      "Bash(python3 -m pip install -r /mnt/e/Projects/Nordeus-FullStack-2026/backend/requirements.txt -r /mnt/e/Projects/Nordeus-FullStack-2026/backend/requirements-dev.txt -q)",
+      "Bash(python3 -m ensurepip --upgrade)",
+      "Bash(python3 -m pip install pytest)",
+      "Bash(sudo apt-get *)",
+      "Bash(python3 -m pip install -r requirements.txt -r requirements-dev.txt -q)",
+      "Bash(python3 -m pip install -r requirements.txt -r requirements-dev.txt -q --break-system-packages)",
+      "Bash(npx vitest *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(./node_modules/.bin/vitest run *)",
+      "Bash(node node_modules/vitest/vitest.mjs run)"
     ]
   }
 }

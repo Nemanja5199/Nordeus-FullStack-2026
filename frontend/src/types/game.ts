@@ -1,3 +1,34 @@
+export type MetaUpgradeCategory = "maxHp" | "attack" | "defense" | "magic" | "skillPoints" | "gold";
+
+export interface MetaUpgrade {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  bonus: number;
+  category: MetaUpgradeCategory;
+  requires?: string;
+}
+
+export type GearSlot = "weapon" | "helmet" | "chestplate" | "gloves" | "ring";
+export type GearRarity = "common" | "rare" | "epic";
+
+export interface GearStatBonuses {
+  attack?: number;
+  defense?: number;
+  magic?: number;
+  maxHp?: number;
+}
+
+export interface GearItem {
+  id: string;
+  name: string;
+  slot: GearSlot;
+  rarity: GearRarity;
+  statBonuses: GearStatBonuses;
+  description: string;
+}
+
 export interface Stats {
   attack: number;
   defense: number;
@@ -26,6 +57,7 @@ export interface MoveConfig {
   baseValue: number;
   effects: MoveEffect[];
   description: string;
+  dropChance: number;
 }
 
 export interface MonsterConfig {
@@ -34,6 +66,10 @@ export interface MonsterConfig {
   stats: { hp: number; attack: number; defense: number; magic: number };
   moves: string[];
   xpReward: number;
+  goldReward: number;
+  shardReward: number;
+  itemDropChance: number;
+  itemDropPool: { itemId: string; weight: number }[];
 }
 
 export interface HeroDefaults {
@@ -49,6 +85,7 @@ export interface HeroDefaults {
 export interface RunConfig {
   monsters: MonsterConfig[];
   moves: Record<string, MoveConfig>;
+  items: Record<string, GearItem>;
   heroDefaults: HeroDefaults;
   mapTree: import("../utils/mockMapTree").MapTree;
   seed: number;
@@ -63,6 +100,9 @@ export interface HeroState {
   defense: number;
   magic: number;
   skillPoints: number;
+  gold: number;
+  equipment: Partial<Record<GearSlot, string>>;
+  inventory: string[];
   learnedMoves: string[];
   equippedMoves: string[];
 }

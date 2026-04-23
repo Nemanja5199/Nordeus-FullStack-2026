@@ -1,11 +1,12 @@
 import Phaser from "phaser";
+import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui/typography";
+import { MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../ui/layout";
 import { GameState } from "../utils/gameState";
-import { createButton, BTN_SM } from "../ui/Button";
+import { createModalFooter } from "../ui/ModalFooter";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
   BG_MOVE_EQUIPPED,
-  BG_BTN_CLOSE,
   BORDER_GOLD,
   BORDER_GOLD_BRIGHT,
   BORDER_LOCKED,
@@ -29,10 +30,6 @@ interface MoveManagementData {
 }
 
 // Layout constants
-const CARD_W = 270;
-const CARD_H = 58;
-const CARD_GAP = 12;
-const START_Y = 114;
 
 export class MoveManagementScene extends Phaser.Scene {
   private selectedLearnedIndex = -1;
@@ -55,11 +52,11 @@ export class MoveManagementScene extends Phaser.Scene {
 
     const { width, height } = this.scale;
 
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 34, "MOVE MANAGEMENT", {
-        fontSize: "36px",
+        fontSize: FONT_TITLE,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
         stroke: TXT_STROKE_HEADER,
@@ -73,22 +70,22 @@ export class MoveManagementScene extends Phaser.Scene {
     const colStatsX = width * 0.78;
 
     this.add
-      .text(colLearnedX, 78, "LEARNED MOVES", {
-        fontSize: "16px",
+      .text(colLearnedX, 90, "LEARNED MOVES", {
+        fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
       .setOrigin(0.5);
     this.add
-      .text(colEquippedX, 78, "EQUIPPED SLOTS", {
-        fontSize: "16px",
+      .text(colEquippedX, 90, "EQUIPPED SLOTS", {
+        fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
       .setOrigin(0.5);
     this.add
-      .text(colStatsX, 78, "STAT POINTS", {
-        fontSize: "16px",
+      .text(colStatsX, 90, "STAT POINTS", {
+        fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
@@ -115,25 +112,17 @@ export class MoveManagementScene extends Phaser.Scene {
       divAlpha,
     );
 
-    this.infoText = this.add
-      .text(width * 0.32, height - 52, "Hover a move to see its description.", {
-        fontSize: "15px",
-        color: TXT_MUTED,
-        wordWrap: { width: width * 0.6 },
-        align: "center",
-      })
-      .setOrigin(0.5);
+    this.infoText = createModalFooter(this, {
+      hint: "Hover a move to see its description.",
+      onClose: () => {
+        this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+        this.scene.stop();
+      },
+    });
 
     this.buildLearnedPanel(colLearnedX);
     this.buildEquippedPanel(colEquippedX);
     this.buildStatPanel(colStatsX);
-
-    createButton(this, width / 2, height - 22, {
-      ...BTN_SM,
-      label: "CLOSE",
-      color: BG_BTN_CLOSE,
-      onClick: () => this.scene.stop(),
-    });
   }
 
   private buildLearnedPanel(panelX: number) {
@@ -150,12 +139,12 @@ export class MoveManagementScene extends Phaser.Scene {
         .setStrokeStyle(1, isEquipped ? BORDER_GOLD : BORDER_LOCKED);
 
       const nameTxt = this.add.text(-CARD_W / 2 + 14, -12, move.name, {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_LIGHT,
       });
       const typeTxt = this.add.text(-CARD_W / 2 + 14, 10, `[${move.moveType}]`, {
-        fontSize: "13px",
+        fontSize: FONT_SM,
         color: TXT_MUTED,
       });
 
@@ -187,11 +176,11 @@ export class MoveManagementScene extends Phaser.Scene {
         .setStrokeStyle(1, BORDER_LOCKED);
 
       const slotTxt = this.add.text(-CARD_W / 2 + 14, -18, `SLOT ${slot + 1}`, {
-        fontSize: "11px",
+        fontSize: FONT_XS,
         color: TXT_MUTED,
       });
       const nameTxt = this.add.text(-CARD_W / 2 + 14, 4, move ? move.name : "(empty)", {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: move ? TXT_HERO : TXT_LOCKED,
       });
@@ -220,8 +209,8 @@ export class MoveManagementScene extends Phaser.Scene {
 
     // Points badge — sits just below the column header
     this.add
-      .text(panelX, 100, pts > 0 ? `✦ ${pts} to spend` : "no points", {
-        fontSize: "18px",
+      .text(panelX, 112, pts > 0 ? `✦ ${pts} to spend` : "no points", {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: pts > 0 ? TXT_SKILL_POINTS : TXT_MUTED,
       })
@@ -240,7 +229,7 @@ export class MoveManagementScene extends Phaser.Scene {
     ];
 
     // Cards start below the badge — badge is at y=100, badge height ~22, gap 18 → cards from y=140
-    const cardsStartY = 140;
+    const cardsStartY = 156;
 
     stats.forEach(({ label, key, gain, sub }, i) => {
       const y = cardsStartY + cardH / 2 + i * (cardH + gap);
@@ -253,25 +242,25 @@ export class MoveManagementScene extends Phaser.Scene {
 
       // Stat name + sub
       this.add.text(panelX - cardW / 2 + 14, y - 22, label, {
-        fontSize: "17px",
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
       });
       this.add.text(panelX - cardW / 2 + 14, y - 2, sub, {
-        fontSize: "12px",
+        fontSize: FONT_SM,
         color: TXT_MUTED,
       });
 
       // Current value
       this.add.text(panelX - cardW / 2 + 14, y + 16, String(val), {
-        fontSize: "22px",
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_LIGHT,
       });
 
       // Gain label
       this.add.text(panelX - cardW / 2 + 66, y + 16, gain, {
-        fontSize: "15px",
+        fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",
         color: haspts ? TXT_SKILL_POINTS : TXT_MUTED,
       });
@@ -285,7 +274,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
         this.add
           .text(btnX, y, "+ Add", {
-            fontSize: "14px",
+            fontSize: FONT_SM,
             fontFamily: "EnchantedLand",
             color: TXT_SKILL_POINTS,
           })

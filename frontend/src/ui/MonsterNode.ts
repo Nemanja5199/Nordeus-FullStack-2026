@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { MonsterConfig } from "../types/game";
 import { MONSTER_FRAMES } from "../utils/spriteFrames";
+import { FONT_MD, FONT_SM } from "./typography";
 import {
   BG_NODE_DEFEATED,
   BG_NODE_ACTIVE,
@@ -53,7 +54,7 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
   const nameColor = isDefeated ? TXT_DEFEATED : isNext ? TXT_GOLD : TXT_LOCKED_NAME;
   scene.add
     .text(x, y - h * 0.42, m.name, {
-      fontSize: "18px",
+      fontSize: FONT_MD,
       fontFamily: "EnchantedLand",
       color: nameColor,
     })
@@ -81,7 +82,7 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
   // Stats
   scene.add
     .text(x, y + h * 0.37, `ATK ${m.stats.attack}   DEF ${m.stats.defense}`, {
-      fontSize: "14px",
+      fontSize: FONT_SM,
       color: isLocked ? "#3a2818" : "#a09060",
       align: "center",
     })
@@ -92,7 +93,7 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
   const statusColor = isDefeated ? TXT_DEFEATED : isNext ? TXT_GOLD : TXT_LOCKED;
   scene.add
     .text(x, y + h * 0.46, statusLabel, {
-      fontSize: "17px",
+      fontSize: FONT_MD,
       fontFamily: "EnchantedLand",
       color: statusColor,
     })

@@ -126,3 +126,10 @@ export const TXT_LOG_MAGIC = "#a060e0"; // purple — magic damage
 export const TXT_INTENT_DEBUFF = "#9060c0"; // purple — debuff
 export const TXT_INTENT_BUFF = "#c8a035"; // gold — buff
 export const TXT_INTENT_HEAL = "#50aa50"; // green — heal/drain
+
+// ─── Meta-progression (shards) ──────────────────────────────────────────────
+export const TXT_SHARD  = "#c084fc"; // purple — shard currency
+export const BG_UPGRADE_AVAILABLE = 0x1a0f2a; // dark purple card bg
+export const BG_UPGRADE_PURCHASED = 0x0a1f0a; // dark green card bg (owned)
+export const BG_UPGRADE_LOCKED    = 0x100c08; // dim bg (locked)
+export const BORDER_SHARD = 0x9333ea; // purple border

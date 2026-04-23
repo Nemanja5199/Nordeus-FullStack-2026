@@ -1,7 +1,10 @@
 import Phaser from "phaser";
+import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
+import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
 import type { CombatCharacter, MonsterConfig } from "../types/game";
-import { applyMove, tickBuffs, getEffectiveStat } from "../utils/combat";
-import { GameState } from "../utils/gameState";
+import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
+import { GameState, getGearBonuses } from "../utils/gameState";
+import { MetaProgress } from "../utils/metaProgress";
 import { api } from "../services/api";
 import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
 import {
@@ -46,8 +49,6 @@ interface BattleData {
   nodeId?: string;
 }
 
-const LOG_LINES = 3;
-const PANEL_W = 270;
 const BAR_W = PANEL_W - 24;
 
 export class BattleScene extends Phaser.Scene {
@@ -103,23 +104,36 @@ export class BattleScene extends Phaser.Scene {
     this.nodeId = data.nodeId;
 
     const hs = GameState.hero;
+    const gear = getGearBonuses(hs.equipment ?? {}, GameState.runConfig!.items);
+    const effMaxHp = hs.maxHp + (gear.maxHp ?? 0);
     this.hero = {
       id: "hero",
       name: "Knight",
-      hp: hs.currentHp ?? hs.maxHp,
-      maxHp: hs.maxHp,
-      baseStats: { attack: hs.attack, defense: hs.defense, magic: hs.magic },
+      hp: Math.min(hs.currentHp ?? hs.maxHp, effMaxHp),
+      maxHp: effMaxHp,
+      baseStats: {
+        attack: hs.attack + (gear.attack ?? 0),
+        defense: hs.defense + (gear.defense ?? 0),
+        magic: hs.magic + (gear.magic ?? 0),
+      },
       activeBuffs: [],
       moves: hs.equippedMoves,
     };
 
     const ms = this.monsterCfg.stats;
+    const heroLevel = GameState.hero.level;
+    const scaleFactor = 1 + 0.08 * (heroLevel - 1);
+    const scaledHp = Math.floor(ms.hp * scaleFactor);
     this.monster = {
       id: this.monsterCfg.id,
       name: this.monsterCfg.name,
-      hp: ms.hp,
-      maxHp: ms.hp,
-      baseStats: { attack: ms.attack, defense: ms.defense, magic: ms.magic },
+      hp: scaledHp,
+      maxHp: scaledHp,
+      baseStats: {
+        attack: Math.floor(ms.attack * scaleFactor),
+        defense: Math.floor(ms.defense * scaleFactor),
+        magic: Math.floor(ms.magic * scaleFactor),
+      },
       activeBuffs: [],
       moves: this.monsterCfg.moves,
     };
@@ -150,7 +164,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.add
       .text(cx, panelTop + 20, `Knight  Lv.${GameState.hero.level}`, {
-        fontSize: "22px",
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_HERO,
       })
@@ -164,7 +178,7 @@ export class BattleScene extends Phaser.Scene {
     // Live effective stats (updated each turn)
     this.heroStatsText = this.add
       .text(cx, panelTop + panelH * 0.62, "", {
-        fontSize: "15px",
+        fontSize: FONT_BODY,
         color: TXT_GOLD_LIGHT,
         align: "center",
       })
@@ -183,14 +197,14 @@ export class BattleScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
     this.heroHpText = this.add
       .text(cx, barY + 18, "", {
-        fontSize: "15px",
+        fontSize: FONT_BODY,
         color: TXT_GOLD_LIGHT,
       })
       .setOrigin(0.5);
 
     this.heroBuffText = this.add
       .text(cx, panelTop + panelH * 0.88, "", {
-        fontSize: "13px",
+        fontSize: FONT_SM,
         color: TXT_GOLD_MID,
         wordWrap: { width: PANEL_W - 16 },
         align: "center",
@@ -213,7 +227,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.add
       .text(cx, panelTop + 20, this.monsterCfg.name, {
-        fontSize: "22px",
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_MONSTER,
       })
@@ -235,7 +249,7 @@ export class BattleScene extends Phaser.Scene {
         panelTop + panelH * 0.62,
         `ATK ${ms.attack}   DEF ${ms.defense}   MAG ${ms.magic}`,
         {
-          fontSize: "15px",
+          fontSize: FONT_BODY,
           color: TXT_GOLD_LIGHT,
           align: "center",
         },
@@ -255,7 +269,7 @@ export class BattleScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
     this.monsterHpText = this.add
       .text(cx, barY + 18, "", {
-        fontSize: "15px",
+        fontSize: FONT_BODY,
         color: TXT_GOLD_LIGHT,
       })
       .setOrigin(0.5);
@@ -263,7 +277,7 @@ export class BattleScene extends Phaser.Scene {
     // Intent row — what the monster plans to do this turn
     this.monsterIntentText = this.add
       .text(cx, panelTop + panelH * 0.86, "", {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: TXT_MUTED,
         wordWrap: { width: PANEL_W - 16 },
@@ -274,7 +288,7 @@ export class BattleScene extends Phaser.Scene {
     // Active buffs/debuffs
     this.monsterBuffText = this.add
       .text(cx, panelTop + panelH * 0.94, "", {
-        fontSize: "12px",
+        fontSize: FONT_SM,
         color: TXT_DUST_MOTE,
         wordWrap: { width: PANEL_W - 16 },
         align: "center",
@@ -291,7 +305,7 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(width / 2, y, width - 20, 38, BG_PANEL, 0.92).setStrokeStyle(1, BORDER_GOLD);
     this.statusText = this.add
       .text(width / 2, y, "", {
-        fontSize: "22px",
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
       })
@@ -316,7 +330,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.descText = this.add
       .text(width / 2, descY, "", {
-        fontSize: "15px",
+        fontSize: FONT_BODY,
         color: TXT_GOLD_MID,
         wordWrap: { width: width - 40 },
         align: "center",
@@ -335,14 +349,14 @@ export class BattleScene extends Phaser.Scene {
         .setStrokeStyle(1, BORDER_LOCKED);
       const nameTxt = this.add
         .text(0, -10, move.name, {
-          fontSize: "17px",
+          fontSize: FONT_MD,
           fontFamily: "EnchantedLand",
           color: TXT_GOLD_LIGHT,
         })
         .setOrigin(0.5);
       const typeTxt = this.add
         .text(0, 12, `[${move.moveType}]`, {
-          fontSize: "13px",
+          fontSize: FONT_SM,
           color: TXT_GOLD_MID,
         })
         .setOrigin(0.5);
@@ -404,7 +418,7 @@ export class BattleScene extends Phaser.Scene {
       this.logLines.push(
         this.add
           .text(width / 2, startY + i * lineH, "", {
-            fontSize: "17px",
+            fontSize: FONT_MD,
             color: TXT_GOLD_LIGHT,
           })
           .setOrigin(0.5),
@@ -801,11 +815,35 @@ export class BattleScene extends Phaser.Scene {
     const xpGain = this.monsterCfg.xpReward;
     const leveled = GameState.addXp(xpGain);
 
-    const newMoves = this.monsterCfg.moves.filter(
-      (id) => !GameState.hero.learnedMoves.includes(id),
-    );
-    const learnedMove =
-      newMoves.length > 0 ? newMoves[Math.floor(Math.random() * newMoves.length)] : null;
+    const baseGold = this.monsterCfg.goldReward ?? 0;
+    const goldEarned = Math.floor(baseGold * (0.8 + Math.random() * 0.4));
+    GameState.hero.gold = (GameState.hero.gold ?? 0) + goldEarned;
+
+    const shardsEarned = this.monsterCfg.shardReward ?? 0;
+    MetaProgress.addShards(shardsEarned);
+
+    let droppedItemId: string | null = null;
+    const dropChance = this.monsterCfg.itemDropChance ?? 0;
+    const dropPool = this.monsterCfg.itemDropPool ?? [];
+    if (dropPool.length > 0 && Math.random() < dropChance) {
+      const totalWeight = dropPool.reduce((s, e) => s + e.weight, 0);
+      let roll = Math.random() * totalWeight;
+      for (const entry of dropPool) {
+        roll -= entry.weight;
+        if (roll <= 0) { droppedItemId = entry.itemId; break; }
+      }
+      if (droppedItemId) {
+        if (GameState.runConfig!.items[droppedItemId]) GameState.addToInventory(droppedItemId);
+      }
+    }
+    GameState.saveHero();
+
+    const allMoves = GameState.runConfig!.moves;
+    const learned = GameState.hero.learnedMoves;
+    const notKnown = this.monsterCfg.moves.filter((id) => !learned.includes(id));
+    const genuinelyNew = notKnown.filter((id) => !hasSimilarMove(allMoves[id], learned, allMoves));
+    const dropped = genuinelyNew.filter((id) => Math.random() < (allMoves[id]?.dropChance ?? 1));
+    const learnedMove = dropped.length > 0 ? dropped[Math.floor(Math.random() * dropped.length)] : null;
     if (learnedMove) GameState.learnMove(learnedMove);
 
     const newDefeated = [...this.defeatedIds, this.monsterCfg.id];
@@ -815,6 +853,9 @@ export class BattleScene extends Phaser.Scene {
       won: true,
       learnedMoveId: learnedMove,
       xpGained: xpGain,
+      goldEarned,
+      shardsEarned,
+      droppedItemId,
       leveledUp: leveled,
       monsterIndex: this.monsterIndex,
       defeatedIds: newDefeated,
@@ -824,14 +865,14 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleDefeat() {
-    GameState.hero.currentHp = GameState.hero.maxHp;
-    const xpGain = Math.floor(this.monsterCfg.xpReward * 0.25);
-    GameState.addXp(xpGain);
+    // Full run reset — hero returns to level 1 with meta bonuses applied
+    if (GameState.runConfig) GameState.resetHero(GameState.runConfig);
+    GameState.resetRunProgress(); // saves fresh tree state so CONTINUE works from main menu
 
     this.scene.start("PostBattleScene", {
       won: false,
       learnedMoveId: null,
-      xpGained: xpGain,
+      xpGained: 0,
       leveledUp: false,
       monsterIndex: this.monsterIndex,
       defeatedIds: this.defeatedIds,

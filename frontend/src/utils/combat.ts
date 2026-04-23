@@ -93,6 +93,26 @@ export function applyMove(
   return result;
 }
 
+export function hasSimilarMove(
+  candidate: MoveConfig,
+  learnedIds: string[],
+  allMoves: Record<string, MoveConfig>,
+): boolean {
+  for (const id of learnedIds) {
+    const learned = allMoves[id];
+    if (!learned) continue;
+    for (const fxA of candidate.effects) {
+      if (fxA.type !== "buff" && fxA.type !== "debuff") continue;
+      for (const fxB of learned.effects) {
+        if (fxA.type === fxB.type && fxA.stat === fxB.stat && fxA.target === fxB.target) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 export function tickBuffs(char: CombatCharacter): void {
   char.activeBuffs = char.activeBuffs
     .map((b) => ({ ...b, turnsRemaining: b.turnsRemaining - 1 }))

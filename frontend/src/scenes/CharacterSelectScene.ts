@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT_LG, FONT_SM, FONT_XS } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { HERO_FRAME } from "../utils/spriteFrames";
 import type { RunConfig } from "../types/game";
@@ -114,7 +115,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.15, "Your choice defines your playstyle for the entire run.", {
-        fontSize: "25px",
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_MUTED,
       })
@@ -142,7 +143,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       .setVisible(false);
     this.statInfoText = this.add
       .text(width / 2, height * 0.835, "", {
-        fontSize: "14px",
+        fontSize: FONT_SM,
         color: TXT_GOLD_LIGHT,
         align: "center",
       })
@@ -194,7 +195,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const nameText = this.add
       .text(0, -h * 0.13, cls.name, {
-        fontSize: "20px",
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: cls.locked ? TXT_CLASS_LOCKED : TXT_GOLD,
       })
@@ -220,7 +221,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
       const valueText = this.add
         .text(textX, sy, `${stat.label}  ${statValues[i]}`, {
-          fontSize: "13px",
+          fontSize: FONT_SM,
           color: cls.locked ? TXT_CARD_LOCKED : TXT_GOLD_LIGHT,
         })
         .setOrigin(0, 0.5);
@@ -249,7 +250,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const descText = this.add
       .text(0, h * 0.22, cls.description, {
-        fontSize: "12px",
+        fontSize: FONT_SM,
         color: cls.locked ? TXT_CARD_LOCKED : TXT_GOLD_LIGHT,
         align: "center",
         wordWrap: { width: w - 24 },
@@ -258,7 +259,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const movesLabel = this.add
       .text(0, h * 0.35, "Moves", {
-        fontSize: "12px",
+        fontSize: FONT_SM,
         fontFamily: "EnchantedLand",
         color: cls.locked ? TXT_CARD_LOCKED : TXT_MUTED,
       })
@@ -266,7 +267,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const movesText = this.add
       .text(0, h * 0.42, cls.moves.join("  ·  "), {
-        fontSize: "11px",
+        fontSize: FONT_XS,
         color: cls.locked ? TXT_CARD_LOCKED : TXT_GOLD_WARM,
         align: "center",
         wordWrap: { width: w - 16 },
@@ -276,7 +277,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     if (cls.locked) {
       const lockText = this.add
         .text(0, 0, "COMING\nSOON", {
-          fontSize: "22px",
+          fontSize: FONT_LG,
           fontFamily: "EnchantedLand",
           color: TXT_COMING_SOON,
           align: "center",

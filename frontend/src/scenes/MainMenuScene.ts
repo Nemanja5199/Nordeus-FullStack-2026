@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT_MD } from "../ui/typography";
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
 import { createButton, BTN_LG } from "../ui/Button";
@@ -81,7 +82,7 @@ export class MainMenuScene extends Phaser.Scene {
   private async startNewGame() {
     const loading = this.add
       .text(this.scale.width / 2, this.scale.height * 0.91, "Loading...", {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         color: TXT_MUTED,
       })
       .setOrigin(0.5);
@@ -97,7 +98,7 @@ export class MainMenuScene extends Phaser.Scene {
   private async continueGame() {
     const loading = this.add
       .text(this.scale.width / 2, this.scale.height * 0.91, "Loading save...", {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         color: TXT_MUTED,
       })
       .setOrigin(0.5);
@@ -124,7 +125,7 @@ export class MainMenuScene extends Phaser.Scene {
     localStorage.removeItem("rpg_hero");
     this.add
       .text(this.scale.width / 2, this.scale.height * 0.91, "Progress reset.", {
-        fontSize: "18px",
+        fontSize: FONT_MD,
         color: TXT_BOSS,
       })
       .setOrigin(0.5);
