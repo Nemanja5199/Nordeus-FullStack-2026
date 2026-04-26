@@ -435,6 +435,7 @@ export class TreeMapScene extends Phaser.Scene {
           defeatedIds: GameState.completedNodes,
           sourceScene: "TreeMapScene",
           nodeId: node.id,
+          levelBand: node.levelBand,
         });
       });
     }

@@ -162,16 +162,16 @@ class GameStateManager {
   private levelUp(): void {
     this.hero.level += 1;
     this.hero.xp = 0;
-    this.hero.skillPoints = (this.hero.skillPoints ?? 0) + 3;
+    this.hero.skillPoints = (this.hero.skillPoints ?? 0) + 1;
   }
 
   spendSkillPoint(stat: "attack" | "defense" | "magic" | "maxHp"): boolean {
     if ((this.hero.skillPoints ?? 0) <= 0) return false;
     const gains = this.runConfig?.heroDefaults.levelUpStats ?? {
-      maxHp: 20,
-      attack: 3,
+      maxHp: 8,
+      attack: 2,
       defense: 2,
-      magic: 2,
+      magic: 3,
     };
     if (stat === "maxHp") {
       this.hero.maxHp += gains.maxHp;

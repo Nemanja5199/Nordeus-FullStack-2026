@@ -17,7 +17,7 @@ const MOCK_CONFIG: RunConfig = {
     defense: 10,
     magic: 8,
     defaultMoves: ["slash", "shield_up", "battle_cry", "second_wind"],
-    levelUpStats: { maxHp: 20, attack: 3, defense: 2, magic: 2 },
+    levelUpStats: { maxHp: 8, attack: 2, defense: 2, magic: 3 },
     xpPerLevel: 100,
   },
 };
@@ -59,9 +59,9 @@ describe("GameState.addXp", () => {
     expect(GameState.hero.xp).toBe(0);
   });
 
-  it("awards 3 skill points on level up", () => {
+  it("awards 1 skill point on level up", () => {
     GameState.addXp(100);
-    expect(GameState.hero.skillPoints).toBe(3);
+    expect(GameState.hero.skillPoints).toBe(1);
   });
 
   it("level up threshold scales with level", () => {
@@ -90,7 +90,7 @@ describe("GameState.spendSkillPoint", () => {
 
   it("increases attack by levelUpStats gain", () => {
     GameState.spendSkillPoint("attack");
-    expect(GameState.hero.attack).toBe(15 + 3);
+    expect(GameState.hero.attack).toBe(15 + 2);
     expect(GameState.hero.skillPoints).toBe(2);
   });
 
@@ -101,14 +101,14 @@ describe("GameState.spendSkillPoint", () => {
 
   it("increases magic by levelUpStats gain", () => {
     GameState.spendSkillPoint("magic");
-    expect(GameState.hero.magic).toBe(8 + 2);
+    expect(GameState.hero.magic).toBe(8 + 3);
   });
 
   it("increases maxHp and current HP together", () => {
     const hpBefore = GameState.hero.currentHp!;
     GameState.spendSkillPoint("maxHp");
-    expect(GameState.hero.maxHp).toBe(100 + 20);
-    expect(GameState.hero.currentHp).toBe(hpBefore + 20);
+    expect(GameState.hero.maxHp).toBe(100 + 8);
+    expect(GameState.hero.currentHp).toBe(hpBefore + 8);
   });
 
   it("currentHp does not exceed new maxHp after HP spend", () => {

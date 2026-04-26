@@ -107,7 +107,7 @@ export class PostBattleScene extends Phaser.Scene {
         y += 44;
 
         this.add
-          .text(width / 2, y, `+3 Skill Points — allocate them in Manage Moves`, {
+          .text(width / 2, y, `+1 Skill Point — allocate it in Manage Moves`, {
             fontSize: FONT_BODY,
             color: TXT_HERO,
           })
@@ -224,6 +224,14 @@ export class PostBattleScene extends Phaser.Scene {
         },
       });
     } else {
+      createButton(this, width / 2, y, {
+        ...BTN_MD,
+        label: "FIGHT AGAIN",
+        color: BG_BTN_SUCCESS,
+        onClick: () => this.scene.start("TreeMapScene"),
+      });
+      y += 60;
+
       createButton(this, width / 2, y, {
         ...BTN_MD,
         label: "UPGRADES",

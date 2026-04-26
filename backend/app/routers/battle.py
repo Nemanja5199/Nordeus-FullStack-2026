@@ -55,10 +55,10 @@ def _apply_move_sim(
                 None,
             )
             if existing:
-                existing.turnsRemaining = max(existing.turnsRemaining, fx["turns"])
+                existing.turnsRemaining = max(existing.turnsRemaining, fx["turns"] + 1)
             else:
                 tgt.activeBuffs.append(
-                    ActiveBuff(stat=fx["stat"], multiplier=fx["multiplier"], turnsRemaining=fx["turns"])
+                    ActiveBuff(stat=fx["stat"], multiplier=fx["multiplier"], turnsRemaining=fx["turns"] + 1)
                 )
         elif ftype == "hp_cost":
             atk.hp = max(1, atk.hp - fx["value"])
@@ -104,7 +104,7 @@ def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
         elif b.multiplier < 1.0:
             buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
 
-    return hp_score + buff_score * 4.0
+    return hp_score + buff_score * 3.0
 
 
 def _minimax(

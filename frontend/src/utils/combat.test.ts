@@ -26,6 +26,7 @@ function makeMove(overrides: Partial<MoveConfig> = {}): MoveConfig {
     effects: [],
     description: "",
     dropChance: 1.0,
+    manaCost: 0,
     ...overrides,
   };
 }
@@ -198,7 +199,7 @@ describe("applyMove — buff/debuff effects", () => {
     expect(attacker.activeBuffs[0]).toMatchObject({
       stat: "attack",
       multiplier: 1.5,
-      turnsRemaining: 2,
+      turnsRemaining: 3,
     });
   });
 
@@ -216,7 +217,7 @@ describe("applyMove — buff/debuff effects", () => {
     expect(defender.activeBuffs[0]).toMatchObject({
       stat: "defense",
       multiplier: 0.7,
-      turnsRemaining: 2,
+      turnsRemaining: 3,
     });
   });
 
@@ -233,7 +234,7 @@ describe("applyMove — buff/debuff effects", () => {
 
     applyMove(move, attacker, defender);
     expect(attacker.activeBuffs).toHaveLength(1);
-    expect(attacker.activeBuffs[0].turnsRemaining).toBe(3);
+    expect(attacker.activeBuffs[0].turnsRemaining).toBe(4);
   });
 });
 

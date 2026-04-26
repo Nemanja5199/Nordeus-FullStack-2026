@@ -1,10 +1,25 @@
 import random
 from typing import Any
 
-# Tier pools
+# Tier pools — depth 1 uses base goblins, depth 2 uses elite variants
 TIER1_MONSTERS = ["goblin_warrior", "goblin_mage"]
 TIER2_MONSTERS = ["giant_spider", "witch"]
 BOSS_MONSTERS  = ["dragon"]
+TIER1_ELITE_MONSTERS = ["goblin_veteran", "goblin_warlock"]
+
+# Per-monster level bands: monsterLevel = clamp(heroLevel, min, max)
+# 5% scaling per level: scaleFactor = 1 + 0.05 * (monsterLevel - 1)
+MONSTER_LEVEL_BANDS: dict[tuple[str, int], dict] = {
+    ("goblin_warrior",  1): {"min": 1,  "max": 3},
+    ("goblin_mage",     1): {"min": 1,  "max": 2},
+    ("goblin_veteran",  2): {"min": 4,  "max": 6},
+    ("goblin_warlock",  2): {"min": 4,  "max": 5},
+    ("giant_spider",    3): {"min": 13, "max": 14},
+    ("giant_spider",    4): {"min": 23, "max": 23},
+    ("witch",           3): {"min": 7,  "max": 10},
+    ("witch",           4): {"min": 12, "max": 13},
+    ("dragon",          5): {"min": 28, "max": 30},
+}
 
 # Probability that a node has 2 children instead of 1 (sparse branching)
 BRANCH_PROB = 0.30
@@ -46,7 +61,10 @@ def generate_map_tree(seed: int | None = None) -> dict[str, Any]:
             if level == 5:
                 monster_id = rng.choice(BOSS_MONSTERS)
                 node_type  = "boss"
-            elif level <= 2:
+            elif level == 2:
+                monster_id = rng.choice(TIER1_ELITE_MONSTERS)
+                node_type  = "monster"
+            elif level == 1:
                 monster_id = rng.choice(TIER1_MONSTERS)
                 node_type  = "monster"
             else:
@@ -57,6 +75,7 @@ def generate_map_tree(seed: int | None = None) -> dict[str, Any]:
                 "id":        nid,
                 "monsterId": monster_id,
                 "level":     level,
+                "levelBand": MONSTER_LEVEL_BANDS.get((monster_id, level), {"min": 1, "max": 1}),
                 "children":  [],
                 "type":      node_type,
             }

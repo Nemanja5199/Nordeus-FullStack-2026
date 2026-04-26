@@ -79,9 +79,54 @@ class TestMoves:
                     )
 
 
+class TestManaCosts:
+    """Mana cost invariants — see BattleScene.MANA_MAX (60)."""
+
+    MANA_MAX = 60
+
+    def test_all_moves_declare_mana_cost(self):
+        for move_id, move in MOVES.items():
+            assert "manaCost" in move, f"Move '{move_id}' missing 'manaCost'"
+
+    def test_mana_costs_non_negative(self):
+        for move_id, move in MOVES.items():
+            assert move["manaCost"] >= 0, (
+                f"Move '{move_id}' has negative manaCost {move['manaCost']}"
+            )
+
+    def test_mana_costs_castable_at_full_mana(self):
+        # Any move whose cost exceeds MANA_MAX is permanently uncastable.
+        for move_id, move in MOVES.items():
+            assert move["manaCost"] <= self.MANA_MAX, (
+                f"Move '{move_id}' costs {move['manaCost']} but MANA_MAX is {self.MANA_MAX}"
+            )
+
+    def test_basic_attack_is_free(self):
+        # Slash must be free so the hero is never mana-locked into doing nothing.
+        assert MOVES["slash"]["manaCost"] == 0
+
+
+class TestHeadbuttSplit:
+    """Headbutt is monster-only; players get the weaker `headbutt_player` from drops."""
+
+    def test_both_variants_exist(self):
+        assert "headbutt" in MOVES
+        assert "headbutt_player" in MOVES
+
+    def test_monster_headbutt_does_not_drop(self):
+        assert MOVES["headbutt"]["dropChance"] == 0.0
+
+    def test_player_headbutt_drops(self):
+        assert MOVES["headbutt_player"]["dropChance"] > 0.0
+
+    def test_player_variant_weaker_than_monster_variant(self):
+        assert MOVES["headbutt_player"]["baseValue"] < MOVES["headbutt"]["baseValue"]
+
+
 class TestMonsters:
-    def test_five_monsters_in_order(self):
-        assert len(MONSTERS) == 5
+    def test_monster_count(self):
+        # 5 base monsters + 2 elite tier-1 variants
+        assert len(MONSTERS) == 7
 
     def test_all_monsters_have_required_fields(self):
         for m in MONSTERS:
@@ -102,15 +147,55 @@ class TestMonsters:
                     f"Monster '{m['id']}' references unknown move '{move_id}'"
                 )
 
-    def test_xp_reward_increases_with_difficulty(self):
-        rewards = [m["xpReward"] for m in MONSTERS]
-        assert rewards == sorted(rewards), "Monster XP rewards should increase with each monster"
+    def test_xp_reward_increases_across_tiers(self):
+        # Tier 1 (base + elite) should give less XP than tier 2, which gives less than the boss
+        tier1_ids = {"goblin_warrior", "goblin_mage", "goblin_veteran", "goblin_warlock"}
+        tier2_ids = {"giant_spider", "witch"}
+        boss_ids  = {"dragon"}
+        by_id = {m["id"]: m["xpReward"] for m in MONSTERS}
+        max_tier1 = max(by_id[mid] for mid in tier1_ids)
+        min_tier2 = min(by_id[mid] for mid in tier2_ids)
+        max_tier2 = max(by_id[mid] for mid in tier2_ids)
+        min_boss  = min(by_id[mid] for mid in boss_ids)
+        assert max_tier1 < min_tier2, "Tier-1 XP should be less than tier-2"
+        assert max_tier2 < min_boss,  "Tier-2 XP should be less than boss"
 
     def test_exactly_four_moves_per_monster(self):
         for m in MONSTERS:
             assert len(m["moves"]) == 4, (
                 f"Monster '{m['id']}' should have exactly 4 moves, has {len(m['moves'])}"
             )
+
+
+class TestEliteMonsters:
+    """Elite tier-1 variants must be strictly harder than their base counterparts."""
+
+    def _by_id(self):
+        return {m["id"]: m for m in MONSTERS}
+
+    def test_goblin_veteran_stronger_than_goblin_warrior(self):
+        by_id = self._by_id()
+        base = by_id["goblin_warrior"]["stats"]
+        elite = by_id["goblin_veteran"]["stats"]
+        assert elite["hp"] > base["hp"], "Veteran HP should exceed Warrior HP"
+        assert elite["attack"] > base["attack"], "Veteran ATK should exceed Warrior ATK"
+
+    def test_goblin_warlock_stronger_than_goblin_mage(self):
+        by_id = self._by_id()
+        base = by_id["goblin_mage"]["stats"]
+        elite = by_id["goblin_warlock"]["stats"]
+        assert elite["hp"] > base["hp"], "Warlock HP should exceed Mage HP"
+        assert elite["magic"] > base["magic"], "Warlock MAG should exceed Mage MAG"
+
+    def test_elite_xp_exceeds_base_counterpart(self):
+        by_id = self._by_id()
+        assert by_id["goblin_veteran"]["xpReward"] > by_id["goblin_warrior"]["xpReward"]
+        assert by_id["goblin_warlock"]["xpReward"] > by_id["goblin_mage"]["xpReward"]
+
+    def test_elites_share_move_pools_with_base(self):
+        by_id = self._by_id()
+        assert by_id["goblin_veteran"]["moves"] == by_id["goblin_warrior"]["moves"]
+        assert by_id["goblin_warlock"]["moves"] == by_id["goblin_mage"]["moves"]
 
 
 class TestHeroDefaults:

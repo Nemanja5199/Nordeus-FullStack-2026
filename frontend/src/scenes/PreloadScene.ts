@@ -40,6 +40,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image("stat_atk", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");
     this.load.image("stat_def", "/assets/Items Assets/Weapon & Tool/Iron Shield.png");
     this.load.image("stat_mag", "/assets/Items Assets/Weapon & Tool/Magic Wand.png");
+    this.load.image("stat_mp", "/assets/Items Assets/Misc/Rune Stone.png");
 
     // Item icons
     this.load.image("item_iron_sword", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");

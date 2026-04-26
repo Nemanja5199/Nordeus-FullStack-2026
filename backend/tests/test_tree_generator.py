@@ -1,6 +1,6 @@
 """Tests for generate_map_tree — enforces all structural rules from the spec."""
 import pytest
-from app.tree_generator import generate_map_tree, TIER1_MONSTERS, TIER2_MONSTERS, BOSS_MONSTERS
+from app.tree_generator import generate_map_tree, TIER1_MONSTERS, TIER1_ELITE_MONSTERS, TIER2_MONSTERS, BOSS_MONSTERS
 
 SEEDS = [0, 1, 42, 999, 12345]  # test multiple seeds to catch non-deterministic edge cases
 
@@ -122,10 +122,45 @@ class TestMonsterTiers:
     def test_tier1_levels_use_tier1_monsters(self, seed):
         tree = get_tree(seed)
         for n in tree["nodes"].values():
-            if n["level"] in (1, 2):
+            if n["level"] == 1:
                 assert n["monsterId"] in TIER1_MONSTERS, (
-                    f"Level {n['level']} node has tier2 monster '{n['monsterId']}'"
+                    f"Level 1 node has non-tier1 monster '{n['monsterId']}'"
                 )
+            elif n["level"] == 2:
+                assert n["monsterId"] in TIER1_ELITE_MONSTERS, (
+                    f"Level 2 node has non-elite monster '{n['monsterId']}'"
+                )
+
+    @pytest.mark.parametrize("seed", SEEDS)
+    def test_elite_monsters_never_appear_at_depth1(self, seed):
+        tree = get_tree(seed)
+        for n in tree["nodes"].values():
+            if n["level"] == 1:
+                assert n["monsterId"] not in TIER1_ELITE_MONSTERS, (
+                    f"Elite monster '{n['monsterId']}' should not appear at depth 1"
+                )
+
+    @pytest.mark.parametrize("seed", SEEDS)
+    def test_base_goblins_never_appear_at_depth2(self, seed):
+        tree = get_tree(seed)
+        for n in tree["nodes"].values():
+            if n["level"] == 2:
+                assert n["monsterId"] not in TIER1_MONSTERS, (
+                    f"Base goblin '{n['monsterId']}' should not appear at depth 2"
+                )
+
+    @pytest.mark.parametrize("seed", SEEDS)
+    def test_level_bands_present_for_all_tree_monsters(self, seed):
+        from app.tree_generator import MONSTER_LEVEL_BANDS
+        tree = get_tree(seed)
+        for n in tree["nodes"].values():
+            key = (n["monsterId"], n["level"])
+            assert key in MONSTER_LEVEL_BANDS, (
+                f"No level band for ({n['monsterId']}, depth {n['level']})"
+            )
+            band = n["levelBand"]
+            assert band["min"] >= 1, f"Level band min < 1 for {key}"
+            assert band["max"] >= band["min"], f"Level band max < min for {key}"
 
     @pytest.mark.parametrize("seed", SEEDS)
     def test_tier2_levels_use_tier2_monsters(self, seed):

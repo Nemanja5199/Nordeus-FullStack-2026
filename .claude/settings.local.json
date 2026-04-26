@@ -33,7 +33,32 @@
       "Bash(npx vitest *)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(./node_modules/.bin/vitest run *)",
-      "Bash(node node_modules/vitest/vitest.mjs run)"
+      "Bash(node node_modules/vitest/vitest.mjs run)",
+      "Bash(python3 -m pytest tests/ -q)",
+      "Bash(python3 -m pytest tests/)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(sed -i 's|import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from \"../ui/typography\";|import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from \"../ui/typography\";\\\\nimport { MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from \"../ui/layout\";|' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/MoveManagementScene.ts)",
+      "Bash(sed -i 's|import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from \"../ui/typography\";|import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from \"../ui/typography\";\\\\nimport { EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from \"../ui/layout\";|' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/EquipmentScene.ts)",
+      "Bash(sed -i 's|import { FONT_MD, FONT_SM } from \"../ui/typography\";|import { FONT_MD, FONT_SM } from \"../ui/typography\";\\\\nimport { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from \"../ui/layout\";|' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/TreeMapScene.ts)",
+      "Bash(sed -i 's|import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from \"../ui/typography\";|import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from \"../ui/typography\";\\\\nimport { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from \"../ui/layout\";|' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/BattleScene.ts)",
+      "Bash(sed -i '/^const CARD_W = /d; /^const CARD_H = /d; /^const CARD_GAP = /d; /^const START_Y = /d' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/MoveManagementScene.ts)",
+      "Bash(sed -i '/^const EQ_CARD_W = /d; /^const EQ_CARD_H = /d; /^const EQ_CARD_GAP = /d; /^const EQ_START_Y = /d; /^const EQ_ICON = /d; /^const GRID_CELL = /d; /^const GRID_GAP = /d; /^const GRID_COLS = /d; /^const GRID_START_Y = /d' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/EquipmentScene.ts)",
+      "Bash(sed -i '/^const PANEL_W = 260/d; /^const PANEL_H = /d; /^const PANEL_GAP = /d; /^const NODE_W = /d; /^const NODE_H = /d; /^const BOSS_W = /d; /^const BOSS_H = /d; /^const HOVER_SCALE = /d' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/TreeMapScene.ts)",
+      "Bash(sed -i '/^const LOG_LINES = /d; /^const PANEL_W = 270/d' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/BattleScene.ts)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch *)",
+      "Bash(python simulate_fights.py --trials 300)",
+      "Bash(python3 simulate_fights.py --trials 300)",
+      "Bash(timeout 90 python3 simulate_fights.py --trials 100)",
+      "Bash(timeout 90 python3 simulate_fights.py --trials 200)",
+      "Bash(timeout 30 python3 simulate_fights.py --trials 20)",
+      "Bash(timeout 60 python3 *)",
+      "Bash(python3 *)",
+      "Bash(wait)",
+      "Bash(jobs)",
+      "Bash(docker compose *)",
+      "Bash(node_modules/.bin/vitest run *)",
+      "Bash(kill bnqmecczo *)"
     ]
   }
 }
