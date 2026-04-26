@@ -30,6 +30,9 @@ import {
   BAR_HP_HIGH,
   BAR_HP_MID,
   BAR_HP_LOW,
+  BAR_MANA_FILL,
+  TXT_MANA,
+  TXT_MANA_LOW,
   BG_BAR_TRACK,
   HP_GHOST_HERO,
   HP_GHOST_MONSTER,
@@ -47,6 +50,7 @@ interface BattleData {
   defeatedIds: string[];
   sourceScene?: string;
   nodeId?: string;
+  levelBand?: { min: number; max: number };
 }
 
 const BAR_W = PANEL_W - 24;
@@ -59,11 +63,20 @@ export class BattleScene extends Phaser.Scene {
   private defeatedIds!: string[];
   private sourceScene!: string;
   private nodeId!: string | undefined;
+  private monsterLevel = 1;
   private turnNumber = 0;
   private busy = false;
 
+  // Mana
+  private heroMana = 60;
+  private readonly MANA_MAX = 60;
+  private readonly MANA_REGEN = 6;
+  private heroManaBarLeft!: number;
+
   // UI
   private heroHpFill!: Phaser.GameObjects.Rectangle;
+  private heroManaFill!: Phaser.GameObjects.Rectangle;
+  private heroManaText!: Phaser.GameObjects.Text;
   private monsterHpFill!: Phaser.GameObjects.Rectangle;
   private heroHpText!: Phaser.GameObjects.Text;
   private monsterHpText!: Phaser.GameObjects.Text;
@@ -93,6 +106,7 @@ export class BattleScene extends Phaser.Scene {
   create(data: BattleData) {
     this.busy = false;
     this.turnNumber = 0;
+    this.heroMana = this.MANA_MAX;
     this.moveButtons = [];
     this.logLines = [];
     this.monsterIntentMoveId = null;
@@ -109,7 +123,7 @@ export class BattleScene extends Phaser.Scene {
     this.hero = {
       id: "hero",
       name: "Knight",
-      hp: Math.min(hs.currentHp ?? hs.maxHp, effMaxHp),
+      hp: effMaxHp,
       maxHp: effMaxHp,
       baseStats: {
         attack: hs.attack + (gear.attack ?? 0),
@@ -122,7 +136,9 @@ export class BattleScene extends Phaser.Scene {
 
     const ms = this.monsterCfg.stats;
     const heroLevel = GameState.hero.level;
-    const scaleFactor = 1 + 0.08 * (heroLevel - 1);
+    const band = data.levelBand ?? { min: 1, max: 15 };
+    this.monsterLevel = Math.max(band.min, Math.min(band.max, heroLevel));
+    const scaleFactor = 1 + 0.05 * (this.monsterLevel - 1);
     const scaledHp = Math.floor(ms.hp * scaleFactor);
     this.monster = {
       id: this.monsterCfg.id,
@@ -185,7 +201,7 @@ export class BattleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // HP bar
-    const barY = panelTop + panelH * 0.72;
+    const barY = panelTop + panelH * 0.70;
     this.heroBarLeft = cx - BAR_W / 2;
     this.heroBarY = barY;
     this.add.rectangle(cx, barY, BAR_W, 14, BG_BAR_TRACK).setOrigin(0.5);
@@ -196,14 +212,28 @@ export class BattleScene extends Phaser.Scene {
       .rectangle(this.heroBarLeft, barY, 0, 14, HP_GHOST_HERO, 0.75)
       .setOrigin(0, 0.5);
     this.heroHpText = this.add
-      .text(cx, barY + 18, "", {
+      .text(cx, barY + 16, "", {
+        fontSize: FONT_BODY,
+        color: TXT_GOLD_LIGHT,
+      })
+      .setOrigin(0.5);
+
+    // Mana bar
+    const manaBarY = panelTop + panelH * 0.81;
+    this.heroManaBarLeft = cx - BAR_W / 2;
+    this.add.rectangle(cx, manaBarY, BAR_W, 10, BG_BAR_TRACK).setOrigin(0.5);
+    this.heroManaFill = this.add
+      .rectangle(this.heroManaBarLeft, manaBarY, BAR_W, 10, BAR_MANA_FILL)
+      .setOrigin(0, 0.5);
+    this.heroManaText = this.add
+      .text(cx, manaBarY + 14, "", {
         fontSize: FONT_BODY,
         color: TXT_GOLD_LIGHT,
       })
       .setOrigin(0.5);
 
     this.heroBuffText = this.add
-      .text(cx, panelTop + panelH * 0.88, "", {
+      .text(cx, panelTop + panelH * 0.93, "", {
         fontSize: FONT_SM,
         color: TXT_GOLD_MID,
         wordWrap: { width: PANEL_W - 16 },
@@ -241,13 +271,12 @@ export class BattleScene extends Phaser.Scene {
         .setOrigin(0.5);
     }
 
-    // Monster base stats (static — monsters don't level up)
-    const ms = this.monsterCfg.stats;
+    // Monster stats scaled to hero level
     this.add
       .text(
         cx,
         panelTop + panelH * 0.62,
-        `ATK ${ms.attack}   DEF ${ms.defense}   MAG ${ms.magic}`,
+        `ATK ${this.monster.baseStats.attack}   DEF ${this.monster.baseStats.defense}   MAG ${this.monster.baseStats.magic}`,
         {
           fontSize: FONT_BODY,
           color: TXT_GOLD_LIGHT,
@@ -343,27 +372,36 @@ export class BattleScene extends Phaser.Scene {
 
       const x = startX + i * (btnW + btnGap);
       const container = this.add.container(x, btnY);
+      const cost = move.manaCost ?? 0;
 
       const bg = this.add
         .rectangle(0, 0, btnW, btnH, BG_MOVE_CARD, 0.92)
         .setStrokeStyle(1, BORDER_LOCKED);
       const nameTxt = this.add
-        .text(0, -10, move.name, {
+        .text(0, -12, move.name, {
           fontSize: FONT_MD,
           fontFamily: "EnchantedLand",
           color: TXT_GOLD_LIGHT,
         })
         .setOrigin(0.5);
       const typeTxt = this.add
-        .text(0, 12, `[${move.moveType}]`, {
+        .text(cost > 0 ? -20 : 0, 10, `[${move.moveType}]`, {
           fontSize: FONT_SM,
           color: TXT_GOLD_MID,
+        })
+        .setOrigin(0.5);
+      const costTxt = this.add
+        .text(cost > 0 ? 32 : 0, 10, cost > 0 ? `${cost} MP` : "", {
+          fontSize: FONT_SM,
+          color: TXT_MANA,
         })
         .setOrigin(0.5);
 
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerover", () => {
         if (this.busy) return;
+        const canAfford = this.heroMana >= cost;
+        if (!canAfford) return;
         bg.setFillStyle(BG_BTN_HOVER);
         bg.setStrokeStyle(1, BORDER_GOLD_BRIGHT);
         nameTxt.setColor(TXT_GOLD);
@@ -377,9 +415,12 @@ export class BattleScene extends Phaser.Scene {
         this.descText.setText("");
         this.hideMovePreview();
       });
-      bg.on("pointerdown", () => this.handlePlayerMove(moveId));
+      bg.on("pointerdown", () => {
+        if (this.heroMana < cost) return;
+        this.handlePlayerMove(moveId);
+      });
 
-      container.add([bg, nameTxt, typeTxt]);
+      container.add([bg, nameTxt, typeTxt, costTxt]);
       this.moveButtons.push(container);
     });
   }
@@ -459,6 +500,28 @@ export class BattleScene extends Phaser.Scene {
     this.heroHpText.setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`);
     this.heroBuffText.setText(this.formatBuffs(this.hero));
     this.updateHeroStats();
+    this.updateHeroMana();
+  }
+
+  private updateHeroMana() {
+    const pct = this.heroMana / this.MANA_MAX;
+    this.heroManaFill.setScale(pct, 1);
+    this.heroManaText.setText(`MP  ${this.heroMana} / ${this.MANA_MAX}`).setColor(TXT_GOLD_LIGHT);
+    this.updateButtonManaState();
+  }
+
+  private updateButtonManaState() {
+    this.hero.moves.forEach((moveId, i) => {
+      const btn = this.moveButtons[i];
+      if (!btn) return;
+      const move = GameState.runConfig!.moves[moveId];
+      const cost = move?.manaCost ?? 0;
+      const canAfford = this.heroMana >= cost;
+      const bg = btn.getAt(0) as Phaser.GameObjects.Rectangle;
+      const costTxt = btn.getAt(3) as Phaser.GameObjects.Text;
+      bg.setAlpha(canAfford ? 1 : 0.45);
+      if (costTxt) costTxt.setColor(canAfford ? TXT_MANA : TXT_MANA_LOW);
+    });
   }
 
   private updateHeroStats() {
@@ -612,6 +675,17 @@ export class BattleScene extends Phaser.Scene {
     const futureDef = this.previewHeroBuffs(move);
     const { playerDmg, playerHeal } = this.previewMonsterHp(move);
     this.previewHeroHp(playerDmg, playerHeal, futureDef);
+    this.previewMana(move.manaCost ?? 0);
+  }
+
+  private previewMana(cost: number) {
+    if (cost <= 0) return;
+    const futureMana = Math.max(0, this.heroMana - cost);
+    const futureRegen = Math.min(this.MANA_MAX, futureMana + this.MANA_REGEN);
+    this.heroManaFill.setScale(futureMana / this.MANA_MAX, 1);
+    this.heroManaText
+      .setText(`MP  ${futureMana} / ${this.MANA_MAX}  (+${futureRegen - futureMana} next turn)`)
+      .setColor(TXT_MANA_LOW);
   }
 
   private previewHeroBuffs(move: MoveConfig): number {
@@ -720,6 +794,7 @@ export class BattleScene extends Phaser.Scene {
       .setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`)
       .setColor(TXT_GOLD_LIGHT);
     this.updateHeroStats();
+    this.updateHeroMana();
   }
 
   // ── Turn logic ───────────────────────────────────────────────────────────
@@ -731,6 +806,7 @@ export class BattleScene extends Phaser.Scene {
     this.setButtonsEnabled(false);
 
     const move = GameState.runConfig!.moves[moveId];
+    this.heroMana = Math.max(0, this.heroMana - (move.manaCost ?? 0));
     const result = applyMove(move, this.hero, this.monster);
     this.pushLog(`You → ${move.name}: ${result.logMessage}`, this.moveLogColor(move));
     this.updateHeroHp();
@@ -799,6 +875,7 @@ export class BattleScene extends Phaser.Scene {
 
     tickBuffs(this.hero);
     tickBuffs(this.monster);
+    this.heroMana = Math.min(this.MANA_MAX, this.heroMana + this.MANA_REGEN);
     this.turnNumber++;
 
     this.updateHeroHp();
@@ -819,7 +896,7 @@ export class BattleScene extends Phaser.Scene {
 
   private handleVictory() {
     GameState.hero.currentHp = this.hero.hp;
-    const xpGain = this.monsterCfg.xpReward;
+    const xpGain = Math.floor(this.monsterCfg.xpReward * this.monsterLevel);
     const leveled = GameState.addXp(xpGain);
 
     const baseGold = this.monsterCfg.goldReward ?? 0;
@@ -831,7 +908,11 @@ export class BattleScene extends Phaser.Scene {
 
     let droppedItemId: string | null = null;
     const dropChance = this.monsterCfg.itemDropChance ?? 0;
-    const dropPool = this.monsterCfg.itemDropPool ?? [];
+    const owned = new Set([
+      ...Object.values(GameState.hero.equipment ?? {}),
+      ...(GameState.hero.inventory ?? []),
+    ]);
+    const dropPool = (this.monsterCfg.itemDropPool ?? []).filter((e) => !owned.has(e.itemId));
     if (dropPool.length > 0 && Math.random() < dropChance) {
       const totalWeight = dropPool.reduce((s, e) => s + e.weight, 0);
       let roll = Math.random() * totalWeight;
@@ -847,7 +928,8 @@ export class BattleScene extends Phaser.Scene {
 
     const allMoves = GameState.runConfig!.moves;
     const learned = GameState.hero.learnedMoves;
-    const notKnown = this.monsterCfg.moves.filter((id) => !learned.includes(id));
+    const moveDropPool = this.monsterCfg.dropMoves ?? this.monsterCfg.moves;
+    const notKnown = moveDropPool.filter((id) => !learned.includes(id));
     const genuinelyNew = notKnown.filter((id) => !hasSimilarMove(allMoves[id], learned, allMoves));
     const dropped = genuinelyNew.filter((id) => Math.random() < (allMoves[id]?.dropChance ?? 1));
     const learnedMove = dropped.length > 0 ? dropped[Math.floor(Math.random() * dropped.length)] : null;

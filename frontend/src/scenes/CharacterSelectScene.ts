@@ -81,6 +81,7 @@ const STAT_DEFS = [
     desc: "Defense — reduces incoming physical damage from enemies.",
   },
   { key: "stat_mag", label: "MAG", desc: "Magic — power of spells, buffs, and magical abilities." },
+  { key: "stat_mp",  label: "MP",  desc: "Mana — spent on abilities, regens 15 per turn. Always starts at 60." },
 ] as const;
 
 export class CharacterSelectScene extends Phaser.Scene {
@@ -204,7 +205,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     // Stats — 4-row vertical list
     const statObjs: Phaser.GameObjects.GameObject[] = [];
-    const statValues = [cls.stats.hp, cls.stats.atk, cls.stats.def, cls.stats.mag];
+    const statValues = [cls.stats.hp, cls.stats.atk, cls.stats.def, cls.stats.mag, 60];
     const iconScale = 0.72;
     const iconHalf = 16 * iconScale;
     const rowSpacing = 28;

@@ -58,6 +58,7 @@ export interface MoveConfig {
   effects: MoveEffect[];
   description: string;
   dropChance: number;
+  manaCost: number;
 }
 
 export interface MonsterConfig {
@@ -65,6 +66,7 @@ export interface MonsterConfig {
   name: string;
   stats: { hp: number; attack: number; defense: number; magic: number };
   moves: string[];
+  dropMoves?: string[];
   xpReward: number;
   goldReward: number;
   shardReward: number;

@@ -64,6 +64,9 @@ export const BAR_HP_MID = 0xddaa00; // 25-50% HP
 export const BAR_HP_LOW = 0xcc3333; // <25% HP
 export const BAR_XP_FILL = 0xb88820;
 export const BG_BAR_TRACK = 0x1a1a1a; // HP bar background track
+export const BAR_MANA_FILL = 0x2255cc; // mana bar fill
+export const TXT_MANA = "#5588ff"; // mana label / cost text
+export const TXT_MANA_LOW = "#cc4444"; // mana cost when hero can't afford
 
 // ─── Battle log ──────────────────────────────────────────────────────────────
 export const TXT_LOG = "#a09070";

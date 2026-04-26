@@ -232,10 +232,10 @@ export class MoveManagementScene extends Phaser.Scene {
       gain: string;
       sub: string;
     }[] = [
-      { label: "ATTACK", key: "attack", gain: "+3", sub: "Physical damage" },
+      { label: "ATTACK", key: "attack", gain: "+2", sub: "Physical damage" },
       { label: "DEFENSE", key: "defense", gain: "+2", sub: "Damage reduction" },
-      { label: "MAGIC", key: "magic", gain: "+2", sub: "Spell power" },
-      { label: "MAX HP", key: "maxHp", gain: "+20", sub: "Max health" },
+      { label: "MAGIC", key: "magic", gain: "+3", sub: "Spell power" },
+      { label: "MAX HP", key: "maxHp", gain: "+8", sub: "Max health" },
     ];
 
     // Cards start below the badge — badge is at y=100, badge height ~22, gap 18 → cards from y=140

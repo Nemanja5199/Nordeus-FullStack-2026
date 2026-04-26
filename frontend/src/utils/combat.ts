@@ -89,12 +89,12 @@ export function applyMove(
           (b) => b.stat === fx.stat && b.multiplier === fx.multiplier,
         );
         if (existing) {
-          existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns!);
+          existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns! + 1);
         } else {
           tgt.activeBuffs.push({
             stat: fx.stat as ActiveBuff["stat"],
             multiplier: fx.multiplier!,
-            turnsRemaining: fx.turns!,
+            turnsRemaining: fx.turns! + 1,
           });
         }
         const pct = Math.round((fx.multiplier! - 1) * 100);
@@ -107,12 +107,12 @@ export function applyMove(
           (b) => b.stat === fx.stat && b.multiplier === fx.multiplier,
         );
         if (existing) {
-          existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns!);
+          existing.turnsRemaining = Math.max(existing.turnsRemaining, fx.turns! + 1);
         } else {
           tgt.activeBuffs.push({
             stat: fx.stat as ActiveBuff["stat"],
             multiplier: fx.multiplier!,
-            turnsRemaining: fx.turns!,
+            turnsRemaining: fx.turns! + 1,
           });
         }
         const pct = Math.round((1 - fx.multiplier!) * 100);
