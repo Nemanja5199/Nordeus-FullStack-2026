@@ -73,6 +73,12 @@ export class BattleScene extends Phaser.Scene {
   private readonly MANA_REGEN = 6;
   private heroManaBarLeft!: number;
 
+  // Potions (free action, 1 per turn)
+  private readonly HP_POTION_HEAL = 40;
+  private readonly MP_POTION_RESTORE = 30;
+  private usedPotionThisTurn = false;
+  private potionButtons: Phaser.GameObjects.Container[] = [];
+
   // UI
   private heroHpFill!: Phaser.GameObjects.Rectangle;
   private heroManaFill!: Phaser.GameObjects.Rectangle;
@@ -108,6 +114,8 @@ export class BattleScene extends Phaser.Scene {
     this.turnNumber = 0;
     this.heroMana = this.MANA_MAX;
     this.moveButtons = [];
+    this.potionButtons = [];
+    this.usedPotionThisTurn = false;
     this.logLines = [];
     this.monsterIntentMoveId = null;
 
@@ -160,6 +168,7 @@ export class BattleScene extends Phaser.Scene {
     this.buildHeroPanel(width, height);
     this.buildMonsterPanel(width, height);
     this.buildStatusBar(width, height);
+    this.buildPotionButtons(width, height);
     this.buildMoveButtons(width, height);
     this.buildBattleLog(width, height);
 
@@ -355,7 +364,7 @@ export class BattleScene extends Phaser.Scene {
     const totalW = moves.length * btnW + (moves.length - 1) * btnGap;
     const startX = (width - totalW) / 2 + btnW / 2;
     const btnY = height * 0.77;
-    const descY = height * 0.85;
+    const descY = height * 0.71;
 
     this.descText = this.add
       .text(width / 2, descY, "", {
@@ -437,6 +446,110 @@ export class BattleScene extends Phaser.Scene {
         bg.disableInteractive();
       } else {
         bg.setInteractive({ useHandCursor: true });
+      }
+    });
+    this.updatePotionButtons();
+  }
+
+  // ── Potion buttons ───────────────────────────────────────────────────────
+
+  private buildPotionButtons(width: number, height: number) {
+    const btnW = 130;
+    const btnH = 40;
+    const gap = 18;
+    const totalW = btnW * 2 + gap;
+    const startX = (width - totalW) / 2 + btnW / 2;
+    const y = height * 0.85;
+
+    const make = (i: number, iconKey: string, count: number, onUse: () => void) => {
+      const x = startX + i * (btnW + gap);
+      const container = this.add.container(x, y);
+      const bg = this.add
+        .rectangle(0, 0, btnW, btnH, BG_MOVE_CARD, 0.92)
+        .setStrokeStyle(1, BORDER_LOCKED);
+      const icon = this.add.image(-btnW / 2 + 22, 0, iconKey).setScale(0.85).setOrigin(0.5);
+      const txt = this.add
+        .text(8, 0, `× ${count}`, {
+          fontSize: FONT_BODY,
+          fontFamily: "EnchantedLand",
+          color: TXT_GOLD_LIGHT,
+        })
+        .setOrigin(0, 0.5);
+      bg.setInteractive({ useHandCursor: true });
+      bg.on("pointerover", () => {
+        bg.setFillStyle(BG_BTN_HOVER);
+        bg.setStrokeStyle(1, BORDER_GOLD_BRIGHT);
+        txt.setColor(TXT_GOLD);
+      });
+      bg.on("pointerout", () => {
+        bg.setFillStyle(BG_MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER_LOCKED);
+        txt.setColor(TXT_GOLD_LIGHT);
+      });
+      bg.on("pointerdown", onUse);
+      container.add([bg, icon, txt]);
+      this.potionButtons.push(container);
+    };
+
+    make(0, "potion_hp", GameState.hero.hpPotions ?? 0, () => this.useHpPotion());
+    make(1, "potion_mp", GameState.hero.manaPotions ?? 0, () => this.useManaPotion());
+    this.updatePotionButtons();
+  }
+
+  private canUseHpPotion(): boolean {
+    return (
+      !this.busy &&
+      !this.usedPotionThisTurn &&
+      (GameState.hero.hpPotions ?? 0) > 0 &&
+      this.hero.hp < this.hero.maxHp
+    );
+  }
+
+  private canUseManaPotion(): boolean {
+    return (
+      !this.busy &&
+      !this.usedPotionThisTurn &&
+      (GameState.hero.manaPotions ?? 0) > 0 &&
+      this.heroMana < this.MANA_MAX
+    );
+  }
+
+  private useHpPotion() {
+    if (!this.canUseHpPotion()) return;
+    if (!GameState.useHpPotion()) return;
+    this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + this.HP_POTION_HEAL);
+    GameState.hero.currentHp = this.hero.hp;
+    this.usedPotionThisTurn = true;
+    this.pushLog(`You drink an HP potion (+${this.HP_POTION_HEAL} HP).`);
+    this.updateHeroHp();
+    this.updatePotionButtons();
+  }
+
+  private useManaPotion() {
+    if (!this.canUseManaPotion()) return;
+    if (!GameState.useManaPotion()) return;
+    this.heroMana = Math.min(this.MANA_MAX, this.heroMana + this.MP_POTION_RESTORE);
+    this.usedPotionThisTurn = true;
+    this.pushLog(`You drink a mana potion (+${this.MP_POTION_RESTORE} MP).`);
+    this.updateHeroMana();
+    this.updatePotionButtons();
+  }
+
+  private updatePotionButtons() {
+    const counts = [GameState.hero.hpPotions ?? 0, GameState.hero.manaPotions ?? 0];
+    const enabled = [this.canUseHpPotion(), this.canUseManaPotion()];
+    this.potionButtons.forEach((c, i) => {
+      const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
+      const txt = c.getAt(2) as Phaser.GameObjects.Text;
+      txt.setText(`× ${counts[i]}`);
+      bg.setAlpha(enabled[i] ? 1 : 0.4);
+      if (enabled[i]) {
+        bg.setInteractive({ useHandCursor: true });
+      } else {
+        bg.disableInteractive();
+        bg.setFillStyle(BG_MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER_LOCKED);
+        txt.setColor(TXT_GOLD_LIGHT);
       }
     });
   }
@@ -887,8 +1000,9 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.setStatus("Your turn — choose a move!");
-    this.setButtonsEnabled(true);
+    this.usedPotionThisTurn = false;
     this.busy = false;
+    this.setButtonsEnabled(true);
     void this.prefetchMonsterIntent();
   }
 
@@ -906,24 +1020,6 @@ export class BattleScene extends Phaser.Scene {
     const shardsEarned = this.monsterCfg.shardReward ?? 0;
     MetaProgress.addShards(shardsEarned);
 
-    let droppedItemId: string | null = null;
-    const dropChance = this.monsterCfg.itemDropChance ?? 0;
-    const owned = new Set([
-      ...Object.values(GameState.hero.equipment ?? {}),
-      ...(GameState.hero.inventory ?? []),
-    ]);
-    const dropPool = (this.monsterCfg.itemDropPool ?? []).filter((e) => !owned.has(e.itemId));
-    if (dropPool.length > 0 && Math.random() < dropChance) {
-      const totalWeight = dropPool.reduce((s, e) => s + e.weight, 0);
-      let roll = Math.random() * totalWeight;
-      for (const entry of dropPool) {
-        roll -= entry.weight;
-        if (roll <= 0) { droppedItemId = entry.itemId; break; }
-      }
-      if (droppedItemId) {
-        if (GameState.runConfig!.items[droppedItemId]) GameState.addToInventory(droppedItemId);
-      }
-    }
     GameState.saveHero();
 
     const allMoves = GameState.runConfig!.moves;
@@ -944,7 +1040,6 @@ export class BattleScene extends Phaser.Scene {
       xpGained: xpGain,
       goldEarned,
       shardsEarned,
-      droppedItemId,
       leveledUp: leveled,
       monsterIndex: this.monsterIndex,
       defeatedIds: newDefeated,

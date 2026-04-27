@@ -6,6 +6,7 @@ import type { MoveConfig } from "../types/game";
 import { buildMoveStatLines } from "../utils/combat";
 import { createModalFooter } from "../ui/ModalFooter";
 import { TooltipManager } from "../ui/TooltipManager";
+import { createScrollableArea, type ScrollableArea } from "../ui/ScrollableArea";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
@@ -40,6 +41,7 @@ export class MoveManagementScene extends Phaser.Scene {
   private infoText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
   private returnScene!: string;
+  private learnedScroll?: ScrollableArea;
 
   constructor() {
     super("MoveManagementScene");
@@ -51,6 +53,8 @@ export class MoveManagementScene extends Phaser.Scene {
     this.selectedEquippedSlot = -1;
     this.learnedButtons = [];
     this.equippedButtons = [];
+    this.learnedScroll?.destroy();
+    this.learnedScroll = undefined;
 
     const { width, height } = this.scale;
 
@@ -148,14 +152,29 @@ export class MoveManagementScene extends Phaser.Scene {
   }
 
   private buildLearnedPanel(panelX: number) {
-    GameState.hero.learnedMoves.forEach((moveId, i) => {
+    const learned = GameState.hero.learnedMoves;
+    const rowStep = CARD_H + CARD_GAP;
+    const contentH = learned.length * rowStep - CARD_GAP;
+    const { width: scaleW, height: scaleH } = this.scale;
+    const viewportH = Math.max(120, scaleH - START_Y - 160);
+
+    this.learnedScroll = createScrollableArea(this, {
+      x: 0,
+      y: START_Y - CARD_H / 2,
+      width: scaleW,
+      height: viewportH + CARD_H,
+      contentHeight: contentH + CARD_H,
+    });
+
+    learned.forEach((moveId, i) => {
       const move = GameState.runConfig!.moves[moveId];
       if (!move) return;
 
       const isEquipped = GameState.hero.equippedMoves.includes(moveId);
-      const y = START_Y + i * (CARD_H + CARD_GAP);
+      // Position relative to scroll viewport: i=0 sits at the top.
+      const cardCenterY = i * rowStep + CARD_H / 2;
 
-      const container = this.add.container(panelX, y);
+      const container = this.add.container(panelX, cardCenterY);
       const bg = this.add
         .rectangle(0, 0, CARD_W, CARD_H, isEquipped ? BG_MOVE_EQUIPPED : BG_MOVE_CARD, 0.92)
         .setStrokeStyle(1, isEquipped ? BORDER_GOLD : BORDER_LOCKED);
@@ -177,7 +196,10 @@ export class MoveManagementScene extends Phaser.Scene {
 
       container.add([bg, nameTxt, typeTxt]);
       this.learnedButtons.push(container);
+      this.learnedScroll!.container.add(container);
     });
+
+    this.learnedScroll.refreshInputState();
   }
 
   private buildEquippedPanel(panelX: number) {

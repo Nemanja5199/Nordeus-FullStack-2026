@@ -291,3 +291,173 @@ describe("GameState.resetHero with MetaProgress bonuses", () => {
     expect(GameState.hero.gold).toBe(0);
   });
 });
+
+// ── potions ───────────────────────────────────────────────────────────────────
+
+describe("GameState potions", () => {
+  it("starts with zero of each potion type", () => {
+    expect(GameState.hero.hpPotions).toBe(0);
+    expect(GameState.hero.manaPotions).toBe(0);
+  });
+
+  it("addHpPotion increments and accumulates", () => {
+    GameState.addHpPotion(3);
+    expect(GameState.hero.hpPotions).toBe(3);
+    GameState.addHpPotion(2);
+    expect(GameState.hero.hpPotions).toBe(5);
+  });
+
+  it("addManaPotion increments and accumulates", () => {
+    GameState.addManaPotion(1);
+    GameState.addManaPotion(4);
+    expect(GameState.hero.manaPotions).toBe(5);
+  });
+
+  it("useHpPotion decrements and returns true when count > 0", () => {
+    GameState.addHpPotion(2);
+    expect(GameState.useHpPotion()).toBe(true);
+    expect(GameState.hero.hpPotions).toBe(1);
+  });
+
+  it("useHpPotion returns false and is a no-op when count is 0", () => {
+    expect(GameState.hero.hpPotions).toBe(0);
+    expect(GameState.useHpPotion()).toBe(false);
+    expect(GameState.hero.hpPotions).toBe(0);
+  });
+
+  it("useManaPotion mirrors useHpPotion behaviour", () => {
+    GameState.addManaPotion(1);
+    expect(GameState.useManaPotion()).toBe(true);
+    expect(GameState.hero.manaPotions).toBe(0);
+    expect(GameState.useManaPotion()).toBe(false);
+    expect(GameState.hero.manaPotions).toBe(0);
+  });
+
+  it("resetHero clears potion stash (lost on death)", () => {
+    GameState.addHpPotion(5);
+    GameState.addManaPotion(3);
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.hpPotions).toBe(0);
+    expect(GameState.hero.manaPotions).toBe(0);
+  });
+
+  it("addHpPotion persists to localStorage", () => {
+    GameState.addHpPotion(2);
+    const raw = localStorage.getItem("rpg_hero");
+    expect(raw).not.toBeNull();
+    expect(JSON.parse(raw!).hpPotions).toBe(2);
+  });
+});
+
+// ── shop ──────────────────────────────────────────────────────────────────────
+
+describe("GameState shop", () => {
+  const SHOP_CONFIG: RunConfig = {
+    ...MOCK_CONFIG,
+    items: {
+      iron_sword: {
+        id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",
+        tier: 1, cost: 30,
+        statBonuses: { attack: 4 }, description: "",
+      },
+      steel_blade: {
+        id: "steel_blade", name: "Steel Blade", slot: "weapon", rarity: "rare",
+        tier: 2, cost: 100,
+        statBonuses: { attack: 8 }, description: "",
+      },
+      legendary_blade: {
+        id: "legendary_blade", name: "Legendary", slot: "weapon", rarity: "epic",
+        tier: 3, cost: 250,
+        statBonuses: { attack: 16 }, description: "",
+      },
+    },
+  };
+
+  beforeEach(() => {
+    GameState.runConfig = SHOP_CONFIG;
+    GameState.resetHero(SHOP_CONFIG);
+  });
+
+  it("unlockedTier returns 1 at level 1, 2 at level 3, 3 at level 6", () => {
+    GameState.hero.level = 1;
+    expect(GameState.unlockedTier()).toBe(1);
+    GameState.hero.level = 2;
+    expect(GameState.unlockedTier()).toBe(1);
+    GameState.hero.level = 3;
+    expect(GameState.unlockedTier()).toBe(2);
+    GameState.hero.level = 5;
+    expect(GameState.unlockedTier()).toBe(2);
+    GameState.hero.level = 6;
+    expect(GameState.unlockedTier()).toBe(3);
+    GameState.hero.level = 10;
+    expect(GameState.unlockedTier()).toBe(3);
+  });
+
+  it("buyItem deducts cost and adds to inventory", () => {
+    GameState.hero.gold = 100;
+    expect(GameState.buyItem("iron_sword")).toBe(true);
+    expect(GameState.hero.gold).toBe(70);
+    expect(GameState.hero.inventory).toContain("iron_sword");
+  });
+
+  it("buyItem returns false and is a no-op when gold insufficient", () => {
+    GameState.hero.gold = 10;
+    expect(GameState.buyItem("iron_sword")).toBe(false);
+    expect(GameState.hero.gold).toBe(10);
+    expect(GameState.hero.inventory).not.toContain("iron_sword");
+  });
+
+  it("buyItem returns false when item already in inventory", () => {
+    GameState.hero.gold = 100;
+    GameState.hero.inventory.push("iron_sword");
+    expect(GameState.buyItem("iron_sword")).toBe(false);
+    expect(GameState.hero.gold).toBe(100);
+  });
+
+  it("buyItem returns false when item is currently equipped", () => {
+    GameState.hero.gold = 100;
+    GameState.hero.equipment = { weapon: "iron_sword" };
+    expect(GameState.buyItem("iron_sword")).toBe(false);
+    expect(GameState.hero.gold).toBe(100);
+  });
+
+  it("buyItem returns false when item tier exceeds unlockedTier", () => {
+    GameState.hero.gold = 500;
+    GameState.hero.level = 1;
+    expect(GameState.buyItem("steel_blade")).toBe(false);
+    expect(GameState.buyItem("legendary_blade")).toBe(false);
+    expect(GameState.hero.gold).toBe(500);
+
+    GameState.hero.level = 3;
+    expect(GameState.buyItem("steel_blade")).toBe(true);
+    expect(GameState.buyItem("legendary_blade")).toBe(false);
+  });
+
+  it("buyHpPotion deducts 25 gold and increments hpPotions", () => {
+    GameState.hero.gold = 50;
+    expect(GameState.buyHpPotion()).toBe(true);
+    expect(GameState.hero.gold).toBe(25);
+    expect(GameState.hero.hpPotions).toBe(1);
+  });
+
+  it("buyHpPotion returns false when gold below 25", () => {
+    GameState.hero.gold = 24;
+    expect(GameState.buyHpPotion()).toBe(false);
+    expect(GameState.hero.gold).toBe(24);
+    expect(GameState.hero.hpPotions).toBe(0);
+  });
+
+  it("buyManaPotion deducts 30 gold and increments manaPotions", () => {
+    GameState.hero.gold = 60;
+    expect(GameState.buyManaPotion()).toBe(true);
+    expect(GameState.hero.gold).toBe(30);
+    expect(GameState.hero.manaPotions).toBe(1);
+  });
+
+  it("buyManaPotion returns false when gold below 30", () => {
+    GameState.hero.gold = 29;
+    expect(GameState.buyManaPotion()).toBe(false);
+    expect(GameState.hero.gold).toBe(29);
+    expect(GameState.hero.manaPotions).toBe(0);
+  });
+});

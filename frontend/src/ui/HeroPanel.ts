@@ -31,13 +31,14 @@ export interface HeroPanelOptions {
   items?: Record<string, GearItem>;
   onManageMoves: () => void;
   onManageEquipment?: () => void;
+  onShop?: () => void;
 }
 
 export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Phaser.GameObjects.Container {
   const container = scene.add.container(0, 0);
   const add = <T extends Phaser.GameObjects.GameObject>(obj: T): T => { container.add(obj); return obj; };
 
-  const { x: panelX, y: panelY, width: w, height: h, hero, xpToNextLevel, moves, items, onManageMoves, onManageEquipment } = opts;
+  const { x: panelX, y: panelY, width: w, height: h, hero, xpToNextLevel, moves, items, onManageMoves, onManageEquipment, onShop } = opts;
   const cx = panelX + w / 2;
   const pad = panelX + 16;
   const barW = w - 20;
@@ -83,34 +84,47 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     }
   });
 
-  // Gold
+  // Gold + potions
   add(scene.add.text(cx, panelY + 252, `Gold: ${hero.gold ?? 0}`, {
     fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD,
+  }).setOrigin(0.5));
+  add(scene.add.text(cx, panelY + 270, `HP × ${hero.hpPotions ?? 0}   MP × ${hero.manaPotions ?? 0}`, {
+    fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_GOLD_MID,
   }).setOrigin(0.5));
 
   // XP bar
   const xpPct = Math.min(1, hero.xp / xpToNextLevel);
-  add(scene.add.text(cx, panelY + 272, `XP  ${hero.xp} / ${xpToNextLevel}`, {
+  add(scene.add.text(cx, panelY + 290, `XP  ${hero.xp} / ${xpToNextLevel}`, {
     fontSize: FONT_SM, color: TXT_GOLD_MID,
   }).setOrigin(0.5));
-  add(scene.add.rectangle(panelX + 10, panelY + 288, barW, 11, BG_ROW_MID).setOrigin(0));
-  add(scene.add.rectangle(panelX + 10, panelY + 288, barW * xpPct, 11, BAR_XP_FILL).setOrigin(0));
+  add(scene.add.rectangle(panelX + 10, panelY + 306, barW, 11, BG_ROW_MID).setOrigin(0));
+  add(scene.add.rectangle(panelX + 10, panelY + 306, barW * xpPct, 11, BAR_XP_FILL).setOrigin(0));
 
   // Divider
-  add(scene.add.rectangle(cx, panelY + 312, barW, 1, BORDER_GOLD, 0.6).setOrigin(0.5));
+  add(scene.add.rectangle(cx, panelY + 330, barW, 1, BORDER_GOLD, 0.6).setOrigin(0.5));
 
   // Equipped moves header
-  add(scene.add.text(cx, panelY + 328, "Equipped Moves", {
+  add(scene.add.text(cx, panelY + 346, "Equipped Moves", {
     fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD,
   }).setOrigin(0.5));
 
   hero.equippedMoves.forEach((moveId, i) => {
     const move = moves[moveId];
     if (!move) return;
-    const rowY = panelY + 348 + i * 50;
+    const rowY = panelY + 366 + i * 50;
     add(scene.add.rectangle(cx, rowY + 18, w - 16, 40, BG_ROW, 0.85).setOrigin(0.5).setStrokeStyle(1, BORDER_ROW));
     add(scene.add.text(pad, rowY + 18, move.name, { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_LIGHT }).setOrigin(0, 0.5));
   });
+
+  // Shop button (top of stack)
+  if (onShop) {
+    const shopBtnY = panelY + h - 114;
+    const shopBg = add(scene.add.rectangle(cx, shopBtnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, BORDER_GOLD).setInteractive({ useHandCursor: true }));
+    const shopTxt = add(scene.add.text(cx, shopBtnY, "Shop", { fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD_MID }).setOrigin(0.5));
+    shopBg.on("pointerover", () => { shopBg.setFillStyle(BG_BTN_HOVER); shopTxt.setColor(TXT_GOLD); });
+    shopBg.on("pointerout", () => { shopBg.setFillStyle(BG_BTN); shopTxt.setColor(TXT_GOLD_MID); });
+    shopBg.on("pointerdown", onShop);
+  }
 
   // Equipment button
   if (onManageEquipment) {

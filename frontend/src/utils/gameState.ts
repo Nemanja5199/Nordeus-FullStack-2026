@@ -23,6 +23,9 @@ const HERO_KEY = "rpg_hero";
 const RUN_KEY = "rpg_run";
 const TREE_KEY = "rpg_tree_state";
 
+export const HP_POTION_PRICE = 25;
+export const MANA_POTION_PRICE = 30;
+
 function defaultHero(defaults: {
   maxHp: number;
   attack: number;
@@ -45,6 +48,8 @@ function defaultHero(defaults: {
     inventory: [],
     learnedMoves: [...defaults.defaultMoves],
     equippedMoves: [...defaults.defaultMoves],
+    hpPotions: 0,
+    manaPotions: 0,
   };
 }
 
@@ -75,6 +80,8 @@ class GameStateManager {
     if (this.hero.gold === undefined) this.hero.gold = 0;
     if (this.hero.equipment === undefined) this.hero.equipment = {};
     if (this.hero.inventory === undefined) this.hero.inventory = [];
+    if (this.hero.hpPotions === undefined) this.hero.hpPotions = 0;
+    if (this.hero.manaPotions === undefined) this.hero.manaPotions = 0;
   }
 
   saveHero(): void {
@@ -219,6 +226,78 @@ class GameStateManager {
   addToInventory(itemId: string): void {
     this.hero.inventory.push(itemId);
     this.saveHero();
+  }
+
+  addHpPotion(n: number): void {
+    this.hero.hpPotions = (this.hero.hpPotions ?? 0) + n;
+    this.saveHero();
+  }
+
+  addManaPotion(n: number): void {
+    this.hero.manaPotions = (this.hero.manaPotions ?? 0) + n;
+    this.saveHero();
+  }
+
+  useHpPotion(): boolean {
+    if ((this.hero.hpPotions ?? 0) <= 0) return false;
+    this.hero.hpPotions -= 1;
+    this.saveHero();
+    return true;
+  }
+
+  useManaPotion(): boolean {
+    if ((this.hero.manaPotions ?? 0) <= 0) return false;
+    this.hero.manaPotions -= 1;
+    this.saveHero();
+    return true;
+  }
+
+  // ── Shop ──────────────────────────────────────────────────────────────
+  // Tier unlock: lv 1 → tier 1, lv 3 → tier 2, lv 6 → tier 3.
+
+  unlockedTier(): 1 | 2 | 3 {
+    const lv = this.hero.level;
+    if (lv >= 6) return 3;
+    if (lv >= 3) return 2;
+    return 1;
+  }
+
+  isItemOwned(itemId: string): boolean {
+    if (Object.values(this.hero.equipment ?? {}).includes(itemId)) return true;
+    return (this.hero.inventory ?? []).includes(itemId);
+  }
+
+  canBuyItem(itemId: string): boolean {
+    const item = this.runConfig?.items[itemId];
+    if (!item) return false;
+    if (this.isItemOwned(itemId)) return false;
+    if (item.tier > this.unlockedTier()) return false;
+    return (this.hero.gold ?? 0) >= item.cost;
+  }
+
+  buyItem(itemId: string): boolean {
+    if (!this.canBuyItem(itemId)) return false;
+    const item = this.runConfig!.items[itemId];
+    this.hero.gold = (this.hero.gold ?? 0) - item.cost;
+    this.hero.inventory.push(itemId);
+    this.saveHero();
+    return true;
+  }
+
+  buyHpPotion(): boolean {
+    if ((this.hero.gold ?? 0) < HP_POTION_PRICE) return false;
+    this.hero.gold -= HP_POTION_PRICE;
+    this.hero.hpPotions = (this.hero.hpPotions ?? 0) + 1;
+    this.saveHero();
+    return true;
+  }
+
+  buyManaPotion(): boolean {
+    if ((this.hero.gold ?? 0) < MANA_POTION_PRICE) return false;
+    this.hero.gold -= MANA_POTION_PRICE;
+    this.hero.manaPotions = (this.hero.manaPotions ?? 0) + 1;
+    this.saveHero();
+    return true;
   }
 
   resetHero(config: RunConfig): void {

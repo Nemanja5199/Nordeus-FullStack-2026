@@ -25,6 +25,8 @@ export interface GearItem {
   name: string;
   slot: GearSlot;
   rarity: GearRarity;
+  tier: 1 | 2 | 3;
+  cost: number;
   statBonuses: GearStatBonuses;
   description: string;
 }
@@ -70,8 +72,6 @@ export interface MonsterConfig {
   xpReward: number;
   goldReward: number;
   shardReward: number;
-  itemDropChance: number;
-  itemDropPool: { itemId: string; weight: number }[];
 }
 
 export interface HeroDefaults {
@@ -107,6 +107,8 @@ export interface HeroState {
   inventory: string[];
   learnedMoves: string[];
   equippedMoves: string[];
+  hpPotions: number;
+  manaPotions: number;
 }
 
 export interface CombatCharacter {

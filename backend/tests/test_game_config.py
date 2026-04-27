@@ -1,6 +1,6 @@
 """Sanity checks on game_config — ensures data integrity before any game logic runs."""
 import pytest
-from app.game_config import MOVES, MONSTERS, HERO_DEFAULTS
+from app.game_config import MOVES, MONSTERS, HERO_DEFAULTS, ITEMS, POTION_PRICES
 
 REQUIRED_MOVE_KEYS = {"id", "name", "moveType", "baseValue", "effects", "description"}
 VALID_MOVE_TYPES = {"physical", "magic", "heal", "none"}
@@ -213,3 +213,50 @@ class TestHeroDefaults:
     def test_level_up_stats_all_positive(self):
         for stat, gain in HERO_DEFAULTS["levelUpStats"].items():
             assert gain > 0, f"levelUpStats['{stat}'] should be positive"
+
+
+class TestShopItems:
+    """Every gear item must declare a tier (1/2/3) and a positive cost."""
+
+    def test_every_item_has_valid_tier(self):
+        for item_id, item in ITEMS.items():
+            assert "tier" in item, f"Item '{item_id}' missing 'tier'"
+            assert item["tier"] in (1, 2, 3), (
+                f"Item '{item_id}' tier must be 1/2/3, got {item['tier']}"
+            )
+
+    def test_every_item_has_positive_cost(self):
+        for item_id, item in ITEMS.items():
+            assert "cost" in item, f"Item '{item_id}' missing 'cost'"
+            assert item["cost"] > 0, f"Item '{item_id}' cost must be positive"
+
+    def test_rare_items_are_at_least_tier_two(self):
+        # Common items live in tier 1, rare in tier 2+. Catches accidental tier-1 pricing on rare gear.
+        for item_id, item in ITEMS.items():
+            if item["rarity"] == "rare":
+                assert item["tier"] >= 2, (
+                    f"Rare item '{item_id}' should be at least tier 2"
+                )
+
+
+class TestNoGearDrops:
+    """Gear drops have been removed in favour of a shop. Monster configs must not declare drop fields."""
+
+    def test_no_monster_has_item_drop_chance(self):
+        for m in MONSTERS:
+            assert "itemDropChance" not in m, (
+                f"Monster '{m['id']}' still has 'itemDropChance' — gear drops were removed"
+            )
+
+    def test_no_monster_has_item_drop_pool(self):
+        for m in MONSTERS:
+            assert "itemDropPool" not in m, (
+                f"Monster '{m['id']}' still has 'itemDropPool' — gear drops were removed"
+            )
+
+
+class TestPotionPrices:
+    def test_potion_prices_positive(self):
+        for key in ("hp", "mp"):
+            assert key in POTION_PRICES, f"POTION_PRICES missing '{key}'"
+            assert POTION_PRICES[key] > 0
