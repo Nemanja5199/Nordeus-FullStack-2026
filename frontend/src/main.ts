@@ -7,6 +7,7 @@ import { PostBattleScene } from "./scenes/PostBattleScene";
 import { MoveManagementScene } from "./scenes/MoveManagementScene";
 import { TreeMapScene } from "./scenes/TreeMapScene";
 import { EquipmentScene } from "./scenes/EquipmentScene";
+import { ShopScene } from "./scenes/ShopScene";
 import { UpgradesScene } from "./scenes/UpgradesScene";
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -21,6 +22,7 @@ const config: Phaser.Types.Core.GameConfig = {
     MoveManagementScene,
     TreeMapScene,
     EquipmentScene,
+    ShopScene,
     UpgradesScene,
   ],
   scale: {

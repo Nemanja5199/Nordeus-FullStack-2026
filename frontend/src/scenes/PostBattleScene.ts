@@ -17,7 +17,6 @@ import {
   TXT_DEFEATED,
   TXT_DEFEAT,
   TXT_SHARD,
-  RARITY_COLOR,
   TXT_BLACK,
 } from "../ui/colors";
 
@@ -27,7 +26,6 @@ interface PostBattleData {
   xpGained: number;
   goldEarned?: number;
   shardsEarned?: number;
-  droppedItemId?: string | null;
   leveledUp: boolean;
   monsterIndex: number;
   defeatedIds: string[];
@@ -106,8 +104,9 @@ export class PostBattleScene extends Phaser.Scene {
           .setOrigin(0.5);
         y += 44;
 
+        const spGained = 1 + MetaProgress.getLevelUpSkillBonus();
         this.add
-          .text(width / 2, y, `+1 Skill Point — allocate it in Manage Moves`, {
+          .text(width / 2, y, `+${spGained} Skill Point${spGained === 1 ? "" : "s"} — allocate ${spGained === 1 ? "it" : "them"} in Manage Moves`, {
             fontSize: FONT_BODY,
             color: TXT_HERO,
           })
@@ -163,21 +162,6 @@ export class PostBattleScene extends Phaser.Scene {
         y += 30;
       }
 
-      if (data.droppedItemId) {
-        const item = GameState.runConfig!.items[data.droppedItemId];
-        this.add
-          .text(width / 2, y, `Item found:  ${item.name}  [${item.rarity}]`, {
-            fontSize: FONT_MD,
-            fontFamily: "EnchantedLand",
-            color: RARITY_COLOR[item.rarity] ?? TXT_GOLD_MID,
-          })
-          .setOrigin(0.5);
-        y += 28;
-        this.add
-          .text(width / 2, y, item.description, { fontSize: FONT_SM, color: TXT_MUTED })
-          .setOrigin(0.5);
-        y += 28;
-      }
     } else {
       this.add
         .text(width / 2, y, `◆ ${MetaProgress.shards} Shards saved`, {

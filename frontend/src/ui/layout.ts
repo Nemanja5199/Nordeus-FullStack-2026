@@ -27,7 +27,7 @@ export const INV_GRID_START_Y = 170;
 
 // ── Hero panel (TreeMapScene sidebar) ─────────────────────────────────────
 export const HERO_PANEL_W   = 260;
-export const HERO_PANEL_H   = 640;
+export const HERO_PANEL_H   = 690;
 export const HERO_PANEL_GAP = 16;
 
 // ── Battle panels ──────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { GameState, getGearBonuses } from "../utils/gameState";
 import type { GearItem, GearSlot } from "../types/game";
 import { createModalFooter } from "../ui/ModalFooter";
 import { TooltipManager } from "../ui/TooltipManager";
+import { createScrollableArea, type ScrollableArea } from "../ui/ScrollableArea";
 import { itemFrames } from "../utils/itemFrames";
 import {
   BG_DARKEST,
@@ -41,6 +42,7 @@ export class EquipmentScene extends Phaser.Scene {
   private returnScene!: string;
   private hintText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
+  private inventoryScroll?: ScrollableArea;
 
   constructor() {
     super("EquipmentScene");
@@ -48,6 +50,8 @@ export class EquipmentScene extends Phaser.Scene {
 
   create(data: EquipmentData) {
     this.returnScene = data.returnScene ?? "TreeMapScene";
+    this.inventoryScroll?.destroy();
+    this.inventoryScroll = undefined;
 
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
@@ -201,6 +205,19 @@ export class EquipmentScene extends Phaser.Scene {
     const gridW = GRID_COLS * step - GRID_GAP;
     const gridLeft = originX - gridW / 2 + GRID_CELL / 2;
 
+    const rowCount = Math.ceil(inv.length / GRID_COLS);
+    const contentH = rowCount * step - GRID_GAP;
+    const { width: scaleW, height: scaleH } = this.scale;
+    const viewportH = Math.max(120, scaleH - GRID_START_Y - 160);
+
+    this.inventoryScroll = createScrollableArea(this, {
+      x: 0,
+      y: GRID_START_Y,
+      width: scaleW,
+      height: viewportH,
+      contentHeight: contentH,
+    });
+
     inv.forEach((itemId, i) => {
       const item: GearItem | undefined = items[itemId];
       if (!item) return;
@@ -208,7 +225,8 @@ export class EquipmentScene extends Phaser.Scene {
       const col = i % GRID_COLS;
       const row = Math.floor(i / GRID_COLS);
       const cx = gridLeft + col * step;
-      const cy = GRID_START_Y + row * step;
+      // y is relative to the scroll viewport (0 == top).
+      const cy = row * step + GRID_CELL / 2;
 
       const bg = this.add
         .rectangle(cx, cy, GRID_CELL, GRID_CELL, BG_MOVE_EQUIPPED, 0.9)
@@ -216,12 +234,11 @@ export class EquipmentScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       const frameKey = itemFrames[itemId];
-      if (frameKey && this.textures.exists(frameKey)) {
-        this.add.image(cx, cy - 6, frameKey).setDisplaySize(GRID_CELL - 16, GRID_CELL - 16);
-      }
+      const icon = frameKey && this.textures.exists(frameKey)
+        ? this.add.image(cx, cy - 6, frameKey).setDisplaySize(GRID_CELL - 16, GRID_CELL - 16)
+        : null;
 
-      // Rarity strip at bottom
-      this.add.rectangle(
+      const rarityStrip = this.add.rectangle(
         cx,
         cy + GRID_CELL / 2 - 6,
         GRID_CELL - 4,
@@ -244,6 +261,10 @@ export class EquipmentScene extends Phaser.Scene {
         this.children.removeAll(true);
         this.create({ returnScene: this.returnScene });
       });
+
+      this.inventoryScroll!.container.add([bg, ...(icon ? [icon] : []), rarityStrip]);
     });
+
+    this.inventoryScroll.refreshInputState();
   }
 }
