@@ -474,7 +474,13 @@ export class BattleScene extends Phaser.Scene {
     const startX = (width - totalW) / 2 + btnW / 2;
     const y = height * 0.85;
 
-    const make = (i: number, iconKey: string, count: number, onUse: () => void) => {
+    const make = (
+      i: number,
+      iconKey: string,
+      count: number,
+      onUse: () => void,
+      onHoverPreview: () => void,
+    ) => {
       const x = startX + i * (btnW + gap);
       const container = this.add.container(x, y);
       const bg = this.add
@@ -493,19 +499,29 @@ export class BattleScene extends Phaser.Scene {
         bg.setFillStyle(BG_BTN_HOVER);
         bg.setStrokeStyle(1, BORDER_GOLD_BRIGHT);
         txt.setColor(TXT_GOLD);
+        onHoverPreview();
       });
       bg.on("pointerout", () => {
         bg.setFillStyle(BG_MOVE_CARD);
         bg.setStrokeStyle(1, BORDER_LOCKED);
         txt.setColor(TXT_GOLD_LIGHT);
+        this.hideMovePreview();
       });
       bg.on("pointerdown", onUse);
       container.add([bg, icon, txt]);
       this.potionButtons.push({ container, bg, txt });
     };
 
-    make(0, "potion_hp", GameState.hero.hpPotions ?? 0, () => this.useHpPotion());
-    make(1, "potion_mp", GameState.hero.manaPotions ?? 0, () => this.useManaPotion());
+    make(
+      0, "potion_hp", GameState.hero.hpPotions ?? 0,
+      () => this.useHpPotion(),
+      () => this.previewHpPotion(),
+    );
+    make(
+      1, "potion_mp", GameState.hero.manaPotions ?? 0,
+      () => this.useManaPotion(),
+      () => this.previewManaPotion(),
+    );
     this.updatePotionButtons();
   }
 
@@ -812,6 +828,24 @@ export class BattleScene extends Phaser.Scene {
     this.heroManaText
       .setText(`MP  ${futureMana} / ${MANA_MAX}  (+${futureRegen - futureMana} next turn)`)
       .setColor(TXT_MANA_LOW);
+  }
+
+  // Preview future HP after drinking an HP potion. Skip when the potion would
+  // do nothing (no charges, already at full HP, in-flight turn, etc.) so the
+  // ghost bar doesn't lie about a heal that won't happen.
+  private previewHpPotion(): void {
+    if (!this.canUseHpPotion()) return;
+    this.previewHeroHp(0, HP_POTION_HEAL, 0);
+  }
+
+  // Mirror of previewHpPotion for the mana bar.
+  private previewManaPotion(): void {
+    if (!this.canUseManaPotion()) return;
+    const futureMana = Math.min(MANA_MAX, this.heroMana + MP_POTION_RESTORE);
+    this.heroManaFill.setScale(futureMana / MANA_MAX, 1);
+    this.heroManaText
+      .setText(`MP  ${futureMana} / ${MANA_MAX}`)
+      .setColor(TXT_INTENT_HEAL);
   }
 
   private previewHeroBuffs(move: MoveConfig): number {
