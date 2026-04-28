@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { GameState } from "./gameState";
+import { GameState, getGearBonuses } from "./gameState";
 import { MetaProgress } from "./metaProgress";
-import type { RunConfig } from "../types/game";
+import type { GearItem, RunConfig } from "../types/game";
 
 // ── Minimal RunConfig stub ────────────────────────────────────────────────────
 
@@ -497,5 +497,76 @@ describe("GameState shop", () => {
     expect(GameState.buyManaPotion()).toBe(false);
     expect(GameState.hero.gold).toBe(20);
     expect(GameState.hero.manaPotions).toBe(0);
+  });
+});
+
+// ── safe lookups ──────────────────────────────────────────────────────────────
+
+describe("GameState.getMove / getItem", () => {
+  const ITEM: GearItem = {
+    id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",
+    tier: 1, cost: 30,
+    statBonuses: { attack: 4 }, description: "",
+  };
+  const CONFIG: RunConfig = {
+    ...MOCK_CONFIG,
+    items: { iron_sword: ITEM },
+    moves: {
+      slash: { id: "slash", name: "Slash", moveType: "physical", baseValue: 10, effects: [], description: "", dropChance: 0, manaCost: 0 },
+    },
+  };
+
+  beforeEach(() => {
+    GameState.runConfig = CONFIG;
+  });
+
+  it("getMove returns the move for a known id", () => {
+    expect(GameState.getMove("slash")?.name).toBe("Slash");
+  });
+
+  it("getMove returns undefined and warns on unknown id", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(GameState.getMove("nonexistent")).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("nonexistent"));
+    warn.mockRestore();
+  });
+
+  it("getItem returns the item for a known id", () => {
+    expect(GameState.getItem("iron_sword")?.name).toBe("Iron Sword");
+  });
+
+  it("getItem returns undefined and warns on unknown id", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(GameState.getItem("ghost_item")).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("ghost_item"));
+    warn.mockRestore();
+  });
+
+  it("getMove returns undefined when runConfig is null", () => {
+    GameState.runConfig = null;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(GameState.getMove("slash")).toBeUndefined();
+    warn.mockRestore();
+  });
+});
+
+describe("getGearBonuses", () => {
+  const SWORD: GearItem = {
+    id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",
+    tier: 1, cost: 30,
+    statBonuses: { attack: 4 }, description: "",
+  };
+
+  it("sums bonuses from equipped items", () => {
+    const b = getGearBonuses({ weapon: "iron_sword" }, { iron_sword: SWORD });
+    expect(b.attack).toBe(4);
+  });
+
+  it("warns and skips when an equipped id is missing from items dict", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const b = getGearBonuses({ weapon: "stale_id" }, { iron_sword: SWORD });
+    expect(b.attack).toBe(0);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("stale_id"));
+    warn.mockRestore();
   });
 });

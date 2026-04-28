@@ -1,6 +1,6 @@
 import os
 from fastapi import APIRouter, HTTPException
-from app.models import SaveStateRequest, SaveStateResponse
+from app.models import LoadGameResponse, SaveStateRequest, SaveStateResponse
 
 router = APIRouter()
 
@@ -34,7 +34,7 @@ def save_game(req: SaveStateRequest):
     return SaveStateResponse(ok=True)
 
 
-@router.get("/game/load/{session_id}")
+@router.get("/game/load/{session_id}", response_model=LoadGameResponse)
 def load_game(session_id: str):
     client = _get_client()
     if not client:

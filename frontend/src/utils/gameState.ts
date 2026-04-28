@@ -1,4 +1,4 @@
-import type { GearItem, GearSlot, GearStatBonuses, HeroState, RunConfig, RunSave } from "../types/game";
+import type { GearItem, GearSlot, GearStatBonuses, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
 import { MetaProgress } from "./metaProgress";
 
 export function getGearBonuses(
@@ -9,7 +9,12 @@ export function getGearBonuses(
   for (const itemId of Object.values(equipment)) {
     if (!itemId) continue;
     const item = items[itemId];
-    if (!item) continue;
+    if (!item) {
+      // Stale equipment id (e.g. item removed from config since save). Surface
+      // it instead of silently dropping the gear bonus.
+      console.warn(`[GameState] equipped item not in runConfig: ${itemId}`);
+      continue;
+    }
     bonuses.attack = (bonuses.attack ?? 0) + (item.statBonuses.attack ?? 0);
     bonuses.defense = (bonuses.defense ?? 0) + (item.statBonuses.defense ?? 0);
     bonuses.magic = (bonuses.magic ?? 0) + (item.statBonuses.magic ?? 0);
@@ -306,6 +311,21 @@ class GameStateManager {
   resetHero(config: RunConfig): void {
     this.hero = defaultHero(config.heroDefaults);
     this.saveHero();
+  }
+
+  // Safe lookups for runConfig-backed data. Returns undefined and logs a warning
+  // on missing ids — caller is expected to handle null. Lets a stale moveId or
+  // itemId in localStorage degrade gracefully instead of crashing on `.name`.
+  getMove(moveId: string): MoveConfig | undefined {
+    const move = this.runConfig?.moves[moveId];
+    if (!move) console.warn(`[GameState] unknown move id: ${moveId}`);
+    return move;
+  }
+
+  getItem(itemId: string): GearItem | undefined {
+    const item = this.runConfig?.items[itemId];
+    if (!item) console.warn(`[GameState] unknown item id: ${itemId}`);
+    return item;
   }
 }
 
