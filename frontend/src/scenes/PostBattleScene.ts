@@ -104,8 +104,9 @@ export class PostBattleScene extends Phaser.Scene {
           .setOrigin(0.5);
         y += 44;
 
+        const spGained = 1 + MetaProgress.getLevelUpSkillBonus();
         this.add
-          .text(width / 2, y, `+1 Skill Point — allocate it in Manage Moves`, {
+          .text(width / 2, y, `+${spGained} Skill Point${spGained === 1 ? "" : "s"} — allocate ${spGained === 1 ? "it" : "them"} in Manage Moves`, {
             fontSize: FONT_BODY,
             color: TXT_HERO,
           })

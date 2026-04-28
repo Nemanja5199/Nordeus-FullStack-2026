@@ -70,8 +70,10 @@ export interface MonsterConfig {
   moves: string[];
   dropMoves?: string[];
   xpReward: number;
-  goldReward: number;
-  shardReward: number;
+  goldMin: number;
+  goldMax: number;
+  shardMin: number;
+  shardMax: number;
 }
 
 export interface HeroDefaults {

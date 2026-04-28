@@ -1013,11 +1013,14 @@ export class BattleScene extends Phaser.Scene {
     const xpGain = Math.floor(this.monsterCfg.xpReward * this.monsterLevel);
     const leveled = GameState.addXp(xpGain);
 
-    const baseGold = this.monsterCfg.goldReward ?? 0;
-    const goldEarned = Math.floor(baseGold * (0.8 + Math.random() * 0.4));
+    const goldMin = this.monsterCfg.goldMin ?? 0;
+    const goldMax = this.monsterCfg.goldMax ?? 0;
+    const goldEarned = Math.floor(goldMin + Math.random() * (goldMax - goldMin + 1));
     GameState.hero.gold = (GameState.hero.gold ?? 0) + goldEarned;
 
-    const shardsEarned = this.monsterCfg.shardReward ?? 0;
+    const shardMin = this.monsterCfg.shardMin ?? 0;
+    const shardMax = this.monsterCfg.shardMax ?? 0;
+    const shardsEarned = Math.floor(shardMin + Math.random() * (shardMax - shardMin + 1));
     MetaProgress.addShards(shardsEarned);
 
     GameState.saveHero();

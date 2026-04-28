@@ -142,10 +142,15 @@ describe("MetaProgress.getStartingBonuses", () => {
     expect(MetaProgress.getStartingBonuses().attack).toBe(6);
   });
 
-  it("tracks scholar skill point bonus", () => {
-    MetaProgress.shards = 100;
-    MetaProgress.buy("scholar"); // +1 skill point
-    expect(MetaProgress.getStartingBonuses().skillPoints).toBe(1);
+  it("Scholar exposes +1 per-level-up SP bonus, not a starting bonus", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("scholar");
+    expect(MetaProgress.getStartingBonuses().skillPoints).toBe(0);
+    expect(MetaProgress.getLevelUpSkillBonus()).toBe(1);
+  });
+
+  it("getLevelUpSkillBonus is 0 when Scholar is not purchased", () => {
+    expect(MetaProgress.getLevelUpSkillBonus()).toBe(0);
   });
 
   it("tracks hoarder gold bonus", () => {

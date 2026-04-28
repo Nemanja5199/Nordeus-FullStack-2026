@@ -45,6 +45,7 @@ beforeEach(() => {
 // ── addXp ─────────────────────────────────────────────────────────────────────
 
 describe("GameState.addXp", () => {
+  // Curve is level² × 60: lv1→60, lv2→240, lv3→540, lv4→960
   it("accumulates XP without leveling up", () => {
     const leveled = GameState.addXp(50);
     expect(GameState.hero.xp).toBe(50);
@@ -52,25 +53,35 @@ describe("GameState.addXp", () => {
     expect(leveled).toBe(false);
   });
 
-  it("levels up when XP reaches threshold", () => {
-    const leveled = GameState.addXp(100);
+  it("levels up when XP reaches threshold and preserves overflow", () => {
+    const leveled = GameState.addXp(100); // 60 needed, 40 overflow
     expect(leveled).toBe(true);
     expect(GameState.hero.level).toBe(2);
-    expect(GameState.hero.xp).toBe(0);
+    expect(GameState.hero.xp).toBe(40);
   });
 
-  it("awards 1 skill point on level up", () => {
+  it("awards 1 skill point per level gained", () => {
     GameState.addXp(100);
     expect(GameState.hero.skillPoints).toBe(1);
   });
 
+  it("processes multiple level-ups in a single call", () => {
+    // 60 (lv1→2) + 240 (lv2→3) = 300; pass 350 → expect lv3, 50 overflow, 2 SP
+    const leveled = GameState.addXp(350);
+    expect(leveled).toBe(true);
+    expect(GameState.hero.level).toBe(3);
+    expect(GameState.hero.xp).toBe(50);
+    expect(GameState.hero.skillPoints).toBe(2);
+  });
+
   it("level up threshold scales with level", () => {
-    // Level 1 needs 100 XP, level 2 needs 200 XP
-    GameState.addXp(100); // reaches level 2
+    GameState.addXp(60); // reaches level 2 exactly
     expect(GameState.hero.level).toBe(2);
-    const leveled = GameState.addXp(100); // 100 < 200, no level up
+    expect(GameState.hero.xp).toBe(0);
+    const leveled = GameState.addXp(100); // 100 < 240, no level up
     expect(leveled).toBe(false);
     expect(GameState.hero.level).toBe(2);
+    expect(GameState.hero.xp).toBe(100);
   });
 });
 
@@ -188,6 +199,17 @@ describe("GameState.completeNode", () => {
     GameState.completeNode("n3a");
     expect(GameState.completedNodes).toEqual(["n1a", "n2b", "n3a"]);
   });
+
+  it("replay does not regress currentNode frontier", () => {
+    // Advance to n2b, then replay n1a — frontier must remain at n2b
+    // (the bug was: replay overwrote currentNode, locking n3 nodes).
+    GameState.completeNode("n1a");
+    GameState.completeNode("n2b");
+    expect(GameState.currentNode).toBe("n2b");
+    GameState.completeNode("n1a");
+    expect(GameState.currentNode).toBe("n2b");
+    expect(GameState.completedNodes.filter((n) => n === "n1a").length).toBe(1);
+  });
 });
 
 // ── resetRunProgress ──────────────────────────────────────────────────────────
@@ -256,10 +278,26 @@ describe("GameState.resetHero with MetaProgress bonuses", () => {
     expect(GameState.hero.defense).toBe(10 + 2);
   });
 
-  it("applies skillPoints bonus to starting hero", () => {
+  it("Scholar does NOT add starting skill points (bonus is per level-up)", () => {
     MetaProgress.shards = 200;
-    MetaProgress.buy("scholar"); // +1 skill point
+    MetaProgress.buy("scholar");
     GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.skillPoints).toBe(0);
+  });
+
+  it("Scholar grants +1 extra skill point per level up (so +2 total)", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("scholar");
+    GameState.resetHero(MOCK_CONFIG);
+    GameState.addXp(60); // lv 1→2
+    expect(GameState.hero.skillPoints).toBe(2);
+    GameState.addXp(240); // lv 2→3
+    expect(GameState.hero.skillPoints).toBe(4);
+  });
+
+  it("without Scholar, level up grants only +1 skill point", () => {
+    GameState.resetHero(MOCK_CONFIG);
+    GameState.addXp(60);
     expect(GameState.hero.skillPoints).toBe(1);
   });
 
@@ -433,31 +471,31 @@ describe("GameState shop", () => {
     expect(GameState.buyItem("legendary_blade")).toBe(false);
   });
 
-  it("buyHpPotion deducts 25 gold and increments hpPotions", () => {
+  it("buyHpPotion deducts 18 gold and increments hpPotions", () => {
     GameState.hero.gold = 50;
     expect(GameState.buyHpPotion()).toBe(true);
-    expect(GameState.hero.gold).toBe(25);
+    expect(GameState.hero.gold).toBe(32);
     expect(GameState.hero.hpPotions).toBe(1);
   });
 
-  it("buyHpPotion returns false when gold below 25", () => {
-    GameState.hero.gold = 24;
+  it("buyHpPotion returns false when gold below 18", () => {
+    GameState.hero.gold = 17;
     expect(GameState.buyHpPotion()).toBe(false);
-    expect(GameState.hero.gold).toBe(24);
+    expect(GameState.hero.gold).toBe(17);
     expect(GameState.hero.hpPotions).toBe(0);
   });
 
-  it("buyManaPotion deducts 30 gold and increments manaPotions", () => {
+  it("buyManaPotion deducts 21 gold and increments manaPotions", () => {
     GameState.hero.gold = 60;
     expect(GameState.buyManaPotion()).toBe(true);
-    expect(GameState.hero.gold).toBe(30);
+    expect(GameState.hero.gold).toBe(39);
     expect(GameState.hero.manaPotions).toBe(1);
   });
 
-  it("buyManaPotion returns false when gold below 30", () => {
-    GameState.hero.gold = 29;
+  it("buyManaPotion returns false when gold below 21", () => {
+    GameState.hero.gold = 20;
     expect(GameState.buyManaPotion()).toBe(false);
-    expect(GameState.hero.gold).toBe(29);
+    expect(GameState.hero.gold).toBe(20);
     expect(GameState.hero.manaPotions).toBe(0);
   });
 });

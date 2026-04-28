@@ -23,8 +23,8 @@ const HERO_KEY = "rpg_hero";
 const RUN_KEY = "rpg_run";
 const TREE_KEY = "rpg_tree_state";
 
-export const HP_POTION_PRICE = 25;
-export const MANA_POTION_PRICE = 30;
+export const HP_POTION_PRICE = 18;
+export const MANA_POTION_PRICE = 21;
 
 function defaultHero(defaults: {
   maxHp: number;
@@ -147,29 +147,32 @@ class GameStateManager {
   }
 
   completeNode(nodeId: string): void {
+    // Replays don't advance the frontier — currentNode drives which nodes are
+    // unlocked next, so overwriting it on replay would lock higher-tier nodes.
     if (!this.completedNodes.includes(nodeId)) {
       this.completedNodes.push(nodeId);
+      this.currentNode = nodeId;
     }
-    this.currentNode = nodeId;
     this.saveTreeState();
   }
 
   addXp(amount: number): boolean {
     this.hero.xp += amount;
-    const needed = Math.floor(this.hero.level * this.hero.level * 60);
-    if (this.hero.xp >= needed) {
+    let leveled = false;
+    let needed = Math.floor(this.hero.level * this.hero.level * 60);
+    while (this.hero.xp >= needed) {
+      this.hero.xp -= needed;
       this.levelUp();
-      this.saveHero();
-      return true;
+      leveled = true;
+      needed = Math.floor(this.hero.level * this.hero.level * 60);
     }
     this.saveHero();
-    return false;
+    return leveled;
   }
 
   private levelUp(): void {
     this.hero.level += 1;
-    this.hero.xp = 0;
-    this.hero.skillPoints = (this.hero.skillPoints ?? 0) + 1;
+    this.hero.skillPoints = (this.hero.skillPoints ?? 0) + 1 + MetaProgress.getLevelUpSkillBonus();
   }
 
   spendSkillPoint(stat: "attack" | "defense" | "magic" | "maxHp"): boolean {

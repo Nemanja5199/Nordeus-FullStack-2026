@@ -21,7 +21,7 @@ export const UPGRADE_DEFS: MetaUpgrade[] = [
   { id: "guard_2",    name: "Guard II",     category: "defense",    cost: 30, bonus: 4, requires: "guard_1",    description: "Start each run with +4 Defense" },
   { id: "guard_3",    name: "Guard III",    category: "defense",    cost: 60, bonus: 9, requires: "guard_2",    description: "Start each run with +9 Defense" },
   // ── Special ───────────────────────────────────────────────────────────────
-  { id: "scholar",    name: "Scholar",      category: "skillPoints", cost: 50, bonus: 1, description: "Start each run with 1 extra skill point" },
+  { id: "scholar",    name: "Scholar",      category: "skillPoints", cost: 100, bonus: 1, description: "Gain +1 extra skill point on every level up" },
   { id: "hoarder",    name: "Hoarder",      category: "gold",       cost: 40, bonus: 25, description: "Start each run with 25 gold" },
 ];
 
@@ -69,9 +69,19 @@ class MetaProgressManager {
     const b: StartingBonuses = { maxHp: 0, attack: 0, defense: 0, magic: 0, skillPoints: 0, gold: 0 };
     for (const id of this.purchased) {
       const def = UPGRADE_DEFS.find((u) => u.id === id);
-      if (def) b[def.category] += def.bonus;
+      // skillPoints bonuses (Scholar) apply per level-up, not at run start.
+      if (def && def.category !== "skillPoints") b[def.category] += def.bonus;
     }
     return b;
+  }
+
+  getLevelUpSkillBonus(): number {
+    let bonus = 0;
+    for (const id of this.purchased) {
+      const def = UPGRADE_DEFS.find((u) => u.id === id);
+      if (def && def.category === "skillPoints") bonus += def.bonus;
+    }
+    return bonus;
   }
 
   resetAll(): void {
