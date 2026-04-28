@@ -47,10 +47,15 @@ class LoadGameResponse(BaseModel):
     run: dict[str, Any] | None
 
 
-class RunConfigResponse(BaseModel):
+class GameMetaResponse(BaseModel):
+    """Static config — same on every request. Cache on the client."""
     monsters: list[dict[str, Any]]
     moves: dict[str, dict[str, Any]]
     items: dict[str, dict[str, Any]]
     heroDefaults: dict[str, Any]
+
+
+class RunStartResponse(BaseModel):
+    """Run-specific data — generated per call, depends on seed."""
     mapTree: dict[str, Any]
     seed: int
