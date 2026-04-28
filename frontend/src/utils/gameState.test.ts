@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { GameState } from "./gameState";
+import { GameState, getGearBonuses } from "./gameState";
 import { MetaProgress } from "./metaProgress";
-import type { RunConfig } from "../types/game";
+import type { GearItem, RunConfig } from "../types/game";
 
 // ── Minimal RunConfig stub ────────────────────────────────────────────────────
 
@@ -497,5 +497,135 @@ describe("GameState shop", () => {
     expect(GameState.buyManaPotion()).toBe(false);
     expect(GameState.hero.gold).toBe(20);
     expect(GameState.hero.manaPotions).toBe(0);
+  });
+});
+
+// ── safe lookups ──────────────────────────────────────────────────────────────
+
+describe("GameState.getMove / getItem", () => {
+  const ITEM: GearItem = {
+    id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",
+    tier: 1, cost: 30,
+    statBonuses: { attack: 4 }, description: "",
+  };
+  const CONFIG: RunConfig = {
+    ...MOCK_CONFIG,
+    items: { iron_sword: ITEM },
+    moves: {
+      slash: { id: "slash", name: "Slash", moveType: "physical", baseValue: 10, effects: [], description: "", dropChance: 0, manaCost: 0 },
+    },
+  };
+
+  beforeEach(() => {
+    GameState.runConfig = CONFIG;
+  });
+
+  it("getMove returns the move for a known id", () => {
+    expect(GameState.getMove("slash")?.name).toBe("Slash");
+  });
+
+  it("getMove returns undefined and warns on unknown id", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(GameState.getMove("nonexistent")).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("nonexistent"));
+    warn.mockRestore();
+  });
+
+  it("getItem returns the item for a known id", () => {
+    expect(GameState.getItem("iron_sword")?.name).toBe("Iron Sword");
+  });
+
+  it("getItem returns undefined and warns on unknown id", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(GameState.getItem("ghost_item")).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("ghost_item"));
+    warn.mockRestore();
+  });
+
+  it("getMove returns undefined when runConfig is null", () => {
+    GameState.runConfig = null;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(GameState.getMove("slash")).toBeUndefined();
+    warn.mockRestore();
+  });
+});
+
+describe("hero save versioning", () => {
+  it("saveHero stamps SAVE_VERSION on the persisted record", async () => {
+    const { SAVE_VERSION } = await import("./gameState");
+    GameState.hero.gold = 42;
+    GameState.saveHero();
+    const raw = localStorage.getItem("rpg_hero");
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.saveVersion).toBe(SAVE_VERSION);
+    expect(parsed.gold).toBe(42);
+  });
+
+  it("initHero migrates an unversioned save by backfilling new fields", () => {
+    const legacy = {
+      level: 3, xp: 10, currentHp: 80, maxHp: 100,
+      attack: 15, defense: 10, magic: 8,
+      learnedMoves: ["slash"], equippedMoves: ["slash"],
+      // skillPoints, gold, equipment, inventory, hpPotions, manaPotions all missing
+    };
+    localStorage.setItem("rpg_hero", JSON.stringify(legacy));
+    GameState.initHero(MOCK_CONFIG);
+    expect(GameState.hero.skillPoints).toBe(0);
+    expect(GameState.hero.gold).toBe(0);
+    expect(GameState.hero.equipment).toEqual({});
+    expect(GameState.hero.inventory).toEqual([]);
+    expect(GameState.hero.hpPotions).toBe(0);
+    expect(GameState.hero.manaPotions).toBe(0);
+    // Existing data is preserved.
+    expect(GameState.hero.level).toBe(3);
+    expect(GameState.hero.xp).toBe(10);
+    expect(GameState.hero.currentHp).toBe(80);
+  });
+
+  it("initHero warns and migrates when save version is older than current", async () => {
+    const { SAVE_VERSION } = await import("./gameState");
+    const legacy = {
+      saveVersion: SAVE_VERSION - 99,
+      level: 1, xp: 0, currentHp: 100, maxHp: 100,
+      attack: 15, defense: 10, magic: 8,
+      learnedMoves: ["slash"], equippedMoves: ["slash"],
+    };
+    localStorage.setItem("rpg_hero", JSON.stringify(legacy));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    GameState.initHero(MOCK_CONFIG);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("migrating hero save"));
+    warn.mockRestore();
+  });
+
+  it("initHero does not warn when save version matches", async () => {
+    const { SAVE_VERSION } = await import("./gameState");
+    GameState.saveHero(); // stamps current SAVE_VERSION
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    GameState.initHero(MOCK_CONFIG);
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("migrating"));
+    warn.mockRestore();
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("getGearBonuses", () => {
+  const SWORD: GearItem = {
+    id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",
+    tier: 1, cost: 30,
+    statBonuses: { attack: 4 }, description: "",
+  };
+
+  it("sums bonuses from equipped items", () => {
+    const b = getGearBonuses({ weapon: "iron_sword" }, { iron_sword: SWORD });
+    expect(b.attack).toBe(4);
+  });
+
+  it("warns and skips when an equipped id is missing from items dict", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const b = getGearBonuses({ weapon: "stale_id" }, { iron_sword: SWORD });
+    expect(b.attack).toBe(0);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("stale_id"));
+    warn.mockRestore();
   });
 });

@@ -3,6 +3,15 @@ import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
+import {
+  HP_BAR_HIGH_THRESHOLD,
+  HP_BAR_MID_THRESHOLD,
+  HP_POTION_HEAL,
+  MANA_MAX,
+  MANA_REGEN,
+  MONSTER_LEVEL_SCALING,
+  MP_POTION_RESTORE,
+} from "../utils/gameConstants";
 import { GameState, getGearBonuses } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
 import { api } from "../services/api";
@@ -67,17 +76,15 @@ export class BattleScene extends Phaser.Scene {
   private turnNumber = 0;
   private busy = false;
 
-  // Mana
-  private heroMana = 60;
-  private readonly MANA_MAX = 60;
-  private readonly MANA_REGEN = 6;
+  // Mana — values come from utils/gameConstants
+  private heroMana = MANA_MAX;
   private heroManaBarLeft!: number;
-
-  // Potions (free action, 1 per turn)
-  private readonly HP_POTION_HEAL = 40;
-  private readonly MP_POTION_RESTORE = 30;
   private usedPotionThisTurn = false;
-  private potionButtons: Phaser.GameObjects.Container[] = [];
+  private potionButtons: Array<{
+    container: Phaser.GameObjects.Container;
+    bg: Phaser.GameObjects.Rectangle;
+    txt: Phaser.GameObjects.Text;
+  }> = [];
 
   // UI
   private heroHpFill!: Phaser.GameObjects.Rectangle;
@@ -93,7 +100,14 @@ export class BattleScene extends Phaser.Scene {
   private statusText!: Phaser.GameObjects.Text;
   private descText!: Phaser.GameObjects.Text;
   private logLines: Phaser.GameObjects.Text[] = [];
-  private moveButtons: Phaser.GameObjects.Container[] = [];
+  private logColors: string[] = [];
+  private moveButtons: Array<{
+    container: Phaser.GameObjects.Container;
+    bg: Phaser.GameObjects.Rectangle;
+    nameTxt: Phaser.GameObjects.Text;
+    typeTxt: Phaser.GameObjects.Text;
+    costTxt: Phaser.GameObjects.Text;
+  }> = [];
   private monsterIntentMoveId: string | null = null;
   private monsterMoveHistory: string[] = [];
 
@@ -112,11 +126,12 @@ export class BattleScene extends Phaser.Scene {
   create(data: BattleData) {
     this.busy = false;
     this.turnNumber = 0;
-    this.heroMana = this.MANA_MAX;
+    this.heroMana = MANA_MAX;
     this.moveButtons = [];
     this.potionButtons = [];
     this.usedPotionThisTurn = false;
     this.logLines = [];
+    this.logColors = [];
     this.monsterIntentMoveId = null;
 
     this.monsterCfg = data.monster;
@@ -146,7 +161,7 @@ export class BattleScene extends Phaser.Scene {
     const heroLevel = GameState.hero.level;
     const band = data.levelBand ?? { min: 1, max: 15 };
     this.monsterLevel = Math.max(band.min, Math.min(band.max, heroLevel));
-    const scaleFactor = 1 + 0.05 * (this.monsterLevel - 1);
+    const scaleFactor = 1 + MONSTER_LEVEL_SCALING * (this.monsterLevel - 1);
     const scaledHp = Math.floor(ms.hp * scaleFactor);
     this.monster = {
       id: this.monsterCfg.id,
@@ -430,14 +445,12 @@ export class BattleScene extends Phaser.Scene {
       });
 
       container.add([bg, nameTxt, typeTxt, costTxt]);
-      this.moveButtons.push(container);
+      this.moveButtons.push({ container, bg, nameTxt, typeTxt, costTxt });
     });
   }
 
   private setButtonsEnabled(enabled: boolean) {
-    this.moveButtons.forEach((c) => {
-      const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
-      const nameTxt = c.getAt(1) as Phaser.GameObjects.Text;
+    this.moveButtons.forEach(({ bg, nameTxt }) => {
       bg.setAlpha(enabled ? 1 : 0.4);
       if (!enabled) {
         bg.setFillStyle(BG_MOVE_CARD);
@@ -461,7 +474,13 @@ export class BattleScene extends Phaser.Scene {
     const startX = (width - totalW) / 2 + btnW / 2;
     const y = height * 0.85;
 
-    const make = (i: number, iconKey: string, count: number, onUse: () => void) => {
+    const make = (
+      i: number,
+      iconKey: string,
+      count: number,
+      onUse: () => void,
+      onHoverPreview: () => void,
+    ) => {
       const x = startX + i * (btnW + gap);
       const container = this.add.container(x, y);
       const bg = this.add
@@ -480,19 +499,29 @@ export class BattleScene extends Phaser.Scene {
         bg.setFillStyle(BG_BTN_HOVER);
         bg.setStrokeStyle(1, BORDER_GOLD_BRIGHT);
         txt.setColor(TXT_GOLD);
+        onHoverPreview();
       });
       bg.on("pointerout", () => {
         bg.setFillStyle(BG_MOVE_CARD);
         bg.setStrokeStyle(1, BORDER_LOCKED);
         txt.setColor(TXT_GOLD_LIGHT);
+        this.hideMovePreview();
       });
       bg.on("pointerdown", onUse);
       container.add([bg, icon, txt]);
-      this.potionButtons.push(container);
+      this.potionButtons.push({ container, bg, txt });
     };
 
-    make(0, "potion_hp", GameState.hero.hpPotions ?? 0, () => this.useHpPotion());
-    make(1, "potion_mp", GameState.hero.manaPotions ?? 0, () => this.useManaPotion());
+    make(
+      0, "potion_hp", GameState.hero.hpPotions ?? 0,
+      () => this.useHpPotion(),
+      () => this.previewHpPotion(),
+    );
+    make(
+      1, "potion_mp", GameState.hero.manaPotions ?? 0,
+      () => this.useManaPotion(),
+      () => this.previewManaPotion(),
+    );
     this.updatePotionButtons();
   }
 
@@ -510,17 +539,17 @@ export class BattleScene extends Phaser.Scene {
       !this.busy &&
       !this.usedPotionThisTurn &&
       (GameState.hero.manaPotions ?? 0) > 0 &&
-      this.heroMana < this.MANA_MAX
+      this.heroMana < MANA_MAX
     );
   }
 
   private useHpPotion() {
     if (!this.canUseHpPotion()) return;
     if (!GameState.useHpPotion()) return;
-    this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + this.HP_POTION_HEAL);
+    this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + HP_POTION_HEAL);
     GameState.hero.currentHp = this.hero.hp;
     this.usedPotionThisTurn = true;
-    this.pushLog(`You drink an HP potion (+${this.HP_POTION_HEAL} HP).`);
+    this.pushLog(`You drink an HP potion (+${HP_POTION_HEAL} HP).`);
     this.updateHeroHp();
     this.updatePotionButtons();
   }
@@ -528,9 +557,9 @@ export class BattleScene extends Phaser.Scene {
   private useManaPotion() {
     if (!this.canUseManaPotion()) return;
     if (!GameState.useManaPotion()) return;
-    this.heroMana = Math.min(this.MANA_MAX, this.heroMana + this.MP_POTION_RESTORE);
+    this.heroMana = Math.min(MANA_MAX, this.heroMana + MP_POTION_RESTORE);
     this.usedPotionThisTurn = true;
-    this.pushLog(`You drink a mana potion (+${this.MP_POTION_RESTORE} MP).`);
+    this.pushLog(`You drink a mana potion (+${MP_POTION_RESTORE} MP).`);
     this.updateHeroMana();
     this.updatePotionButtons();
   }
@@ -538,9 +567,7 @@ export class BattleScene extends Phaser.Scene {
   private updatePotionButtons() {
     const counts = [GameState.hero.hpPotions ?? 0, GameState.hero.manaPotions ?? 0];
     const enabled = [this.canUseHpPotion(), this.canUseManaPotion()];
-    this.potionButtons.forEach((c, i) => {
-      const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
-      const txt = c.getAt(2) as Phaser.GameObjects.Text;
+    this.potionButtons.forEach(({ bg, txt }, i) => {
       txt.setText(`× ${counts[i]}`);
       bg.setAlpha(enabled[i] ? 1 : 0.4);
       if (enabled[i]) {
@@ -577,17 +604,20 @@ export class BattleScene extends Phaser.Scene {
           })
           .setOrigin(0.5),
       );
+      this.logColors.push(TXT_GOLD_LIGHT);
     }
   }
 
   private pushLog(msg: string, color: string = TXT_GOLD_LIGHT) {
     for (let i = 0; i < this.logLines.length - 1; i++) {
       this.logLines[i].setText(this.logLines[i + 1].text);
-      this.logLines[i].setColor(this.logLines[i + 1].style.color as string);
+      this.logLines[i].setColor(this.logColors[i + 1]);
+      this.logColors[i] = this.logColors[i + 1];
     }
-    const last = this.logLines[this.logLines.length - 1];
-    last.setText(`> ${msg}`);
-    last.setColor(color);
+    const lastIdx = this.logLines.length - 1;
+    this.logLines[lastIdx].setText(`> ${msg}`);
+    this.logLines[lastIdx].setColor(color);
+    this.logColors[lastIdx] = color;
   }
 
   private moveLogColor(move: {
@@ -609,7 +639,9 @@ export class BattleScene extends Phaser.Scene {
   private updateHeroHp() {
     const pct = Math.max(0, this.hero.hp) / this.hero.maxHp;
     this.heroHpFill.setScale(pct, 1);
-    this.heroHpFill.setFillStyle(pct > 0.5 ? BAR_HP_HIGH : pct > 0.25 ? BAR_HP_MID : BAR_HP_LOW);
+    this.heroHpFill.setFillStyle(
+      pct > HP_BAR_HIGH_THRESHOLD ? BAR_HP_HIGH : pct > HP_BAR_MID_THRESHOLD ? BAR_HP_MID : BAR_HP_LOW,
+    );
     this.heroHpText.setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`);
     this.heroBuffText.setText(this.formatBuffs(this.hero));
     this.updateHeroStats();
@@ -617,9 +649,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updateHeroMana() {
-    const pct = this.heroMana / this.MANA_MAX;
+    const pct = this.heroMana / MANA_MAX;
     this.heroManaFill.setScale(pct, 1);
-    this.heroManaText.setText(`MP  ${this.heroMana} / ${this.MANA_MAX}`).setColor(TXT_GOLD_LIGHT);
+    this.heroManaText.setText(`MP  ${this.heroMana} / ${MANA_MAX}`).setColor(TXT_GOLD_LIGHT);
     this.updateButtonManaState();
   }
 
@@ -627,13 +659,10 @@ export class BattleScene extends Phaser.Scene {
     this.hero.moves.forEach((moveId, i) => {
       const btn = this.moveButtons[i];
       if (!btn) return;
-      const move = GameState.runConfig!.moves[moveId];
-      const cost = move?.manaCost ?? 0;
+      const cost = GameState.getMove(moveId)?.manaCost ?? 0;
       const canAfford = this.heroMana >= cost;
-      const bg = btn.getAt(0) as Phaser.GameObjects.Rectangle;
-      const costTxt = btn.getAt(3) as Phaser.GameObjects.Text;
-      bg.setAlpha(canAfford ? 1 : 0.45);
-      if (costTxt) costTxt.setColor(canAfford ? TXT_MANA : TXT_MANA_LOW);
+      btn.bg.setAlpha(canAfford ? 1 : 0.45);
+      btn.costTxt.setColor(canAfford ? TXT_MANA : TXT_MANA_LOW);
     });
   }
 
@@ -794,11 +823,29 @@ export class BattleScene extends Phaser.Scene {
   private previewMana(cost: number) {
     if (cost <= 0) return;
     const futureMana = Math.max(0, this.heroMana - cost);
-    const futureRegen = Math.min(this.MANA_MAX, futureMana + this.MANA_REGEN);
-    this.heroManaFill.setScale(futureMana / this.MANA_MAX, 1);
+    const futureRegen = Math.min(MANA_MAX, futureMana + MANA_REGEN);
+    this.heroManaFill.setScale(futureMana / MANA_MAX, 1);
     this.heroManaText
-      .setText(`MP  ${futureMana} / ${this.MANA_MAX}  (+${futureRegen - futureMana} next turn)`)
+      .setText(`MP  ${futureMana} / ${MANA_MAX}  (+${futureRegen - futureMana} next turn)`)
       .setColor(TXT_MANA_LOW);
+  }
+
+  // Preview future HP after drinking an HP potion. Skip when the potion would
+  // do nothing (no charges, already at full HP, in-flight turn, etc.) so the
+  // ghost bar doesn't lie about a heal that won't happen.
+  private previewHpPotion(): void {
+    if (!this.canUseHpPotion()) return;
+    this.previewHeroHp(0, HP_POTION_HEAL, 0);
+  }
+
+  // Mirror of previewHpPotion for the mana bar.
+  private previewManaPotion(): void {
+    if (!this.canUseManaPotion()) return;
+    const futureMana = Math.min(MANA_MAX, this.heroMana + MP_POTION_RESTORE);
+    this.heroManaFill.setScale(futureMana / MANA_MAX, 1);
+    this.heroManaText
+      .setText(`MP  ${futureMana} / ${MANA_MAX}`)
+      .setColor(TXT_INTENT_HEAL);
   }
 
   private previewHeroBuffs(move: MoveConfig): number {
@@ -918,7 +965,12 @@ export class BattleScene extends Phaser.Scene {
     this.hideMovePreview();
     this.setButtonsEnabled(false);
 
-    const move = GameState.runConfig!.moves[moveId];
+    const move = GameState.getMove(moveId);
+    if (!move) {
+      this.busy = false;
+      this.setButtonsEnabled(true);
+      return;
+    }
     this.heroMana = Math.max(0, this.heroMana - (move.manaCost ?? 0));
     const result = applyMove(move, this.hero, this.monster);
     this.pushLog(`You → ${move.name}: ${result.logMessage}`, this.moveLogColor(move));
@@ -968,7 +1020,8 @@ export class BattleScene extends Phaser.Scene {
         moveId = resp.moveId;
       }
 
-      const monsterMove = GameState.runConfig!.moves[moveId];
+      const monsterMove = GameState.getMove(moveId);
+      if (!monsterMove) throw new Error(`unknown monster move: ${moveId}`);
       const result = applyMove(monsterMove, this.monster, this.hero);
       this.pushLog(
         `${this.monster.name} → ${monsterMove.name}: ${result.logMessage}`,
@@ -977,18 +1030,22 @@ export class BattleScene extends Phaser.Scene {
       this.monsterMoveHistory = [moveId, ...this.monsterMoveHistory].slice(0, 3);
     } catch {
       const fallbackId = this.monster.moves[Math.floor(Math.random() * this.monster.moves.length)];
-      const fallbackMove = GameState.runConfig!.moves[fallbackId];
-      const result = applyMove(fallbackMove, this.monster, this.hero);
-      this.pushLog(
-        `${this.monster.name} → ${fallbackMove.name}: ${result.logMessage}`,
-        this.moveLogColor(fallbackMove),
-      );
-      this.monsterMoveHistory = [fallbackId, ...this.monsterMoveHistory].slice(0, 3);
+      const fallbackMove = GameState.getMove(fallbackId);
+      if (!fallbackMove) {
+        this.pushLog(`${this.monster.name} hesitates.`, TXT_MUTED);
+      } else {
+        const result = applyMove(fallbackMove, this.monster, this.hero);
+        this.pushLog(
+          `${this.monster.name} → ${fallbackMove.name}: ${result.logMessage}`,
+          this.moveLogColor(fallbackMove),
+        );
+        this.monsterMoveHistory = [fallbackId, ...this.monsterMoveHistory].slice(0, 3);
+      }
     }
 
     tickBuffs(this.hero);
     tickBuffs(this.monster);
-    this.heroMana = Math.min(this.MANA_MAX, this.heroMana + this.MANA_REGEN);
+    this.heroMana = Math.min(MANA_MAX, this.heroMana + MANA_REGEN);
     this.turnNumber++;
 
     this.updateHeroHp();
