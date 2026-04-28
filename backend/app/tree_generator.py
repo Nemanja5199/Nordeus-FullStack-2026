@@ -5,15 +5,15 @@ from typing import Any
 TIER1_MONSTERS = ["goblin_warrior", "goblin_mage"]
 TIER2_MONSTERS = ["giant_spider", "witch"]
 BOSS_MONSTERS  = ["dragon"]
-TIER1_ELITE_MONSTERS = ["goblin_veteran", "goblin_warlock"]
+TIER1_ELITE_MONSTERS = ["skeleton", "lich"]
 
 # Per-monster level bands: monsterLevel = clamp(heroLevel, min, max)
 # 5% scaling per level: scaleFactor = 1 + 0.05 * (monsterLevel - 1)
 MONSTER_LEVEL_BANDS: dict[tuple[str, int], dict] = {
     ("goblin_warrior",  1): {"min": 1,  "max": 3},
     ("goblin_mage",     1): {"min": 1,  "max": 2},
-    ("goblin_veteran",  2): {"min": 4,  "max": 6},
-    ("goblin_warlock",  2): {"min": 4,  "max": 5},
+    ("skeleton",        2): {"min": 4,  "max": 6},
+    ("lich",            2): {"min": 4,  "max": 5},
     ("giant_spider",    3): {"min": 13, "max": 14},
     ("giant_spider",    4): {"min": 23, "max": 23},
     ("witch",           3): {"min": 7,  "max": 10},

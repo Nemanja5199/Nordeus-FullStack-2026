@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
-import { applyMove, tickBuffs, getEffectiveStat, hasSimilarMove } from "../utils/combat";
+import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../utils/combat";
 import {
   HP_BAR_HIGH_THRESHOLD,
   HP_BAR_MID_THRESHOLD,
@@ -154,6 +154,7 @@ export class BattleScene extends Phaser.Scene {
         magic: hs.magic + (gear.magic ?? 0),
       },
       activeBuffs: [],
+      activeDots: [],
       moves: hs.equippedMoves,
     };
 
@@ -174,6 +175,7 @@ export class BattleScene extends Phaser.Scene {
         magic: Math.floor(ms.magic * scaleFactor),
       },
       activeBuffs: [],
+      activeDots: [],
       moves: this.monsterCfg.moves,
     };
 
@@ -681,14 +683,16 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private formatBuffs(char: CombatCharacter): string {
-    if (!char.activeBuffs.length) return "";
-    return char.activeBuffs
-      .map((b) => {
-        const sign = b.multiplier >= 1 ? "+" : "-";
-        const pct = Math.round(Math.abs(b.multiplier - 1) * 100);
-        return `${b.stat} ${sign}${pct}% (${b.turnsRemaining}t)`;
-      })
-      .join("  ");
+    const parts: string[] = [];
+    for (const b of char.activeBuffs) {
+      const sign = b.multiplier >= 1 ? "+" : "-";
+      const pct = Math.round(Math.abs(b.multiplier - 1) * 100);
+      parts.push(`${b.stat} ${sign}${pct}% (${b.turnsRemaining}t)`);
+    }
+    for (const d of char.activeDots ?? []) {
+      parts.push(`☠${d.damagePerTurn}/t (${d.turnsRemaining}t)`);
+    }
+    return parts.join("  ");
   }
 
   // ── Move tooltip (shown on hover) ───────────────────────────────────────
@@ -786,6 +790,7 @@ export class BattleScene extends Phaser.Scene {
           defense: this.monster.baseStats.defense,
           magic: this.monster.baseStats.magic,
           activeBuffs: this.monster.activeBuffs,
+          activeDots: this.monster.activeDots,
         },
         heroState: {
           hp: this.hero.hp,
@@ -794,6 +799,7 @@ export class BattleScene extends Phaser.Scene {
           defense: this.hero.baseStats.defense,
           magic: this.hero.baseStats.magic,
           activeBuffs: this.hero.activeBuffs,
+          activeDots: this.hero.activeDots,
         },
         turnNumber: this.turnNumber,
         heroMoves: this.hero.moves,
@@ -1003,6 +1009,7 @@ export class BattleScene extends Phaser.Scene {
             defense: this.monster.baseStats.defense,
             magic: this.monster.baseStats.magic,
             activeBuffs: this.monster.activeBuffs,
+            activeDots: this.monster.activeDots,
           },
           heroState: {
             hp: this.hero.hp,
@@ -1011,6 +1018,7 @@ export class BattleScene extends Phaser.Scene {
             defense: this.hero.baseStats.defense,
             magic: this.hero.baseStats.magic,
             activeBuffs: this.hero.activeBuffs,
+            activeDots: this.hero.activeDots,
           },
           turnNumber: this.turnNumber,
           heroMoves: this.hero.moves,
@@ -1045,12 +1053,27 @@ export class BattleScene extends Phaser.Scene {
 
     tickBuffs(this.hero);
     tickBuffs(this.monster);
+
+    // DOTs tick at end of full turn, after both sides have acted. A DOT
+    // applied this turn won't expire before its first damage tick because
+    // applyMove stored turns + 1.
+    const heroDotDmg = tickDots(this.hero);
+    if (heroDotDmg > 0) this.pushLog(`Decay tick: -${heroDotDmg} HP`, TXT_INTENT_DEBUFF);
+    const monsterDotDmg = tickDots(this.monster);
+    if (monsterDotDmg > 0)
+      this.pushLog(`${this.monster.name} loses ${monsterDotDmg} to decay`, TXT_INTENT_HEAL);
+
     this.heroMana = Math.min(MANA_MAX, this.heroMana + MANA_REGEN);
     this.turnNumber++;
 
     this.updateHeroHp();
     this.updateMonsterHp();
 
+    // DOT can finish off either side; check both before yielding control.
+    if (this.monster.hp <= 0) {
+      this.handleVictory();
+      return;
+    }
     if (this.hero.hp <= 0) {
       this.handleDefeat();
       return;

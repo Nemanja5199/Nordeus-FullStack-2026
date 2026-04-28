@@ -58,7 +58,26 @@
       "Bash(jobs)",
       "Bash(docker compose *)",
       "Bash(node_modules/.bin/vitest run *)",
-      "Bash(kill bnqmecczo *)"
+      "Bash(kill bnqmecczo *)",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc825.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Weapon & Tool/Wooden Wand.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc1556.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Weapon & Tool/War Club.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc1608.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Weapon & Tool/Battlemage Sword.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc730.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Weapon & Tool/Dragonfang Blade.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc1590.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Weapon & Tool/Archmage Staff.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc1953.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Equipment/Iron Skullcap.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc2052.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Equipment/Battle Helm.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc2079.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Equipment/Crown of Embers.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc1870.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Equipment/Mage Robe.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc1860.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Equipment/Battle Plate.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc833.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Ore & Gem/Ring of Insight.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc2065.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Ore & Gem/Ring of Vigor.png\")",
+      "Bash(cp \"/mnt/e/Projects/Assets/Potenial icons/fc810.png\" \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Ore & Gem/Ring of Power.png\")",
+      "Bash(xargs ls *)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(kill %1)",
+      "Bash(pkill -f \"_pick_move\")",
+      "Bash(awk -F: '{print $2}')",
+      "Bash(grep -iB 1 \"claude\\\\|anthropic\\\\|opus\\\\|sonnet\")"
     ]
   }
 }

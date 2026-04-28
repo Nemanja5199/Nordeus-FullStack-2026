@@ -43,8 +43,13 @@ export interface ActiveBuff {
   turnsRemaining: number;
 }
 
+export interface ActiveDot {
+  damagePerTurn: number;
+  turnsRemaining: number;
+}
+
 export interface MoveEffect {
-  type: "buff" | "debuff" | "heal" | "drain" | "hp_cost";
+  type: "buff" | "debuff" | "heal" | "drain" | "hp_cost" | "dot";
   target?: "self" | "opponent";
   stat?: "attack" | "defense" | "magic";
   multiplier?: number;
@@ -120,6 +125,7 @@ export interface CombatCharacter {
   maxHp: number;
   baseStats: Stats;
   activeBuffs: ActiveBuff[];
+  activeDots: ActiveDot[];
   moves: string[];
 }
 

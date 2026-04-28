@@ -1,4 +1,4 @@
-import type { ActiveBuff, GearItem, HeroDefaults, MonsterConfig, MoveConfig, RunConfig } from "../types/game";
+import type { ActiveBuff, ActiveDot, GearItem, HeroDefaults, MonsterConfig, MoveConfig, RunConfig } from "../types/game";
 import type { MapTree } from "../utils/mockMapTree";
 
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
@@ -13,6 +13,7 @@ export interface BattleStatePayload {
     defense: number;
     magic: number;
     activeBuffs: ActiveBuff[];
+    activeDots: ActiveDot[];
   };
   heroState: {
     hp: number;
@@ -21,6 +22,7 @@ export interface BattleStatePayload {
     defense: number;
     magic: number;
     activeBuffs: ActiveBuff[];
+    activeDots: ActiveDot[];
   };
   turnNumber: number;
   heroMoves: string[];

@@ -2,7 +2,7 @@ import copy
 import math
 import random
 from fastapi import APIRouter
-from app.models import ActiveBuff, CharacterState, MonsterMoveRequest, MonsterMoveResponse
+from app.models import ActiveBuff, ActiveDot, CharacterState, MonsterMoveRequest, MonsterMoveResponse
 from app.game_config import MOVES
 
 router = APIRouter()
@@ -62,6 +62,13 @@ def _apply_move_sim(
                 )
         elif ftype == "hp_cost":
             atk.hp = max(1, atk.hp - fx["value"])
+        elif ftype == "dot":
+            # turns stored directly (NOT turns + 1 like buffs); see combat.ts
+            # for the rationale on the asymmetry with buff storage.
+            tgt = atk if fx.get("target") == "self" else dfn
+            tgt.activeDots.append(
+                ActiveDot(damagePerTurn=fx["value"], turnsRemaining=fx["turns"])
+            )
 
     return atk, dfn
 
@@ -73,6 +80,22 @@ def _tick_buffs_sim(state: CharacterState) -> CharacterState:
         ActiveBuff(stat=b.stat, multiplier=b.multiplier, turnsRemaining=b.turnsRemaining - 1)
         for b in s.activeBuffs
         if b.turnsRemaining - 1 > 0
+    ]
+    return s
+
+
+def _tick_dots_sim(state: CharacterState) -> CharacterState:
+    """Non-mutating: deep-copies, applies one DOT tick of damage, decrements
+    durations, and drops expired DOTs. Mirrors tickDots() on the frontend."""
+    s = copy.deepcopy(state)
+    if not s.activeDots:
+        return s
+    total = sum(d.damagePerTurn for d in s.activeDots)
+    s.hp = max(0, s.hp - total)
+    s.activeDots = [
+        ActiveDot(damagePerTurn=d.damagePerTurn, turnsRemaining=d.turnsRemaining - 1)
+        for d in s.activeDots
+        if d.turnsRemaining - 1 > 0
     ]
     return s
 
@@ -90,6 +113,13 @@ def _buff_impact(stat: str, multiplier: float, turns: int, char: CharacterState)
     return delta * turns * 3.0
 
 
+def _dot_threat(state: CharacterState) -> float:
+    """Total guaranteed-future damage from active DOTs. Used by _evaluate so
+    the AI treats an applied DOT as nearly-equivalent to dealing that damage
+    upfront (DOTs can't be cleansed in this game)."""
+    return float(sum(d.damagePerTurn * d.turnsRemaining for d in state.activeDots))
+
+
 def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
     """Heuristic score from the monster's perspective. Positive = monster is winning."""
     hp_score = ((monster.hp / monster.maxHp) - (hero.hp / hero.maxHp)) * 100.0
@@ -104,7 +134,13 @@ def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
         elif b.multiplier < 1.0:
             buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
 
-    return hp_score + buff_score * 3.0
+    # DOT pending on the hero is good for the monster; on the monster, bad.
+    # Scale into the same units as direct HP swing — pending damage is real
+    # but slightly devalued vs. immediate HP because we might end the fight
+    # before all ticks land.
+    dot_score = (_dot_threat(hero) - _dot_threat(monster)) * 0.6
+
+    return hp_score + buff_score * 3.0 + dot_score
 
 
 def _minimax(
@@ -147,10 +183,13 @@ def _minimax(
         total = 0.0
         for move_id in hero_moves:
             h2, m2 = _apply_move_sim(move_id, hero, monster)
-            # Buffs tick at the end of each full turn (after both sides have acted)
+            # End of full turn: tick buffs, then DOTs (mirror the live BattleScene
+            # ordering so AI predictions match what actually happens).
             m3 = _tick_buffs_sim(m2)
             h3 = _tick_buffs_sim(h2)
-            total += _minimax(m3, h3, depth - 1, True, alpha, beta, monster_moves, hero_moves)
+            m4 = _tick_dots_sim(m3)
+            h4 = _tick_dots_sim(h3)
+            total += _minimax(m4, h4, depth - 1, True, alpha, beta, monster_moves, hero_moves)
         return total / len(hero_moves)
 
 

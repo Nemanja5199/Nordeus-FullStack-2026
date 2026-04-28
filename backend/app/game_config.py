@@ -151,6 +151,44 @@ MOVES: dict[str, dict[str, Any]] = {
         "repeatPenalty": 0.6, "dropChance": 0.60, "manaCost": 15,
         "description": "Raises own Defense by 50% for 2 turns.",
     },
+    # ── Skeleton ─────────────────────────────────────────────────────────
+    "bone_strike": {
+        "id": "bone_strike", "name": "Bone Strike", "moveType": "physical", "baseValue": 18,
+        "effects": [], "repeatPenalty": 0.3, "dropChance": 0.55, "manaCost": 0,
+        "description": "A swift bone-handed strike.",
+    },
+    "bone_armor": {
+        "id": "bone_armor", "name": "Bone Armor", "moveType": "none", "baseValue": 0,
+        "effects": [{"type": "buff", "target": "self", "stat": "defense", "multiplier": 1.5, "turns": 2}],
+        "repeatPenalty": 0.6, "dropChance": 0.40, "manaCost": 20,
+        "description": "Raises own Defense by 50% for 2 turns.",
+    },
+    "rise_again": {
+        # Monster-only: lets the skeleton heal itself, justifying its elite slot.
+        "id": "rise_again", "name": "Rise Again", "moveType": "heal", "baseValue": 25,
+        "effects": [], "repeatPenalty": 0.2, "dropChance": 0.0, "manaCost": 0,
+        "description": "Knits broken bones — heals 25 HP plus magic scaling.",
+    },
+    # ── Lich ─────────────────────────────────────────────────────────────
+    "soul_drain": {
+        "id": "soul_drain", "name": "Soul Drain", "moveType": "magic", "baseValue": 10,
+        "effects": [{"type": "drain", "target": "self"}],
+        "repeatPenalty": 0.4, "dropChance": 0.30, "manaCost": 20,
+        "description": "Light magic damage; heals self for the same amount.",
+    },
+    "decay_curse": {
+        # The new mechanic: light upfront magic damage, plus a DOT that ticks
+        # 4 dmg/turn for 4 turns at end-of-turn.
+        "id": "decay_curse", "name": "Decay Curse", "moveType": "magic", "baseValue": 6,
+        "effects": [{"type": "dot", "target": "opponent", "value": 4, "turns": 4}],
+        "repeatPenalty": 0.5, "dropChance": 0.35, "manaCost": 25,
+        "description": "Inflicts a 4-turn decay: 4 dmg/turn after a small initial hit.",
+    },
+    "death_pulse": {
+        "id": "death_pulse", "name": "Death Pulse", "moveType": "magic", "baseValue": 26,
+        "effects": [], "repeatPenalty": 0.25, "dropChance": 0.20, "manaCost": 30,
+        "description": "A burst of necrotic energy. Heavy magic damage.",
+    },
 }
 
 ITEMS: dict[str, dict[str, Any]] = {
@@ -363,18 +401,22 @@ MONSTERS: list[dict[str, Any]] = [
         "shardMin": 0, "shardMax": 2,
     },
     {
-        "id": "goblin_veteran", "name": "Goblin Veteran",
-        "stats": {"hp": 167, "attack": 23, "defense": 9, "magic": 2},
-        "moves": ["rusty_blade", "dirty_kick", "frenzy", "headbutt"],
-        "dropMoves": ["rusty_blade", "dirty_kick", "frenzy", "headbutt_player"],
+        # Replaces goblin_veteran. Physical undead with self-heal — the player
+        # has to out-pace the regen or get worn down.
+        "id": "skeleton", "name": "Skeleton",
+        "stats": {"hp": 175, "attack": 22, "defense": 11, "magic": 2},
+        "moves": ["bone_strike", "headbutt", "bone_armor", "rise_again"],
+        "dropMoves": ["bone_strike", "bone_armor", "headbutt_player"],
         "xpReward": 110,
         "goldMin": 5, "goldMax": 20,
         "shardMin": 1, "shardMax": 3,
     },
     {
-        "id": "goblin_warlock", "name": "Goblin Warlock",
-        "stats": {"hp": 144, "attack": 8, "defense": 8, "magic": 21},
-        "moves": ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
+        # Replaces goblin_warlock. Magic undead, DOT-pressure specialist.
+        "id": "lich", "name": "Lich",
+        "stats": {"hp": 138, "attack": 6, "defense": 9, "magic": 22},
+        "moves": ["soul_drain", "decay_curse", "bone_armor", "death_pulse"],
+        "dropMoves": ["soul_drain", "decay_curse", "bone_armor"],
         "xpReward": 150,
         "goldMin": 5, "goldMax": 20,
         "shardMin": 1, "shardMax": 3,

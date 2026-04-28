@@ -4,7 +4,7 @@ from app.game_config import MOVES, MONSTERS, HERO_DEFAULTS, ITEMS, POTION_PRICES
 
 REQUIRED_MOVE_KEYS = {"id", "name", "moveType", "baseValue", "effects", "description"}
 VALID_MOVE_TYPES = {"physical", "magic", "heal", "none"}
-VALID_EFFECT_TYPES = {"buff", "debuff", "drain", "hp_cost"}
+VALID_EFFECT_TYPES = {"buff", "debuff", "drain", "hp_cost", "dot"}
 VALID_EFFECT_TARGETS = {"self", "opponent"}
 
 
@@ -149,7 +149,7 @@ class TestMonsters:
 
     def test_xp_reward_increases_across_tiers(self):
         # Tier 1 (base + elite) should give less XP than tier 2, which gives less than the boss
-        tier1_ids = {"goblin_warrior", "goblin_mage", "goblin_veteran", "goblin_warlock"}
+        tier1_ids = {"goblin_warrior", "goblin_mage", "skeleton", "lich"}
         tier2_ids = {"giant_spider", "witch"}
         boss_ids  = {"dragon"}
         by_id = {m["id"]: m["xpReward"] for m in MONSTERS}
@@ -168,34 +168,49 @@ class TestMonsters:
 
 
 class TestEliteMonsters:
-    """Elite tier-1 variants must be strictly harder than their base counterparts."""
+    """The lv-2 elites (skeleton physical / lich caster) must be strictly harder
+    than the base tier-1 goblins AND have a distinct move pool — the whole
+    point of the rework was to give elites their own combat identity."""
 
     def _by_id(self):
         return {m["id"]: m for m in MONSTERS}
 
-    def test_goblin_veteran_stronger_than_goblin_warrior(self):
+    def test_skeleton_stronger_than_goblin_warrior(self):
         by_id = self._by_id()
         base = by_id["goblin_warrior"]["stats"]
-        elite = by_id["goblin_veteran"]["stats"]
-        assert elite["hp"] > base["hp"], "Veteran HP should exceed Warrior HP"
-        assert elite["attack"] > base["attack"], "Veteran ATK should exceed Warrior ATK"
+        elite = by_id["skeleton"]["stats"]
+        assert elite["hp"] > base["hp"], "Skeleton HP should exceed Warrior HP"
+        assert elite["attack"] > base["attack"], "Skeleton ATK should exceed Warrior ATK"
 
-    def test_goblin_warlock_stronger_than_goblin_mage(self):
+    def test_lich_stronger_than_goblin_mage(self):
         by_id = self._by_id()
         base = by_id["goblin_mage"]["stats"]
-        elite = by_id["goblin_warlock"]["stats"]
-        assert elite["hp"] > base["hp"], "Warlock HP should exceed Mage HP"
-        assert elite["magic"] > base["magic"], "Warlock MAG should exceed Mage MAG"
+        elite = by_id["lich"]["stats"]
+        assert elite["hp"] > base["hp"], "Lich HP should exceed Mage HP"
+        assert elite["magic"] > base["magic"], "Lich MAG should exceed Mage MAG"
 
     def test_elite_xp_exceeds_base_counterpart(self):
         by_id = self._by_id()
-        assert by_id["goblin_veteran"]["xpReward"] > by_id["goblin_warrior"]["xpReward"]
-        assert by_id["goblin_warlock"]["xpReward"] > by_id["goblin_mage"]["xpReward"]
+        assert by_id["skeleton"]["xpReward"] > by_id["goblin_warrior"]["xpReward"]
+        assert by_id["lich"]["xpReward"] > by_id["goblin_mage"]["xpReward"]
 
-    def test_elites_share_move_pools_with_base(self):
+    def test_elites_have_distinct_move_pools_from_base(self):
+        # Base goblins reuse a melee/caster set; elites should NOT share movesets,
+        # otherwise they're just stat-bumped clones (the original bug).
         by_id = self._by_id()
-        assert by_id["goblin_veteran"]["moves"] == by_id["goblin_warrior"]["moves"]
-        assert by_id["goblin_warlock"]["moves"] == by_id["goblin_mage"]["moves"]
+        assert set(by_id["skeleton"]["moves"]) != set(by_id["goblin_warrior"]["moves"])
+        assert set(by_id["lich"]["moves"]) != set(by_id["goblin_mage"]["moves"])
+
+    def test_lich_uses_dot(self):
+        # Lich is the DOT specialist — its move set must include at least one
+        # move whose effects contain a 'dot' entry.
+        by_id = self._by_id()
+        lich_moves = by_id["lich"]["moves"]
+        has_dot = any(
+            any(fx["type"] == "dot" for fx in MOVES[m]["effects"])
+            for m in lich_moves
+        )
+        assert has_dot, "Lich's move pool should contain at least one DOT move"
 
 
 class TestHeroDefaults:
