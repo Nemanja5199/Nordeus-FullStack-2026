@@ -550,6 +550,65 @@ describe("GameState.getMove / getItem", () => {
   });
 });
 
+describe("hero save versioning", () => {
+  it("saveHero stamps SAVE_VERSION on the persisted record", async () => {
+    const { SAVE_VERSION } = await import("./gameState");
+    GameState.hero.gold = 42;
+    GameState.saveHero();
+    const raw = localStorage.getItem("rpg_hero");
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.saveVersion).toBe(SAVE_VERSION);
+    expect(parsed.gold).toBe(42);
+  });
+
+  it("initHero migrates an unversioned save by backfilling new fields", () => {
+    const legacy = {
+      level: 3, xp: 10, currentHp: 80, maxHp: 100,
+      attack: 15, defense: 10, magic: 8,
+      learnedMoves: ["slash"], equippedMoves: ["slash"],
+      // skillPoints, gold, equipment, inventory, hpPotions, manaPotions all missing
+    };
+    localStorage.setItem("rpg_hero", JSON.stringify(legacy));
+    GameState.initHero(MOCK_CONFIG);
+    expect(GameState.hero.skillPoints).toBe(0);
+    expect(GameState.hero.gold).toBe(0);
+    expect(GameState.hero.equipment).toEqual({});
+    expect(GameState.hero.inventory).toEqual([]);
+    expect(GameState.hero.hpPotions).toBe(0);
+    expect(GameState.hero.manaPotions).toBe(0);
+    // Existing data is preserved.
+    expect(GameState.hero.level).toBe(3);
+    expect(GameState.hero.xp).toBe(10);
+    expect(GameState.hero.currentHp).toBe(80);
+  });
+
+  it("initHero warns and migrates when save version is older than current", async () => {
+    const { SAVE_VERSION } = await import("./gameState");
+    const legacy = {
+      saveVersion: SAVE_VERSION - 99,
+      level: 1, xp: 0, currentHp: 100, maxHp: 100,
+      attack: 15, defense: 10, magic: 8,
+      learnedMoves: ["slash"], equippedMoves: ["slash"],
+    };
+    localStorage.setItem("rpg_hero", JSON.stringify(legacy));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    GameState.initHero(MOCK_CONFIG);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("migrating hero save"));
+    warn.mockRestore();
+  });
+
+  it("initHero does not warn when save version matches", async () => {
+    const { SAVE_VERSION } = await import("./gameState");
+    GameState.saveHero(); // stamps current SAVE_VERSION
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    GameState.initHero(MOCK_CONFIG);
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("migrating"));
+    warn.mockRestore();
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe("getGearBonuses", () => {
   const SWORD: GearItem = {
     id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",

@@ -1,4 +1,5 @@
 import type { GearItem, GearSlot, GearStatBonuses, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
+import { XP_CURVE_FACTOR } from "./gameConstants";
 import { MetaProgress } from "./metaProgress";
 
 export function getGearBonuses(
@@ -27,6 +28,13 @@ const SESSION_KEY = "rpg_session_id";
 const HERO_KEY = "rpg_hero";
 const RUN_KEY = "rpg_run";
 const TREE_KEY = "rpg_tree_state";
+
+// Bump when the persisted hero shape changes in a non-additive way (e.g. a
+// field's type changes, or default differs from `??`-style fallbacks below).
+// Add a case to `migrateHero` for each new version.
+export const SAVE_VERSION = 1;
+
+type PersistedHero = HeroState & { saveVersion?: number };
 
 export const HP_POTION_PRICE = 18;
 export const MANA_POTION_PRICE = 21;
@@ -79,18 +87,44 @@ class GameStateManager {
 
   initHero(config: RunConfig): void {
     const raw = localStorage.getItem(HERO_KEY);
-    this.hero = raw ? JSON.parse(raw) : defaultHero(config.heroDefaults);
-    if (this.hero.currentHp === undefined) this.hero.currentHp = this.hero.maxHp;
-    if (this.hero.skillPoints === undefined) this.hero.skillPoints = 0;
-    if (this.hero.gold === undefined) this.hero.gold = 0;
-    if (this.hero.equipment === undefined) this.hero.equipment = {};
-    if (this.hero.inventory === undefined) this.hero.inventory = [];
-    if (this.hero.hpPotions === undefined) this.hero.hpPotions = 0;
-    if (this.hero.manaPotions === undefined) this.hero.manaPotions = 0;
+    if (!raw) {
+      this.hero = defaultHero(config.heroDefaults);
+      return;
+    }
+    const persisted: PersistedHero = JSON.parse(raw);
+    this.hero = this.migrateHero(persisted);
+  }
+
+  // Bring a persisted hero up to the current schema. Branch on saveVersion when
+  // a future change can't be backfilled by `??` defaults alone.
+  private migrateHero(saved: PersistedHero): HeroState {
+    if (saved.saveVersion !== undefined && saved.saveVersion !== SAVE_VERSION) {
+      console.warn(
+        `[GameState] migrating hero save from v${saved.saveVersion} to v${SAVE_VERSION}`,
+      );
+    }
+    return {
+      level: saved.level,
+      xp: saved.xp,
+      currentHp: saved.currentHp ?? saved.maxHp,
+      maxHp: saved.maxHp,
+      attack: saved.attack,
+      defense: saved.defense,
+      magic: saved.magic,
+      skillPoints: saved.skillPoints ?? 0,
+      gold: saved.gold ?? 0,
+      equipment: saved.equipment ?? {},
+      inventory: saved.inventory ?? [],
+      learnedMoves: saved.learnedMoves,
+      equippedMoves: saved.equippedMoves,
+      hpPotions: saved.hpPotions ?? 0,
+      manaPotions: saved.manaPotions ?? 0,
+    };
   }
 
   saveHero(): void {
-    localStorage.setItem(HERO_KEY, JSON.stringify(this.hero));
+    const persisted: PersistedHero = { ...this.hero, saveVersion: SAVE_VERSION };
+    localStorage.setItem(HERO_KEY, JSON.stringify(persisted));
   }
 
   saveRun(run: RunSave): void {
@@ -164,12 +198,12 @@ class GameStateManager {
   addXp(amount: number): boolean {
     this.hero.xp += amount;
     let leveled = false;
-    let needed = Math.floor(this.hero.level * this.hero.level * 60);
+    let needed = Math.floor(this.hero.level * this.hero.level * XP_CURVE_FACTOR);
     while (this.hero.xp >= needed) {
       this.hero.xp -= needed;
       this.levelUp();
       leveled = true;
-      needed = Math.floor(this.hero.level * this.hero.level * 60);
+      needed = Math.floor(this.hero.level * this.hero.level * XP_CURVE_FACTOR);
     }
     this.saveHero();
     return leveled;

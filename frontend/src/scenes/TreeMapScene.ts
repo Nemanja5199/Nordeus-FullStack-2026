@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { FONT_MD, FONT_SM, FONT_MAP_TITLE } from "../ui/typography";
 import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
 import { GameState } from "../utils/gameState";
+import { XP_CURVE_FACTOR } from "../utils/gameConstants";
 import { createHeroPanel } from "../ui/HeroPanel";
 import { createButton, BTN_SM } from "../ui/Button";
 import { MONSTER_FRAMES, SHOPKEEPER_FRAME } from "../utils/spriteFrames";
@@ -140,7 +141,7 @@ export class TreeMapScene extends Phaser.Scene {
       width: PANEL_W,
       height: PANEL_H,
       hero: GameState.hero,
-      xpToNextLevel: Math.floor(GameState.hero.level * GameState.hero.level * 60),
+      xpToNextLevel: Math.floor(GameState.hero.level * GameState.hero.level * XP_CURVE_FACTOR),
       moves: GameState.runConfig?.moves ?? {},
       items: GameState.runConfig?.items ?? {},
       onManageMoves: () => {
