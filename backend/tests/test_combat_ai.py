@@ -110,14 +110,17 @@ class TestMinimax:
         assert result in ("flame_breath", "claw_swipe")
 
     def test_avoids_hp_cost_move_when_near_dead(self):
-        # Witch at 16 HP — dark_pact costs 15 HP, leaving 1 HP; drain_life is clearly safer
+        # Witch at 16 HP — dark_pact costs 15 HP, leaving 1 HP; drain_life is clearly safer.
+        # _pick_move is weighted-random, so dark_pact has ~2% pick probability on any single
+        # call (worst score still gets sqrt(1)=1 weight). Sample many to assert it stays rare.
         req = make_request(
             "witch", self.MONSTER_MOVES,
             monster_state=make_state(hp=16, max_hp=75),
             hero_moves=HERO_MOVES,
         )
-        result = _pick_move(req)
-        assert result != "dark_pact"
+        results = [_pick_move(req) for _ in range(100)]
+        dp_count = results.count("dark_pact")
+        assert dp_count < 10, f"dark_pact should rarely fire near death, got {dp_count}/100"
 
     def test_repeat_penalty_applies_even_when_kill_is_near(self):
         # Repeat penalty always applies — pounce (just played 3x, penalty=0.15) should appear
