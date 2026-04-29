@@ -13,6 +13,7 @@ import {
   MP_POTION_RESTORE,
 } from "../utils/gameConstants";
 import { GameState, getGearBonuses } from "../utils/gameState";
+import { TestMode } from "../utils/testMode";
 import { MetaProgress } from "../utils/metaProgress";
 import { api } from "../services/api";
 import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
@@ -651,10 +652,24 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updateHeroMana() {
+    // Test mode: top mana off every refresh so the player can spam any move.
+    // Cheaper than threading TestMode through every cost check.
+    if (TestMode.isOn()) this.heroMana = MANA_MAX;
     const pct = this.heroMana / MANA_MAX;
     this.heroManaFill.setScale(pct, 1);
     this.heroManaText.setText(`MP  ${this.heroMana} / ${MANA_MAX}`).setColor(TXT_GOLD_LIGHT);
     this.updateButtonManaState();
+  }
+
+  // mp_drain side-effect from monster moves (currently only Mind Freeze).
+  // Mana lives on this scene, not on CombatCharacter, so applyMove can't touch
+  // it directly — it surfaces the drain via result.mpDrain instead.
+  private applyMonsterManaDrain(amount: number | undefined) {
+    if (!amount) return;
+    const before = this.heroMana;
+    this.heroMana = Math.max(0, this.heroMana - amount);
+    const dropped = before - this.heroMana;
+    if (dropped > 0) this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT_INTENT_DEBUFF);
   }
 
   private updateButtonManaState() {
@@ -1031,6 +1046,7 @@ export class BattleScene extends Phaser.Scene {
       const monsterMove = GameState.getMove(moveId);
       if (!monsterMove) throw new Error(`unknown monster move: ${moveId}`);
       const result = applyMove(monsterMove, this.monster, this.hero);
+      this.applyMonsterManaDrain(result.mpDrain);
       this.pushLog(
         `${this.monster.name} → ${monsterMove.name}: ${result.logMessage}`,
         this.moveLogColor(monsterMove),
@@ -1043,6 +1059,7 @@ export class BattleScene extends Phaser.Scene {
         this.pushLog(`${this.monster.name} hesitates.`, TXT_MUTED);
       } else {
         const result = applyMove(fallbackMove, this.monster, this.hero);
+        this.applyMonsterManaDrain(result.mpDrain);
         this.pushLog(
           `${this.monster.name} → ${fallbackMove.name}: ${result.logMessage}`,
           this.moveLogColor(fallbackMove),

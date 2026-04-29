@@ -49,7 +49,7 @@ export interface ActiveDot {
 }
 
 export interface MoveEffect {
-  type: "buff" | "debuff" | "heal" | "drain" | "hp_cost" | "dot";
+  type: "buff" | "debuff" | "heal" | "drain" | "hp_cost" | "dot" | "mp_drain";
   target?: "self" | "opponent";
   stat?: "attack" | "defense" | "magic";
   multiplier?: number;
@@ -133,6 +133,9 @@ export interface MoveResult {
   damage: number;
   heal: number;
   hpCost: number;
+  // Mana burned off the *defender* (mp_drain effect). Lives outside
+  // CombatCharacter because mana is owned by BattleScene, not the simulator.
+  mpDrain?: number;
   logMessage: string;
 }
 

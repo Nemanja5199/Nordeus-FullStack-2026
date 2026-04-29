@@ -38,6 +38,11 @@ export function buildMoveStatLines(move: MoveConfig): { text: string; color: str
         text: `☠  ${fx.value} dmg/turn × ${fx.turns} turns`,
         color: TXT_MOVE_DEBUFF,
       });
+    } else if (fx.type === "mp_drain" && fx.value) {
+      lines.push({
+        text: `✦  Burns ${fx.value} MP`,
+        color: TXT_MOVE_DEBUFF,
+      });
     }
   }
 
@@ -141,6 +146,16 @@ export function applyMove(
           turnsRemaining: fx.turns!,
         });
         logs.push(`${tgt.name} cursed (${fx.value}/t × ${fx.turns}t)`);
+        break;
+      }
+      case "mp_drain": {
+        // Mana lives in BattleScene, not on CombatCharacter — applyMove is a
+        // pure simulator that knows only HP/buffs/DOTs. The live scene reads
+        // `result.mpDrain` after each call and adjusts the hero's mana bar
+        // (or the AI ignores it in sim, which is fine — mp_drain is meant to
+        // pressure the *player*, not factor into monster planning).
+        result.mpDrain = (result.mpDrain ?? 0) + (fx.value ?? 0);
+        logs.push(`${defender.name}'s mana drained (-${fx.value} MP)`);
         break;
       }
     }

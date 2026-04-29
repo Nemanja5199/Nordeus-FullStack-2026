@@ -189,6 +189,67 @@ MOVES: dict[str, dict[str, Any]] = {
         "effects": [], "repeatPenalty": 0.25, "dropChance": 0.20, "manaCost": 30,
         "description": "A burst of necrotic energy. Heavy magic damage.",
     },
+    # ── Death Knight ─────────────────────────────────────────────────────
+    # Hybrid lv-4 elite. Mixes physical and magic — hits hard with both, plus
+    # the new mp_drain mechanic to lock the hero out of casting.
+    "death_strike": {
+        "id": "death_strike", "name": "Death Strike", "moveType": "physical", "baseValue": 26,
+        "effects": [], "repeatPenalty": 0.2, "dropChance": 0.20, "manaCost": 0,
+        "description": "A brutal sweeping strike. Heavy physical damage.",
+    },
+    "mind_freeze": {
+        # The new mechanic: 'mp_drain' burns mana off the target instead of HP.
+        # Forces the hero to choose between holding mana for big spells vs
+        # spending it before the lich king burns it.
+        "id": "mind_freeze", "name": "Mind Freeze", "moveType": "magic", "baseValue": 16,
+        "effects": [{"type": "mp_drain", "target": "opponent", "value": 15}],
+        "repeatPenalty": 0.4, "dropChance": 0.30, "manaCost": 20,
+        "description": "Magic damage that also burns 15 MP from the target.",
+    },
+    "dread_curse": {
+        "id": "dread_curse", "name": "Dread Curse", "moveType": "magic", "baseValue": 10,
+        "effects": [
+            {"type": "debuff", "target": "opponent", "stat": "attack", "multiplier": 0.7, "turns": 3},
+            {"type": "debuff", "target": "opponent", "stat": "magic",  "multiplier": 0.7, "turns": 3},
+        ],
+        "repeatPenalty": 0.5, "dropChance": 0.40, "manaCost": 25,
+        "description": "Magic damage. Lowers target's Attack and Magic by 30% for 3 turns.",
+    },
+    "unholy_might": {
+        "id": "unholy_might", "name": "Unholy Might", "moveType": "none", "baseValue": 0,
+        "effects": [
+            {"type": "buff", "target": "self", "stat": "attack", "multiplier": 1.4, "turns": 3},
+            {"type": "buff", "target": "self", "stat": "magic",  "multiplier": 1.4, "turns": 3},
+        ],
+        "repeatPenalty": 0.5, "dropChance": 0.40, "manaCost": 25,
+        "description": "Empowers self with unholy energy. +40% Attack and Magic for 3 turns.",
+    },
+    # ── Big Slime ────────────────────────────────────────────────────────
+    # Stat-erosion bruiser: stacks ATK+DEF debuffs and slams between them.
+    # body_slam stays monster-only so the slime keeps a punishing finisher
+    # the player can't poach (matches the headbutt pattern).
+    "body_slam": {
+        "id": "body_slam", "name": "Body Slam", "moveType": "physical", "baseValue": 28,
+        "effects": [], "repeatPenalty": 0.2, "dropChance": 0.0, "manaCost": 0,
+        "description": "Throws its bulk at the target. Heavy physical damage.",
+    },
+    "engulf": {
+        "id": "engulf", "name": "Engulf", "moveType": "physical", "baseValue": 14,
+        "effects": [{"type": "debuff", "target": "opponent", "stat": "attack", "multiplier": 0.7, "turns": 3}],
+        "repeatPenalty": 0.5, "dropChance": 0.40, "manaCost": 10,
+        "description": "Smothers the target. Light damage and lowers Attack by 30% for 3 turns.",
+    },
+    "acid_coat": {
+        "id": "acid_coat", "name": "Acid Coat", "moveType": "physical", "baseValue": 10,
+        "effects": [{"type": "debuff", "target": "opponent", "stat": "defense", "multiplier": 0.7, "turns": 3}],
+        "repeatPenalty": 0.5, "dropChance": 0.40, "manaCost": 8,
+        "description": "Sprays corrosive ooze. Light damage and lowers Defense by 30% for 3 turns.",
+    },
+    "reform": {
+        "id": "reform", "name": "Reform", "moveType": "heal", "baseValue": 25,
+        "effects": [], "repeatPenalty": 0.4, "dropChance": 0.30, "manaCost": 15,
+        "description": "Reconstitutes its body. Heals 25 HP plus magic scaling.",
+    },
 }
 
 ITEMS: dict[str, dict[str, Any]] = {
@@ -412,7 +473,7 @@ MONSTERS: list[dict[str, Any]] = [
         "shardMin": 1, "shardMax": 3,
     },
     {
-        # Replaces goblin_warlock. Magic undead, DOT-pressure specialist.
+        # Lv-2 elite caster. Magic undead, DOT-pressure specialist.
         "id": "lich", "name": "Lich",
         "stats": {"hp": 138, "attack": 6, "defense": 9, "magic": 22},
         "moves": ["soul_drain", "decay_curse", "bone_armor", "death_pulse"],
@@ -438,8 +499,30 @@ MONSTERS: list[dict[str, Any]] = [
         "shardMin": 3, "shardMax": 5,
     },
     {
+        # Lv-4 hybrid elite: physical + magic + mana-burn pressure. Distinct
+        # from the lv-2 lich (pure DOT caster) and witch (pure caster).
+        "id": "death_knight", "name": "Death Knight",
+        "stats": {"hp": 200, "attack": 18, "defense": 14, "magic": 22},
+        "moves": ["death_strike", "mind_freeze", "dread_curse", "unholy_might"],
+        "dropMoves": ["death_strike", "mind_freeze", "dread_curse", "unholy_might"],
+        "xpReward": 320,
+        "goldMin": 15, "goldMax": 30,
+        "shardMin": 3, "shardMax": 5,
+    },
+    {
+        # Tier-2 tanky bruiser: erodes the hero's stats with engulf+acid_coat,
+        # punishes with body_slam, falls back to reform when low.
+        "id": "big_slime", "name": "Big Slime",
+        "stats": {"hp": 165, "attack": 16, "defense": 14, "magic": 8},
+        "moves": ["body_slam", "engulf", "acid_coat", "reform"],
+        "dropMoves": ["engulf", "acid_coat", "reform"],
+        "xpReward": 200,
+        "goldMin": 10, "goldMax": 25,
+        "shardMin": 2, "shardMax": 4,
+    },
+    {
         "id": "dragon", "name": "Dragon",
-        "stats": {"hp": 198, "attack": 31, "defense": 11, "magic": 23},
+        "stats": {"hp": 280, "attack": 31, "defense": 11, "magic": 23},
         "moves": ["flame_breath", "claw_swipe", "intimidate", "dragon_scales"],
         "xpReward": 500,
         "goldMin": 20, "goldMax": 30,

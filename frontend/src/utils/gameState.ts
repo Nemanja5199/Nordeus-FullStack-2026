@@ -1,6 +1,7 @@
 import type { GearItem, GearSlot, GearStatBonuses, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
 import { XP_CURVE_FACTOR } from "./gameConstants";
 import { MetaProgress } from "./metaProgress";
+import { TestMode } from "./testMode";
 
 export function getGearBonuses(
   equipment: Partial<Record<GearSlot, string>>,
@@ -39,15 +40,10 @@ type PersistedHero = HeroState & { saveVersion?: number };
 export const HP_POTION_PRICE = 18;
 export const MANA_POTION_PRICE = 21;
 
-function defaultHero(defaults: {
-  maxHp: number;
-  attack: number;
-  defense: number;
-  magic: number;
-  defaultMoves: string[];
-}): HeroState {
+function defaultHero(config: RunConfig): HeroState {
+  const defaults = config.heroDefaults;
   const meta = MetaProgress.getStartingBonuses();
-  return {
+  const hero: HeroState = {
     level: 1,
     xp: 0,
     currentHp: defaults.maxHp + meta.maxHp,
@@ -64,6 +60,26 @@ function defaultHero(defaults: {
     hpPotions: 0,
     manaPotions: 0,
   };
+  if (TestMode.isOn()) applyTestBuffs(hero, config);
+  return hero;
+}
+
+// Replaces the hero with god-tier stats + a full kit. Toggle lives on the
+// title screen so we can iterate on later-game content without grinding.
+function applyTestBuffs(hero: HeroState, config: RunConfig): void {
+  hero.maxHp = 9999;
+  hero.currentHp = 9999;
+  hero.attack = 999;
+  hero.defense = 999;
+  hero.magic = 999;
+  hero.gold = 9999;
+  hero.hpPotions = 20;
+  hero.manaPotions = 20;
+  hero.inventory = Object.keys(config.items);
+  const droppable = Object.values(config.moves)
+    .filter((m: MoveConfig) => m.dropChance > 0)
+    .map((m: MoveConfig) => m.id);
+  hero.learnedMoves = Array.from(new Set([...hero.learnedMoves, ...droppable]));
 }
 
 class GameStateManager {
@@ -88,7 +104,7 @@ class GameStateManager {
   initHero(config: RunConfig): void {
     const raw = localStorage.getItem(HERO_KEY);
     if (!raw) {
-      this.hero = defaultHero(config.heroDefaults);
+      this.hero = defaultHero(config);
       return;
     }
     const persisted: PersistedHero = JSON.parse(raw);
@@ -343,7 +359,7 @@ class GameStateManager {
   }
 
   resetHero(config: RunConfig): void {
-    this.hero = defaultHero(config.heroDefaults);
+    this.hero = defaultHero(config);
     this.saveHero();
   }
 

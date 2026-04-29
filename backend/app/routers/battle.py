@@ -69,6 +69,11 @@ def _apply_move_sim(
             tgt.activeDots.append(
                 ActiveDot(damagePerTurn=fx["value"], turnsRemaining=fx["turns"])
             )
+        elif ftype == "mp_drain":
+            # Mana lives on the live BattleScene, not on CharacterState. The
+            # minimax AI never models hero mana, so this effect just doesn't
+            # enter the search — it's a *player-pressure* mechanic.
+            pass
 
     return atk, dfn
 

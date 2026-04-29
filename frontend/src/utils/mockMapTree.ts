@@ -32,7 +32,7 @@ export function getNodeState(
 // ─── Mock tree (5 levels, merges included) ───────────────────────────────────
 // Tier 1 depth 1: goblin_warrior, goblin_mage (weak)
 // Tier 1 depth 2: skeleton, lich (undead elite — physical + DOT caster)
-// Tier 2 (levels 3-4): giant_spider, witch
+// Tier 2 (levels 3-4): big_slime, witch (giant_spider can also roll at lv 3)
 // Boss   (level 5):    dragon
 
 export const MOCK_MAP_TREE: MapTree = {
@@ -47,11 +47,11 @@ export const MOCK_MAP_TREE: MapTree = {
     n2b: { id: "n2b", monsterId: "skeleton", level: 2, levelBand: { min: 4, max: 6 }, children: ["n3a", "n3b"] },
     n2c: { id: "n2c", monsterId: "lich", level: 2, levelBand: { min: 4, max: 5 }, children: ["n3b"] },
     // ── Level 3 (tier 2) ──────────────────────────────────────────────────
-    n3a: { id: "n3a", monsterId: "giant_spider", level: 3, levelBand: { min: 13, max: 14 }, children: ["n4a"] },
+    n3a: { id: "n3a", monsterId: "big_slime", level: 3, levelBand: { min: 10, max: 12 }, children: ["n4a"] },
     n3b: { id: "n3b", level: 3, levelBand: { min: 7, max: 10 }, children: ["n4a", "n4b"], type: "shop" },
     // ── Level 4 (tier 2) ──────────────────────────────────────────────────
     n4a: { id: "n4a", monsterId: "witch", level: 4, levelBand: { min: 12, max: 13 }, children: ["boss"] },
-    n4b: { id: "n4b", monsterId: "giant_spider", level: 4, levelBand: { min: 23, max: 23 }, children: ["boss"] },
+    n4b: { id: "n4b", monsterId: "death_knight", level: 4, levelBand: { min: 13, max: 15 }, children: ["boss"] },
     // ── Level 5 (boss) ────────────────────────────────────────────────────
     boss: { id: "boss", monsterId: "dragon", level: 5, levelBand: { min: 28, max: 30 }, children: [], type: "boss" },
   },

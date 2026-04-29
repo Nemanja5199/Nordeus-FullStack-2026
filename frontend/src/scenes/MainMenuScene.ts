@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE } from "../ui/typography";
+import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../ui/typography";
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
+import { TestMode } from "../utils/testMode";
 import { createButton, BTN_LG } from "../ui/Button";
 import {
   BG_BLACK,
@@ -77,6 +78,53 @@ export class MainMenuScene extends Phaser.Scene {
         onClick: () => this.resetProgress(),
       });
     }
+
+    this.createTestModeToggle();
+  }
+
+  // Bottom-right dev toggle: gives the next-started run god stats + a full kit.
+  // Clears the persisted hero on flip so changes apply on the next NEW GAME
+  // without the player having to reset progress manually.
+  private createTestModeToggle() {
+    const { width, height } = this.scale;
+    const padX = 24;
+    const padY = 24;
+    const boxSize = 18;
+
+    const labelText = this.add
+      .text(width - padX, height - padY, "Test Mode", {
+        fontSize: FONT_SM,
+        color: TestMode.isOn() ? TXT_GOLD : TXT_MUTED,
+      })
+      .setOrigin(1, 0.5);
+
+    const boxX = labelText.x - labelText.width - 14;
+    this.add
+      .rectangle(boxX, height - padY, boxSize, boxSize, BG_BLACK)
+      .setStrokeStyle(2, 0xb0b0b0)
+      .setOrigin(0.5);
+
+    const check = this.add
+      .text(boxX, height - padY, "✓", {
+        fontSize: FONT_SM,
+        color: TXT_GOLD,
+      })
+      .setOrigin(0.5)
+      .setVisible(TestMode.isOn());
+
+    const hitWidth = labelText.width + boxSize + 24;
+    const hitX = width - padX - hitWidth;
+    this.add
+      .zone(hitX, height - padY - 16, hitWidth, 32)
+      .setOrigin(0)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerup", () => {
+        const on = TestMode.toggle();
+        check.setVisible(on);
+        labelText.setColor(on ? TXT_GOLD : TXT_MUTED);
+        // Drop the saved hero so the next NEW GAME picks up the new defaults.
+        localStorage.removeItem("rpg_hero");
+      });
   }
 
   private async startNewGame() {
