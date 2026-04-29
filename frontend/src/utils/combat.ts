@@ -33,6 +33,16 @@ export function buildMoveStatLines(move: MoveConfig): { text: string; color: str
       lines.push({ text: `↺  Drain: heal for dmg dealt`, color: TXT_SHARD });
     } else if (fx.type === "hp_cost" && fx.value) {
       lines.push({ text: `↓  Costs ${fx.value} HP`, color: TXT_STAT_ATTACK });
+    } else if (fx.type === "dot" && fx.value && fx.turns) {
+      lines.push({
+        text: `☠  ${fx.value} dmg/turn × ${fx.turns} turns`,
+        color: TXT_MOVE_DEBUFF,
+      });
+    } else if (fx.type === "mp_drain" && fx.value) {
+      lines.push({
+        text: `✦  Burns ${fx.value} MP`,
+        color: TXT_MOVE_DEBUFF,
+      });
     }
   }
 
@@ -125,6 +135,29 @@ export function applyMove(
         logs.push(`cost ${result.hpCost} HP`);
         break;
       }
+      case "dot": {
+        // DOTs differ from buffs on storage: store `turns` directly. A 4-turn
+        // DOT should fire exactly 4 end-of-turn damage ticks (cast-turn tick
+        // counts). Buffs use turns + 1 because they're queried *between* ticks
+        // and the cast turn's stats were computed before apply.
+        const tgt = fx.target === "self" ? attacker : defender;
+        tgt.activeDots.push({
+          damagePerTurn: fx.value!,
+          turnsRemaining: fx.turns!,
+        });
+        logs.push(`${tgt.name} cursed (${fx.value}/t × ${fx.turns}t)`);
+        break;
+      }
+      case "mp_drain": {
+        // Mana lives in BattleScene, not on CombatCharacter — applyMove is a
+        // pure simulator that knows only HP/buffs/DOTs. The live scene reads
+        // `result.mpDrain` after each call and adjusts the hero's mana bar
+        // (or the AI ignores it in sim, which is fine — mp_drain is meant to
+        // pressure the *player*, not factor into monster planning).
+        result.mpDrain = (result.mpDrain ?? 0) + (fx.value ?? 0);
+        logs.push(`${defender.name}'s mana drained (-${fx.value} MP)`);
+        break;
+      }
     }
   }
 
@@ -156,4 +189,18 @@ export function tickBuffs(char: CombatCharacter): void {
   char.activeBuffs = char.activeBuffs
     .map((b) => ({ ...b, turnsRemaining: b.turnsRemaining - 1 }))
     .filter((b) => b.turnsRemaining > 0);
+}
+
+// Apply DOT damage and decrement durations. Returns total damage dealt this
+// tick so the caller can log it. Mirrors tickBuffs: end-of-turn, after both
+// sides have acted.
+export function tickDots(char: CombatCharacter): number {
+  if (!char.activeDots || char.activeDots.length === 0) return 0;
+  let total = 0;
+  for (const d of char.activeDots) total += d.damagePerTurn;
+  char.hp = Math.max(0, char.hp - total);
+  char.activeDots = char.activeDots
+    .map((d) => ({ ...d, turnsRemaining: d.turnsRemaining - 1 }))
+    .filter((d) => d.turnsRemaining > 0);
+  return total;
 }

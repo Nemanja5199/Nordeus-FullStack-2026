@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getEffectiveStat, applyMove, tickBuffs } from "./combat";
+import { getEffectiveStat, applyMove, tickBuffs, tickDots } from "./combat";
 import type { CombatCharacter, MoveConfig } from "../types/game";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -12,6 +12,7 @@ function makeChar(overrides: Partial<CombatCharacter> = {}): CombatCharacter {
     maxHp: 100,
     baseStats: { attack: 15, defense: 10, magic: 8 },
     activeBuffs: [],
+    activeDots: [],
     moves: [],
     ...overrides,
   };
@@ -322,5 +323,90 @@ describe("tickBuffs", () => {
     const char = makeChar();
     tickBuffs(char);
     expect(char.activeBuffs).toHaveLength(0);
+  });
+});
+
+// ── DOT (damage over time) ────────────────────────────────────────────────────
+
+describe("applyMove with dot effect", () => {
+  it("adds an entry to the target's activeDots", () => {
+    const attacker = makeChar({ baseStats: { attack: 10, defense: 10, magic: 20 } });
+    const defender = makeChar({ hp: 100, maxHp: 100 });
+    const decay = makeMove({
+      id: "decay_curse",
+      moveType: "magic",
+      baseValue: 6,
+      effects: [{ type: "dot", target: "opponent", value: 4, turns: 4 }],
+    });
+    applyMove(decay, attacker, defender);
+    expect(defender.activeDots).toHaveLength(1);
+    // DOTs store turns directly (no +1) so a 4-turn DOT ticks exactly 4 times.
+    expect(defender.activeDots[0].turnsRemaining).toBe(4);
+    expect(defender.activeDots[0].damagePerTurn).toBe(4);
+  });
+
+  it("still applies the upfront magic damage alongside the DOT", () => {
+    const attacker = makeChar({ baseStats: { attack: 10, defense: 10, magic: 10 } });
+    const defender = makeChar({ hp: 100, maxHp: 100 });
+    const decay = makeMove({
+      moveType: "magic",
+      baseValue: 6,
+      effects: [{ type: "dot", target: "opponent", value: 4, turns: 4 }],
+    });
+    applyMove(decay, attacker, defender);
+    expect(defender.hp).toBeLessThan(100);
+  });
+});
+
+describe("tickDots", () => {
+  it("returns 0 and is a no-op on a character with no DOTs", () => {
+    const char = makeChar();
+    expect(tickDots(char)).toBe(0);
+    expect(char.hp).toBe(100);
+  });
+
+  it("subtracts damagePerTurn from hp and returns total damage dealt", () => {
+    const char = makeChar({ activeDots: [{ damagePerTurn: 4, turnsRemaining: 4 }] });
+    const dealt = tickDots(char);
+    expect(dealt).toBe(4);
+    expect(char.hp).toBe(96);
+  });
+
+  it("decrements turnsRemaining and removes expired DOTs", () => {
+    const char = makeChar({ activeDots: [{ damagePerTurn: 5, turnsRemaining: 1 }] });
+    tickDots(char);
+    expect(char.activeDots).toHaveLength(0);
+  });
+
+  it("ticks four times for a 'turns: 4' DOT (matches storage convention)", () => {
+    // Attacker casts a 4-turn DOT → applyMove stores turnsRemaining = 5.
+    const attacker = makeChar();
+    const defender = makeChar({ hp: 100 });
+    const dot = makeMove({
+      moveType: "none",
+      baseValue: 0,
+      effects: [{ type: "dot", target: "opponent", value: 3, turns: 4 }],
+    });
+    applyMove(dot, attacker, defender);
+    let totalDamage = 0;
+    while (defender.activeDots.length > 0) totalDamage += tickDots(defender);
+    expect(totalDamage).toBe(12); // 4 ticks × 3 dmg each
+  });
+
+  it("clamps hp to 0 (won't go negative)", () => {
+    const char = makeChar({ hp: 2, activeDots: [{ damagePerTurn: 10, turnsRemaining: 3 }] });
+    tickDots(char);
+    expect(char.hp).toBe(0);
+  });
+
+  it("sums damage from multiple stacked DOTs in one tick", () => {
+    const char = makeChar({
+      activeDots: [
+        { damagePerTurn: 3, turnsRemaining: 2 },
+        { damagePerTurn: 5, turnsRemaining: 2 },
+      ],
+    });
+    expect(tickDots(char)).toBe(8);
+    expect(char.hp).toBe(92);
   });
 });

@@ -8,6 +8,11 @@ class ActiveBuff(BaseModel):
     turnsRemaining: int
 
 
+class ActiveDot(BaseModel):
+    damagePerTurn: int
+    turnsRemaining: int
+
+
 class CharacterState(BaseModel):
     hp: int
     maxHp: int
@@ -15,6 +20,7 @@ class CharacterState(BaseModel):
     defense: int
     magic: int
     activeBuffs: list[ActiveBuff] = []
+    activeDots: list[ActiveDot] = []
 
 
 class MonsterMoveRequest(BaseModel):

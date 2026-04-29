@@ -3,21 +3,27 @@ from typing import Any
 
 # Tier pools — depth 1 uses base goblins, depth 2 uses elite variants
 TIER1_MONSTERS = ["goblin_warrior", "goblin_mage"]
-TIER2_MONSTERS = ["giant_spider", "witch"]
-BOSS_MONSTERS  = ["dragon"]
-TIER1_ELITE_MONSTERS = ["goblin_veteran", "goblin_warlock"]
+TIER2_LV3_MONSTERS   = ["big_slime", "giant_spider"]
+TIER2_LV4_MONSTERS   = ["witch", "death_knight"]
+# Union kept for any external import that asks "what's tier 2 overall?"
+TIER2_MONSTERS       = sorted(set(TIER2_LV3_MONSTERS) | set(TIER2_LV4_MONSTERS))
+BOSS_MONSTERS        = ["dragon"]
+TIER1_ELITE_MONSTERS = ["skeleton", "lich"]
 
 # Per-monster level bands: monsterLevel = clamp(heroLevel, min, max)
 # 5% scaling per level: scaleFactor = 1 + 0.05 * (monsterLevel - 1)
 MONSTER_LEVEL_BANDS: dict[tuple[str, int], dict] = {
     ("goblin_warrior",  1): {"min": 1,  "max": 3},
     ("goblin_mage",     1): {"min": 1,  "max": 2},
-    ("goblin_veteran",  2): {"min": 4,  "max": 6},
-    ("goblin_warlock",  2): {"min": 4,  "max": 5},
+    ("skeleton",        2): {"min": 4,  "max": 6},
+    ("lich",            2): {"min": 4,  "max": 5},
     ("giant_spider",    3): {"min": 13, "max": 14},
     ("giant_spider",    4): {"min": 23, "max": 23},
     ("witch",           3): {"min": 7,  "max": 10},
     ("witch",           4): {"min": 12, "max": 13},
+    ("big_slime",       3): {"min": 10, "max": 12},
+    ("big_slime",       4): {"min": 14, "max": 16},
+    ("death_knight",    4): {"min": 13, "max": 15},
     ("dragon",          5): {"min": 28, "max": 30},
 }
 
@@ -67,8 +73,11 @@ def generate_map_tree(seed: int | None = None) -> dict[str, Any]:
             elif level == 1:
                 monster_id = rng.choice(TIER1_MONSTERS)
                 node_type  = "monster"
-            else:
-                monster_id = rng.choice(TIER2_MONSTERS)
+            elif level == 3:
+                monster_id = rng.choice(TIER2_LV3_MONSTERS)
+                node_type  = "monster"
+            else:  # level 4
+                monster_id = rng.choice(TIER2_LV4_MONSTERS)
                 node_type  = "monster"
 
             nodes[nid] = {

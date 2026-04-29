@@ -1,6 +1,13 @@
 """Tests for generate_map_tree — enforces all structural rules from the spec."""
 import pytest
-from app.tree_generator import generate_map_tree, TIER1_MONSTERS, TIER1_ELITE_MONSTERS, TIER2_MONSTERS, BOSS_MONSTERS
+from app.tree_generator import (
+    generate_map_tree,
+    TIER1_MONSTERS,
+    TIER1_ELITE_MONSTERS,
+    TIER2_LV3_MONSTERS,
+    TIER2_LV4_MONSTERS,
+    BOSS_MONSTERS,
+)
 
 SEEDS = [0, 1, 42, 999, 12345]  # test multiple seeds to catch non-deterministic edge cases
 
@@ -166,9 +173,13 @@ class TestMonsterTiers:
     def test_tier2_levels_use_tier2_monsters(self, seed):
         tree = get_tree(seed)
         for n in tree["nodes"].values():
-            if n["level"] in (3, 4):
-                assert n["monsterId"] in TIER2_MONSTERS, (
-                    f"Level {n['level']} node has wrong monster '{n['monsterId']}'"
+            if n["level"] == 3:
+                assert n["monsterId"] in TIER2_LV3_MONSTERS, (
+                    f"Lv-3 node has wrong monster '{n['monsterId']}'"
+                )
+            elif n["level"] == 4:
+                assert n["monsterId"] in TIER2_LV4_MONSTERS, (
+                    f"Lv-4 node has wrong monster '{n['monsterId']}'"
                 )
 
     @pytest.mark.parametrize("seed", SEEDS)

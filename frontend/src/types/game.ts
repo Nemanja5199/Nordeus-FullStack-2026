@@ -43,8 +43,13 @@ export interface ActiveBuff {
   turnsRemaining: number;
 }
 
+export interface ActiveDot {
+  damagePerTurn: number;
+  turnsRemaining: number;
+}
+
 export interface MoveEffect {
-  type: "buff" | "debuff" | "heal" | "drain" | "hp_cost";
+  type: "buff" | "debuff" | "heal" | "drain" | "hp_cost" | "dot" | "mp_drain";
   target?: "self" | "opponent";
   stat?: "attack" | "defense" | "magic";
   multiplier?: number;
@@ -120,6 +125,7 @@ export interface CombatCharacter {
   maxHp: number;
   baseStats: Stats;
   activeBuffs: ActiveBuff[];
+  activeDots: ActiveDot[];
   moves: string[];
 }
 
@@ -127,6 +133,9 @@ export interface MoveResult {
   damage: number;
   heal: number;
   hpCost: number;
+  // Mana burned off the *defender* (mp_drain effect). Lives outside
+  // CombatCharacter because mana is owned by BattleScene, not the simulator.
+  mpDrain?: number;
   logMessage: string;
 }
 
