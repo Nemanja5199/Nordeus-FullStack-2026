@@ -26,6 +26,16 @@ const MAGE_DEFAULTS = {
   xpPerLevel: 100,
 };
 
+// Trimmed fixture — covers categories the tests exercise.
+const MOCK_UPGRADES = [
+  { id: "vitality_1", name: "Vitality I",   category: "maxHp",   cost: 15, bonus: 15, description: "" },
+  { id: "vitality_2", name: "Vitality II",  category: "maxHp",   cost: 30, bonus: 30, requires: "vitality_1", description: "" },
+  { id: "strength_1", name: "Strength I",   category: "attack",  cost: 15, bonus: 2,  description: "" },
+  { id: "guard_1",    name: "Guard I",      category: "defense", cost: 15, bonus: 2,  description: "" },
+  { id: "scholar",    name: "Scholar",      category: "skillPoints", cost: 100, bonus: 1, description: "" },
+  { id: "hoarder",    name: "Hoarder",      category: "gold",    cost: 40, bonus: 25, description: "" },
+] as const;
+
 const MOCK_CONFIG: RunConfig = {
   monsters: [],
   moves: {},
@@ -34,6 +44,7 @@ const MOCK_CONFIG: RunConfig = {
   mapTree: { nodes: {}, roots: [] },
   heroDefaults: KNIGHT_DEFAULTS,
   heroClasses: { knight: KNIGHT_DEFAULTS, mage: MAGE_DEFAULTS },
+  upgrades: MOCK_UPGRADES as unknown as RunConfig["upgrades"],
 };
 
 // ── Setup: reset state and mock localStorage before each test ─────────────────

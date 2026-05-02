@@ -14,7 +14,7 @@ class TestRunMeta:
         r = client.get("/api/run/meta")
         assert r.status_code == 200
         body = r.json()
-        assert set(body.keys()) == {"monsters", "moves", "items", "heroDefaults", "heroClasses"}
+        assert set(body.keys()) == {"monsters", "moves", "items", "heroDefaults", "heroClasses", "upgrades"}
 
     def test_hero_classes_includes_knight_and_mage(self):
         body = client.get("/api/run/meta").json()
@@ -23,6 +23,19 @@ class TestRunMeta:
         assert body["heroClasses"]["mage"]["defaultMoves"] == ["arc_lash", "mana_ward", "focus", "mend"]
         # Knight + heroDefaults stay aligned (back-compat)
         assert body["heroDefaults"] == body["heroClasses"]["knight"]
+
+    def test_upgrades_present_and_well_formed(self):
+        body = client.get("/api/run/meta").json()
+        upgrades = body["upgrades"]
+        assert isinstance(upgrades, list) and len(upgrades) > 0
+        ids = [u["id"] for u in upgrades]
+        # IDs must be unique.
+        assert len(set(ids)) == len(ids), "duplicate upgrade ids"
+        id_set = set(ids)
+        for u in upgrades:
+            assert u["cost"] > 0, f"upgrade {u['id']} has non-positive cost"
+            if "requires" in u:
+                assert u["requires"] in id_set, f"upgrade {u['id']} requires unknown {u['requires']}"
 
     def test_meta_is_deterministic_across_calls(self):
         # Static config; same response every time. If this fails, /run/meta has

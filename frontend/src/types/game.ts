@@ -100,6 +100,7 @@ export interface RunConfig {
   items: Record<string, GearItem>;
   heroDefaults: HeroDefaults; // back-compat; mirrors heroClasses.knight
   heroClasses: Record<HeroClass, HeroDefaults>;
+  upgrades: MetaUpgrade[];
   mapTree: import("../utils/mockMapTree").MapTree;
   seed: number;
 }

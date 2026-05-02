@@ -65,6 +65,7 @@ class GameMetaResponse(BaseModel):
     items: dict[str, dict[str, Any]]
     heroDefaults: dict[str, Any]  # Knight defaults; kept for back-compat
     heroClasses: dict[str, dict[str, Any]]
+    upgrades: list[dict[str, Any]]
 
 
 class RunStartResponse(BaseModel):

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
-import { MetaProgress, UPGRADE_DEFS } from "../utils/metaProgress";
+import { MetaProgress } from "../utils/metaProgress";
 import type { MetaUpgrade } from "../types/game";
 import { GameState } from "../utils/gameState";
 import { Audio, TrackGroup } from "../utils/audio";
@@ -75,6 +75,8 @@ export class UpgradesScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const upgradeDefs = GameState.runConfig?.upgrades ?? [];
+
     // 4-column × 3-tier upgrade grid
     const totalGridW = 4 * CARD_W + 3 * CARD_GAP;
     const gridLeft = (width - totalGridW) / 2 + CARD_W / 2;
@@ -91,7 +93,7 @@ export class UpgradesScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
 
-      const tiers = UPGRADE_DEFS.filter((u) => u.id.startsWith(key));
+      const tiers = upgradeDefs.filter((u) => u.id.startsWith(key));
       tiers.forEach((upgrade, row) => {
         const cy = gridTop + 32 + row * (CARD_H + CARD_GAP) + CARD_H / 2;
         this.drawCard(cx, cy, upgrade, color);
@@ -109,7 +111,7 @@ export class UpgradesScene extends Phaser.Scene {
 
     const specialSpacing = CARD_W + CARD_GAP;
     SPECIALS.forEach((id, i) => {
-      const upgrade = UPGRADE_DEFS.find((u) => u.id === id)!;
+      const upgrade = upgradeDefs.find((u) => u.id === id)!;
       const cx = width / 2 + (i - 0.5) * specialSpacing;
       this.drawCard(cx, specialY, upgrade, TXT_GOLD_MID);
     });

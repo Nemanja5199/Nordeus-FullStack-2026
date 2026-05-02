@@ -1,4 +1,4 @@
-import type { ActiveBuff, ActiveDot, GearItem, HeroClass, HeroDefaults, MonsterConfig, MoveConfig, RunConfig } from "../types/game";
+import type { ActiveBuff, ActiveDot, GearItem, HeroClass, HeroDefaults, MetaUpgrade, MonsterConfig, MoveConfig, RunConfig } from "../types/game";
 import type { MapTree } from "../utils/mockMapTree";
 
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
@@ -60,6 +60,7 @@ export interface GameMeta {
   items: Record<string, GearItem>;
   heroDefaults: HeroDefaults;
   heroClasses: Record<HeroClass, HeroDefaults>;
+  upgrades: MetaUpgrade[];
 }
 
 export interface RunStart {

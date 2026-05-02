@@ -36,6 +36,10 @@ const MAGE_DEFAULTS = {
   xpPerLevel: 100,
 };
 
+const MOCK_UPGRADES = [
+  { id: "vitality_1", name: "Vitality I", category: "maxHp", cost: 15, bonus: 15, description: "" },
+] as const;
+
 const MOCK_CONFIG: RunConfig = {
   monsters: [],
   moves: {},
@@ -44,6 +48,7 @@ const MOCK_CONFIG: RunConfig = {
   mapTree: { nodes: {}, roots: [] },
   heroDefaults: KNIGHT_DEFAULTS,
   heroClasses: { knight: KNIGHT_DEFAULTS, mage: MAGE_DEFAULTS },
+  upgrades: MOCK_UPGRADES as unknown as RunConfig["upgrades"],
 };
 
 function makeStorage() {
@@ -61,6 +66,9 @@ beforeEach(() => {
   vi.stubGlobal("crypto", { randomUUID: () => "round-trip-session" });
   Cloud.resetForTests();
   Settings.resetCacheForTests();
+  // MetaProgress reads upgrade defs from runConfig; tests that buy upgrades
+  // need the fixture in place.
+  GameState.runConfig = MOCK_CONFIG;
   MetaProgress.resetAll();
 });
 
