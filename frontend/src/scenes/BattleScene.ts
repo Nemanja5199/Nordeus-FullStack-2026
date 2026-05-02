@@ -20,7 +20,7 @@ import { Audio, TrackGroup } from "../utils/audio";
 import { SfxPlayer, Sfx } from "../utils/sfx";
 import { MetaProgress } from "../utils/metaProgress";
 import { api } from "../services/api";
-import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
+import { heroFrameFor, MONSTER_FRAMES } from "../utils/spriteFrames";
 import {
   BG_DARKEST,
   BG_HERO_BATTLE,
@@ -225,8 +225,9 @@ export class BattleScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const heroFrame = heroFrameFor(GameState.selectedClass);
     this.heroSprite = this.add
-      .image(cx, panelTop + panelH * 0.42, HERO_FRAME.key, HERO_FRAME.frame)
+      .image(cx, panelTop + panelH * 0.42, heroFrame.key, heroFrame.frame)
       .setScale(5)
       .setOrigin(0.5);
 

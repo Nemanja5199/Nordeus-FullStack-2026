@@ -1,4 +1,4 @@
-import type { GearItem, GearSlot, GearStatBonuses, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
+import type { GearItem, GearSlot, GearStatBonuses, HeroClass, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
 import { XP_CURVE_FACTOR } from "./gameConstants";
 import { MetaProgress } from "./metaProgress";
 import { TestMode } from "./testMode";
@@ -30,6 +30,7 @@ const SESSION_KEY = "rpg_session_id";
 const HERO_KEY = "rpg_hero";
 const RUN_KEY = "rpg_run";
 const TREE_KEY = "rpg_tree_state";
+const CLASS_KEY = "rpg_selected_class";
 
 // Bump when the persisted hero shape changes in a non-additive way (e.g. a
 // field's type changes, or default differs from `??`-style fallbacks below).
@@ -41,8 +42,11 @@ type PersistedHero = HeroState & { saveVersion?: number };
 export const HP_POTION_PRICE = 18;
 export const MANA_POTION_PRICE = 21;
 
-function defaultHero(config: RunConfig): HeroState {
-  const defaults = config.heroDefaults;
+function defaultHero(config: RunConfig, cls: HeroClass): HeroState {
+  // Pick class-specific stats & moves; fall back to heroDefaults (= Knight)
+  // if the chosen class isn't in the runConfig (older payloads, hand-crafted
+  // mocks).
+  const defaults = config.heroClasses?.[cls] ?? config.heroDefaults;
   const meta = MetaProgress.getStartingBonuses();
   const hero: HeroState = {
     level: 1,
@@ -93,6 +97,12 @@ class GameStateManager {
   currentNode: string | null = null;
   runSeed: number | null = null;
 
+  // Class chosen on the character-select screen. Drives starting stats and
+  // moveset (via heroClasses[cls]) and the in-battle hero sprite.
+  // Defaults to "knight" — matches all save files made before the Mage
+  // class shipped.
+  selectedClass: HeroClass = "knight";
+
   getSessionId(): string {
     let id = localStorage.getItem(SESSION_KEY);
     if (!id) {
@@ -102,10 +112,21 @@ class GameStateManager {
     return id;
   }
 
+  loadSelectedClass(): void {
+    const raw = localStorage.getItem(CLASS_KEY);
+    if (raw === "knight" || raw === "mage") this.selectedClass = raw;
+    else this.selectedClass = "knight";
+  }
+
+  setSelectedClass(cls: HeroClass): void {
+    this.selectedClass = cls;
+    localStorage.setItem(CLASS_KEY, cls);
+  }
+
   initHero(config: RunConfig): void {
     const raw = localStorage.getItem(HERO_KEY);
     if (!raw) {
-      this.hero = defaultHero(config);
+      this.hero = defaultHero(config, this.selectedClass);
       return;
     }
     const persisted: PersistedHero = JSON.parse(raw);
@@ -361,7 +382,7 @@ class GameStateManager {
   }
 
   resetHero(config: RunConfig): void {
-    this.hero = defaultHero(config);
+    this.hero = defaultHero(config, this.selectedClass);
     this.saveHero();
   }
 
@@ -373,7 +394,11 @@ class GameStateManager {
     this.clearRun();
     this.runConfig = config;
     this.runSeed = config.seed;
-    console.log("Im here");
+    // Persist the seed immediately so MainMenuScene's localStorage check
+    // for "rpg_tree_state" sees a save and shows CONTINUE on refresh. Without
+    // this, TreeMapScene only saves when runSeed was null on entry — and we
+    // just set it above, so its save guard would skip.
+    this.saveTreeState();
     this.resetHero(config);
   }
 

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
+import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../ui/typography";
 import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../utils/gameState";
 import { SfxPlayer, Sfx } from "../utils/sfx";
 import type { GearItem } from "../types/game";
@@ -21,6 +21,10 @@ import {
   TXT_LOCKED,
   TXT_STROKE_HEADER,
   TXT_DEFEAT,
+  TXT_STAT_ATTACK,
+  TXT_STAT_DEFENSE,
+  TXT_STAT_MAGIC,
+  TXT_STAT_HP,
   RARITY_COLOR,
 } from "../ui/colors";
 
@@ -28,9 +32,12 @@ interface ShopData {
   returnScene: SceneKey;
 }
 
-const ROW_H = 56;
-const GEAR_ROW_W = 380;
-const POTION_ROW_W = 500;
+const ROW_H = 76;
+const POTION_ROW_H = 60;
+const ICON_SIZE = 48;
+const POTION_ICON_SIZE = 40;
+const GEAR_ROW_W = 460;
+const POTION_ROW_W = 580;
 const TIER_UNLOCK_LEVEL: Record<1 | 2 | 3, number> = { 1: 1, 2: 3, 3: 6 };
 
 export class ShopScene extends Phaser.Scene {
@@ -63,8 +70,8 @@ export class ShopScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, 76, `Gold: ${GameState.hero.gold ?? 0}g`, {
-        fontSize: FONT_MD,
+      .text(width / 2, 78, `Gold: ${GameState.hero.gold ?? 0}g`, {
+        fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD,
       })
@@ -83,10 +90,10 @@ export class ShopScene extends Phaser.Scene {
     this.buildPotionSection(width, height);
   }
 
-  private buildGearSection(width: number, height: number) {
+  private buildGearSection(width: number, _height: number) {
     this.add
-      .text(width / 2, 110, "GEAR", {
-        fontSize: FONT_BODY,
+      .text(width / 2, 116, "GEAR", {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
@@ -98,11 +105,19 @@ export class ShopScene extends Phaser.Scene {
 
     const colLeft = width * 0.27;
     const colRight = width * 0.73;
-    const startY = 138;
-    const rowGap = 6;
+    const startY = 148;
+    const rowGap = 8;
 
-    // Reserve space at the bottom for the potion section + close button (~250 px).
-    const viewportH = Math.max(180, Math.min(height - 270, 470) - startY);
+    // Vertical stripes from top to bottom (heights for a typical h=800):
+    //   148-440  gear scroll viewport
+    //   470-580  potion section (header + 2 rows)
+    //   605-660  tooltip area (when hovering — height-195)
+    //   670      modal footer hint
+    //   745      close button
+    // Cutting gear short at 440 keeps the bottom-most gear row from
+    // bleeding into potion territory when scrolled.
+    const GEAR_VIEWPORT_BOTTOM = 440;
+    const viewportH = Math.max(220, GEAR_VIEWPORT_BOTTOM - startY);
     const rowCount = Math.ceil(items.length / 2);
     const contentH = rowCount * (ROW_H + rowGap);
 
@@ -138,24 +153,24 @@ export class ShopScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: buyable });
 
     const iconKey = itemFrames[item.id];
+    const iconLeft = x - GEAR_ROW_W / 2 + ICON_SIZE / 2 + 10;
     const icon = iconKey && this.textures.exists(iconKey)
-      ? this.add.image(x - GEAR_ROW_W / 2 + 26, y, iconKey).setDisplaySize(36, 36)
+      ? this.add.image(iconLeft, y, iconKey).setDisplaySize(ICON_SIZE, ICON_SIZE)
       : null;
 
+    const textLeft = x - GEAR_ROW_W / 2 + ICON_SIZE + 22;
     const nameTxt = this.add
-      .text(x - GEAR_ROW_W / 2 + 52, y - 12, item.name, {
-        fontSize: FONT_BODY,
+      .text(textLeft, y - 16, item.name, {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: RARITY_COLOR[item.rarity] ?? TXT_GOLD_LIGHT,
       })
       .setOrigin(0, 0.5);
 
-    const statTxt = this.add
-      .text(x - GEAR_ROW_W / 2 + 52, y + 10, this.formatStatSummary(item), {
-        fontSize: FONT_SM,
-        color: TXT_MUTED,
-      })
-      .setOrigin(0, 0.5);
+    // Stats render as separate Text objects so each chunk gets its own
+    // stat color (ATK red, DEF grey, MAG purple, HP green) instead of the
+    // muted grey one-liner the formatter used to produce.
+    const statTexts = this.buildStatChunks(item, textLeft, y + 14);
 
     let badgeText: string;
     let badgeColor: string;
@@ -170,8 +185,8 @@ export class ShopScene extends Phaser.Scene {
       badgeColor = canAfford ? TXT_GOLD : TXT_DEFEAT;
     }
     const badgeTxt = this.add
-      .text(x + GEAR_ROW_W / 2 - 14, y, badgeText, {
-        fontSize: FONT_BODY,
+      .text(x + GEAR_ROW_W / 2 - 16, y, badgeText, {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: badgeColor,
       })
@@ -208,39 +223,61 @@ export class ShopScene extends Phaser.Scene {
     if (owned || lockedByLv) bg.setAlpha(0.55);
     else if (!canAfford) bg.setAlpha(0.8);
 
-    scroll.container.add([bg, ...(icon ? [icon] : []), nameTxt, statTxt, badgeTxt]);
+    scroll.container.add([bg, ...(icon ? [icon] : []), nameTxt, ...statTexts, badgeTxt]);
   }
 
-  private formatStatSummary(item: GearItem): string {
-    const parts: string[] = [];
-    if (item.statBonuses.attack) parts.push(`+${item.statBonuses.attack} ATK`);
-    if (item.statBonuses.defense) parts.push(`+${item.statBonuses.defense} DEF`);
-    if (item.statBonuses.magic) parts.push(`+${item.statBonuses.magic} MAG`);
-    if (item.statBonuses.maxHp) parts.push(`+${item.statBonuses.maxHp} HP`);
-    return parts.join("  ");
+  // Renders +N STAT chunks left-to-right, each in its own stat color.
+  // Phaser.Text doesn't support inline coloring, so we lay out individual
+  // Text objects and advance the cursor by each chunk's measured width.
+  private buildStatChunks(item: GearItem, x: number, y: number): Phaser.GameObjects.Text[] {
+    const chunks: Array<{ value: number; label: string; color: string }> = [];
+    if (item.statBonuses.attack) chunks.push({ value: item.statBonuses.attack, label: "ATK", color: TXT_STAT_ATTACK });
+    if (item.statBonuses.defense) chunks.push({ value: item.statBonuses.defense, label: "DEF", color: TXT_STAT_DEFENSE });
+    if (item.statBonuses.magic) chunks.push({ value: item.statBonuses.magic, label: "MAG", color: TXT_STAT_MAGIC });
+    if (item.statBonuses.maxHp) chunks.push({ value: item.statBonuses.maxHp, label: "HP",  color: TXT_STAT_HP });
+
+    const out: Phaser.GameObjects.Text[] = [];
+    let cursor = x;
+    for (const c of chunks) {
+      const sign = c.value >= 0 ? "+" : "";
+      const txt = this.add
+        .text(cursor, y, `${sign}${c.value} ${c.label}`, {
+          fontSize: FONT_BODY,
+          fontFamily: "EnchantedLand",
+          color: c.color,
+        })
+        .setOrigin(0, 0.5);
+      out.push(txt);
+      cursor += txt.width + 12;
+    }
+    return out;
   }
 
   private showItemTooltip(item: GearItem) {
     const { width, height } = this.scale;
     const cx = width / 2;
-    const baseY = height - 200;
+    const baseY = height - 195;
     this.tooltip.begin();
     this.tooltip.addText(cx, baseY, item.name, {
-      fontSize: FONT_MD,
+      fontSize: FONT_LG,
       fontFamily: "EnchantedLand",
       color: RARITY_COLOR[item.rarity] ?? TXT_GOLD,
     });
-    this.tooltip.addText(cx, baseY + 22, item.description, {
-      fontSize: FONT_SM,
+    this.tooltip.addText(cx, baseY + 28, item.description, {
+      fontSize: FONT_BODY,
       color: TXT_MUTED,
     });
   }
 
   private buildPotionSection(width: number, height: number) {
-    const startY = Math.min(height - 220, 470);
+    // Sit just below the gear viewport (which cuts off at 440) with a
+    // 30px breathing gap. For very small windows, fall back to keeping
+    // it above the tooltip stripe at the bottom.
+    const sectionH = 38 + POTION_ROW_H + 6 + POTION_ROW_H / 2;
+    const startY = Math.min(470, height - 205 - sectionH);
     this.add
       .text(width / 2, startY, "POTIONS", {
-        fontSize: FONT_BODY,
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_MID,
       })
@@ -248,7 +285,7 @@ export class ShopScene extends Phaser.Scene {
 
     this.buildPotionRow(
       width / 2,
-      startY + 36,
+      startY + 38,
       "potion_hp",
       "HP Potion",
       "Heals 40 HP",
@@ -257,7 +294,7 @@ export class ShopScene extends Phaser.Scene {
     );
     this.buildPotionRow(
       width / 2,
-      startY + 36 + ROW_H + 6,
+      startY + 38 + POTION_ROW_H + 6,
       "potion_mp",
       "Mana Potion",
       "Restores 30 MP",
@@ -278,30 +315,32 @@ export class ShopScene extends Phaser.Scene {
     const canAfford = (GameState.hero.gold ?? 0) >= cost;
 
     const bg = this.add
-      .rectangle(x, y, POTION_ROW_W, ROW_H - 4, BG_MOVE_CARD, 0.92)
+      .rectangle(x, y, POTION_ROW_W, POTION_ROW_H, BG_MOVE_CARD, 0.92)
       .setStrokeStyle(1, BORDER_LOCKED)
       .setInteractive({ useHandCursor: canAfford });
 
+    const iconLeft = x - POTION_ROW_W / 2 + POTION_ICON_SIZE / 2 + 10;
     if (this.textures.exists(iconKey)) {
-      this.add.image(x - POTION_ROW_W / 2 + 26, y, iconKey).setDisplaySize(36, 36);
+      this.add.image(iconLeft, y, iconKey).setDisplaySize(POTION_ICON_SIZE, POTION_ICON_SIZE);
     }
+    const textLeft = x - POTION_ROW_W / 2 + POTION_ICON_SIZE + 20;
     this.add
-      .text(x - POTION_ROW_W / 2 + 52, y - 12, name, {
-        fontSize: FONT_BODY,
+      .text(textLeft, y - 12, name, {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_LIGHT,
       })
       .setOrigin(0, 0.5);
     this.add
-      .text(x - POTION_ROW_W / 2 + 52, y + 10, desc, {
-        fontSize: FONT_SM,
+      .text(textLeft, y + 12, desc, {
+        fontSize: FONT_BODY,
         color: TXT_MUTED,
       })
       .setOrigin(0, 0.5);
 
     this.add
-      .text(x + POTION_ROW_W / 2 - 14, y, `${cost}g`, {
-        fontSize: FONT_BODY,
+      .text(x + POTION_ROW_W / 2 - 16, y, `${cost}g`, {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: canAfford ? TXT_GOLD : TXT_DEFEAT,
       })

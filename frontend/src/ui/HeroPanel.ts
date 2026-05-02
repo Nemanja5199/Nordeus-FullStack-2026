@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { GearItem, HeroState, MoveConfig } from "../types/game";
-import { getGearBonuses } from "../utils/gameState";
-import { HERO_FRAME } from "../utils/spriteFrames";
+import { GameState, getGearBonuses } from "../utils/gameState";
+import { heroFrameFor } from "../utils/spriteFrames";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "./typography";
 import {
   BG_PANEL,
@@ -58,7 +58,8 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
   }).setOrigin(0.5));
 
   // Hero sprite
-  add(scene.add.image(cx, panelY + 96, HERO_FRAME.key, HERO_FRAME.frame).setScale(3.2).setOrigin(0.5));
+  const heroFrame = heroFrameFor(GameState.selectedClass);
+  add(scene.add.image(cx, panelY + 96, heroFrame.key, heroFrame.frame).setScale(3.2).setOrigin(0.5));
 
   // Stats 2×2 grid + MP row
   const stats = [

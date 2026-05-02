@@ -250,4 +250,35 @@ MOVES: dict[str, dict[str, Any]] = {
         "effects": [], "repeatPenalty": 0.4, "dropChance": 0.30, "manaCost": 15,
         "description": "Reconstitutes its body. Heals 25 HP plus magic scaling.",
     },
+    # ── Mage class defaults ──────────────────────────────────────────────
+    # Mirror the Knight's archetype set (primary / defense / buff / heal)
+    # but tilted to the Mage's MP-rich, HP-poor playstyle. dropChance 1.0
+    # keeps the convention used by the Knight defaults; monsters don't use
+    # these moves, so the value is effectively cosmetic for now.
+    "arc_lash": {
+        "id": "arc_lash", "name": "Arc Lash", "moveType": "magic", "baseValue": 20,
+        "effects": [], "repeatPenalty": 0.3, "dropChance": 1.0, "manaCost": 10,
+        "description": "A jagged bolt of arcane lightning. Solid magic damage.",
+    },
+    "mana_ward": {
+        "id": "mana_ward", "name": "Mana Ward", "moveType": "none", "baseValue": 0,
+        "effects": [{"type": "buff", "target": "self", "stat": "defense", "multiplier": 1.5, "turns": 2}],
+        "repeatPenalty": 0.6, "dropChance": 1.0, "manaCost": 25,
+        "description": "Weaves a shimmering barrier of pure mana. +50% Defense for 2 turns.",
+    },
+    "focus": {
+        # 1-turn, 80% Magic spike — bigger than battle_cry's 50% but it
+        # lands only one cast, rewarding tight timing.
+        "id": "focus", "name": "Focus", "moveType": "none", "baseValue": 0,
+        "effects": [{"type": "buff", "target": "self", "stat": "magic", "multiplier": 1.8, "turns": 1}],
+        "repeatPenalty": 0.6, "dropChance": 1.0, "manaCost": 15,
+        "description": "Sharpens arcane focus. +80% Magic for 1 turn.",
+    },
+    "mend": {
+        # Smaller / cheaper than second_wind — Mage heals more often, less
+        # per cast.
+        "id": "mend", "name": "Mend", "moveType": "heal", "baseValue": 18,
+        "effects": [], "repeatPenalty": 0.5, "dropChance": 1.0, "manaCost": 25,
+        "description": "Mends torn flesh with woven mana. A quick magic-scaling heal.",
+    },
 }

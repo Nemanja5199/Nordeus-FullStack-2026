@@ -17,21 +17,33 @@ import { GameState } from "./gameState";
 import { api } from "../services/api";
 import type { RunConfig } from "../types/game";
 
+const KNIGHT_DEFAULTS = {
+  maxHp: 100,
+  attack: 15,
+  defense: 10,
+  magic: 8,
+  defaultMoves: ["slash", "shield_up", "battle_cry", "second_wind"],
+  levelUpStats: { maxHp: 8, attack: 2, defense: 2, magic: 3 },
+  xpPerLevel: 100,
+};
+const MAGE_DEFAULTS = {
+  maxHp: 80,
+  attack: 8,
+  defense: 6,
+  magic: 25,
+  defaultMoves: ["arc_lash", "mana_ward", "focus", "mend"],
+  levelUpStats: { maxHp: 6, attack: 1, defense: 1, magic: 4 },
+  xpPerLevel: 100,
+};
+
 const MOCK_CONFIG: RunConfig = {
   monsters: [],
   moves: {},
   items: {},
   seed: 1,
   mapTree: { nodes: {}, roots: [] },
-  heroDefaults: {
-    maxHp: 100,
-    attack: 15,
-    defense: 10,
-    magic: 8,
-    defaultMoves: ["slash", "shield_up", "battle_cry", "second_wind"],
-    levelUpStats: { maxHp: 8, attack: 2, defense: 2, magic: 3 },
-    xpPerLevel: 100,
-  },
+  heroDefaults: KNIGHT_DEFAULTS,
+  heroClasses: { knight: KNIGHT_DEFAULTS, mage: MAGE_DEFAULTS },
 };
 
 function makeStorage() {

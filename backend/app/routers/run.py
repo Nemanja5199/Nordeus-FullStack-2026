@@ -1,6 +1,6 @@
 import random
 from fastapi import APIRouter, Query
-from app.game_config import MONSTERS, MOVES, ITEMS, HERO_DEFAULTS
+from app.game_config import MONSTERS, MOVES, ITEMS, HERO_DEFAULTS, HERO_CLASSES
 from app.models import GameMetaResponse, RunStartResponse
 from app.tree_generator import generate_map_tree
 
@@ -16,6 +16,7 @@ def get_game_meta():
         "moves": MOVES,
         "items": ITEMS,
         "heroDefaults": HERO_DEFAULTS,
+        "heroClasses": HERO_CLASSES,
     }
 
 

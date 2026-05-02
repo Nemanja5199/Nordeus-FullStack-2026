@@ -14,7 +14,15 @@ class TestRunMeta:
         r = client.get("/api/run/meta")
         assert r.status_code == 200
         body = r.json()
-        assert set(body.keys()) == {"monsters", "moves", "items", "heroDefaults"}
+        assert set(body.keys()) == {"monsters", "moves", "items", "heroDefaults", "heroClasses"}
+
+    def test_hero_classes_includes_knight_and_mage(self):
+        body = client.get("/api/run/meta").json()
+        assert set(body["heroClasses"].keys()) == {"knight", "mage"}
+        # Mage has its unique moveset
+        assert body["heroClasses"]["mage"]["defaultMoves"] == ["arc_lash", "mana_ward", "focus", "mend"]
+        # Knight + heroDefaults stay aligned (back-compat)
+        assert body["heroDefaults"] == body["heroClasses"]["knight"]
 
     def test_meta_is_deterministic_across_calls(self):
         # Static config; same response every time. If this fails, /run/meta has

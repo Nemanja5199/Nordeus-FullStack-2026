@@ -3,8 +3,8 @@ import { Scene } from "./sceneKeys";
 import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
-import { HERO_FRAME } from "../utils/spriteFrames";
-import type { RunConfig } from "../types/game";
+import { HERO_FRAMES } from "../utils/spriteFrames";
+import type { HeroClass, RunConfig } from "../types/game";
 import { createButton, BTN_MD } from "../ui/Button";
 import {
   BG_BLACK,
@@ -31,37 +31,42 @@ interface CharacterSelectData {
   runConfig: RunConfig;
 }
 
-const CLASSES = [
+interface ClassCard {
+  id: HeroClass;
+  name: string;
+  description: string;
+  stats: { hp: number; atk: number; def: number; mag: number };
+  moves: string[];
+  spriteKey: string;
+  spriteFrame: number;
+  locked: boolean;
+}
+
+// Card data is hand-authored for the menu — keep stats/moves in sync with
+// HERO_CLASSES on the backend. The actual run uses the backend numbers,
+// not these; these strings are display-only.
+const CLASSES: ClassCard[] = [
   {
     id: "knight",
     name: "Knight",
     description:
       "A stalwart warrior clad in steel.\nTanks hits and overpowers enemies\nwith raw strength.",
-    stats: { hp: 100, atk: 15, def: 10, mag: 8 },
+    stats: { hp: 100, atk: 25, def: 10, mag: 8 },
     moves: ["Slash", "Shield Up", "Battle Cry", "Second Wind"],
-    spriteKey: HERO_FRAME.key,
-    spriteFrame: HERO_FRAME.frame,
+    spriteKey: HERO_FRAMES.knight.key,
+    spriteFrame: HERO_FRAMES.knight.frame,
     locked: false,
-  },
-  {
-    id: "assassin",
-    name: "Assassin",
-    description: "A shadow in the night.\nStrips defenses and punishes\nvulnerable enemies.",
-    stats: { hp: 80, atk: 18, def: 6, mag: 6 },
-    moves: ["Shiv", "Cheap Shot", "Smoke Bomb", "Expose"],
-    spriteKey: "rogues",
-    spriteFrame: 3,
-    locked: true,
   },
   {
     id: "mage",
     name: "Mage",
-    description: "A wielder of arcane forces.\nIgnores Defense and drains\nlife with pure magic.",
-    stats: { hp: 70, atk: 6, def: 5, mag: 20 },
-    moves: ["Fireball", "Frost Nova", "Arcane Shield", "Drain"],
-    spriteKey: "rogues",
-    spriteFrame: 5,
-    locked: true,
+    description:
+      "A glass cannon of pure arcane power.\nFrail body, devastating spells.\nMana is your weapon.",
+    stats: { hp: 80, atk: 8, def: 6, mag: 25 },
+    moves: ["Arc Lash", "Mana Ward", "Focus", "Mend"],
+    spriteKey: HERO_FRAMES.mage.key,
+    spriteFrame: HERO_FRAMES.mage.frame,
+    locked: false,
   },
 ];
 
@@ -124,10 +129,14 @@ export class CharacterSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const cardW = Math.min(280, (width - 160) / 3);
+    // Layout scales with the card count so removing/adding classes doesn't
+    // leave a lopsided gap. cardW caps at 280 to keep the look consistent
+    // even when there are only 2 cards.
+    const n = CLASSES.length;
+    const cardW = Math.min(280, (width - 160) / Math.max(n, 3));
     const cardH = height * 0.6;
-    const gap = Math.max(40, (width - cardW * 3) / 6);
-    const totalW = cardW * 3 + gap * 2;
+    const gap = Math.max(40, (width - cardW * n) / (n + 1));
+    const totalW = cardW * n + gap * (n - 1);
     const startX = width / 2 - totalW / 2 + cardW / 2;
 
     CLASSES.forEach((cls, i) => {
@@ -322,6 +331,9 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     MetaProgress.resetAll();
     GameState.runConfig = this.runConfig;
+    // Persist the picked class BEFORE resetHero() so defaultHero() reads
+    // the right entry from runConfig.heroClasses.
+    GameState.setSelectedClass(cls.id);
     GameState.resetHero(this.runConfig);
     GameState.clearRun();
 

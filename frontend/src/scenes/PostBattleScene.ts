@@ -329,15 +329,12 @@ export class PostBattleScene extends Phaser.Scene {
 
     createButton(this, width / 2, height * 0.76, {
       ...BTN_MD,
-      width: 360,
-      height: 52,
-      fontSize: FONT_LG,
-      label: "Main Menu",
-      color: BG_BTN_SUCCESS,
+      label: "MAIN MENU",
+      color: BG_BTN_NEUTRAL,
       onClick: () => {
         GameState.resetHero(GameState.runConfig!);
         GameState.clearRun();
-        this.scene.start("MainMEnu");
+        this.scene.start(Scene.MainMenu);
       },
     });
   }

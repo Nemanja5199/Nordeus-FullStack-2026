@@ -7,21 +7,33 @@ import type { GearItem, MoveConfig, RunConfig } from "../types/game";
 
 // ── Minimal RunConfig stub ────────────────────────────────────────────────────
 
+const KNIGHT_DEFAULTS = {
+  maxHp: 100,
+  attack: 15,
+  defense: 10,
+  magic: 8,
+  defaultMoves: ["slash", "shield_up", "battle_cry", "second_wind"],
+  levelUpStats: { maxHp: 8, attack: 2, defense: 2, magic: 3 },
+  xpPerLevel: 100,
+};
+const MAGE_DEFAULTS = {
+  maxHp: 80,
+  attack: 8,
+  defense: 6,
+  magic: 25,
+  defaultMoves: ["arc_lash", "mana_ward", "focus", "mend"],
+  levelUpStats: { maxHp: 6, attack: 1, defense: 1, magic: 4 },
+  xpPerLevel: 100,
+};
+
 const MOCK_CONFIG: RunConfig = {
   monsters: [],
   moves: {},
   items: {},
   seed: 1,
   mapTree: { nodes: {}, roots: [] },
-  heroDefaults: {
-    maxHp: 100,
-    attack: 15,
-    defense: 10,
-    magic: 8,
-    defaultMoves: ["slash", "shield_up", "battle_cry", "second_wind"],
-    levelUpStats: { maxHp: 8, attack: 2, defense: 2, magic: 3 },
-    xpPerLevel: 100,
-  },
+  heroDefaults: KNIGHT_DEFAULTS,
+  heroClasses: { knight: KNIGHT_DEFAULTS, mage: MAGE_DEFAULTS },
 };
 
 // ── Setup: reset state and mock localStorage before each test ─────────────────
@@ -747,6 +759,58 @@ describe("GameState.startFreshRun", () => {
     GameState.startFreshRun({ ...MOCK_CONFIG, seed: 1 });
     expect(GameState.runSave).toBeNull();
     expect(localStorage.getItem("rpg_run")).toBeNull();
+  });
+
+  it("persists tree state with the new seed so MainMenu shows CONTINUE on refresh", () => {
+    // Regression: without the saveTreeState call inside startFreshRun, a
+    // browser refresh right after Fight Again would find an empty
+    // rpg_tree_state and the menu would hide the CONTINUE button.
+    GameState.startFreshRun({ ...MOCK_CONFIG, seed: 12345 });
+    const raw = localStorage.getItem("rpg_tree_state");
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.runSeed).toBe(12345);
+    expect(parsed.completedNodes).toEqual([]);
+    expect(parsed.currentNode).toBeNull();
+  });
+});
+
+describe("GameState selectedClass", () => {
+  it("defaults to knight when no class persisted", () => {
+    GameState.loadSelectedClass();
+    expect(GameState.selectedClass).toBe("knight");
+  });
+
+  it("setSelectedClass persists to localStorage", () => {
+    GameState.setSelectedClass("mage");
+    expect(localStorage.getItem("rpg_selected_class")).toBe("mage");
+    GameState.selectedClass = "knight" as const; // simulate page reload
+    GameState.loadSelectedClass();
+    expect(GameState.selectedClass).toBe("mage");
+  });
+
+  it("ignores garbage values in localStorage and falls back to knight", () => {
+    localStorage.setItem("rpg_selected_class", "wizard"); // not a HeroClass
+    GameState.loadSelectedClass();
+    expect(GameState.selectedClass).toBe("knight");
+  });
+
+  it("resetHero with mage class uses Mage stats and moves", () => {
+    GameState.setSelectedClass("mage");
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.maxHp).toBe(MAGE_DEFAULTS.maxHp);
+    expect(GameState.hero.attack).toBe(MAGE_DEFAULTS.attack);
+    expect(GameState.hero.magic).toBe(MAGE_DEFAULTS.magic);
+    expect(GameState.hero.learnedMoves).toEqual(MAGE_DEFAULTS.defaultMoves);
+    expect(GameState.hero.equippedMoves).toEqual(MAGE_DEFAULTS.defaultMoves);
+  });
+
+  it("resetHero with knight class uses Knight stats and moves", () => {
+    GameState.setSelectedClass("knight");
+    GameState.resetHero(MOCK_CONFIG);
+    expect(GameState.hero.maxHp).toBe(KNIGHT_DEFAULTS.maxHp);
+    expect(GameState.hero.attack).toBe(KNIGHT_DEFAULTS.attack);
+    expect(GameState.hero.learnedMoves).toEqual(KNIGHT_DEFAULTS.defaultMoves);
   });
 });
 

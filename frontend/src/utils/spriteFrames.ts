@@ -1,3 +1,5 @@
+import type { HeroClass } from "../types/game";
+
 // monsters.png: 12 cols per row, 32x32 per frame
 // rogues.png:    7 cols per row, 32x32 per frame
 
@@ -9,10 +11,23 @@ function rogueFrame(row: number, col: number) {
   return row * 7 + col;
 }
 
-export const HERO_FRAME = {
-  key: "rogues",
-  frame: rogueFrame(1, 0), // 2.a Knight
+// Per-class hero sprite frames. Battle/HeroPanel/CharacterSelect use
+// heroFrameFor(class) instead of a fixed HERO_FRAME so the picked class
+// drives what the player sees. The Knight stays at "2.a" (the original
+// HERO_FRAME); the Mage uses "5.a" — the female wizard.
+export const HERO_FRAMES: Record<HeroClass, { key: string; frame: number }> = {
+  knight: { key: "rogues", frame: rogueFrame(1, 0) }, // 2.a Knight
+  mage:   { key: "rogues", frame: rogueFrame(4, 0) }, // 5.a female wizard
 };
+
+export function heroFrameFor(cls: HeroClass): { key: string; frame: number } {
+  return HERO_FRAMES[cls] ?? HERO_FRAMES.knight;
+}
+
+// Back-compat: existing imports of HERO_FRAME keep working as the Knight.
+// Migrate to heroFrameFor(GameState.selectedClass) so the chosen class
+// actually drives the sprite instead of always rendering the Knight.
+export const HERO_FRAME = HERO_FRAMES.knight;
 
 export const SHOPKEEPER_FRAME = {
   key: "rogues",

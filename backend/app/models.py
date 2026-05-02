@@ -66,7 +66,11 @@ class GameMetaResponse(BaseModel):
     monsters: list[dict[str, Any]]
     moves: dict[str, dict[str, Any]]
     items: dict[str, dict[str, Any]]
+    # Knight defaults, kept for back-compat with older clients.
     heroDefaults: dict[str, Any]
+    # Per-class starting data (knight, mage, ...). The frontend picks one in
+    # CharacterSelectScene and feeds it to defaultHero().
+    heroClasses: dict[str, dict[str, Any]]
 
 
 class RunStartResponse(BaseModel):

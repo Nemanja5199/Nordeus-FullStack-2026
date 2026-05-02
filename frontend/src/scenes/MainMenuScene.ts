@@ -51,7 +51,7 @@ export class MainMenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.36, "Five monsters. One hero.\nCan you survive the gauntlet?", {
+      .text(width / 2, height * 0.36, "The dragon will break you.\nThe fire will remake you.", {
         fontSize: FONT_TAGLINE,
         fontFamily: "EnchantedLand",
         color: TXT_TAGLINE,
