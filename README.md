@@ -20,13 +20,15 @@
 
 <div align="center">
 
-|                  Main Menu                   |                  Tree Map                  |
-| :------------------------------------------: | :----------------------------------------: |
-| ![Main Menu](screenshots/main-menu.png)      | ![Tree Map](screenshots/tree-map.png)      |
+|                  Main Menu                  |                  Class Select                  |
+| :-----------------------------------------: | :--------------------------------------------: |
+| ![Main Menu](screenshots/main-menu.png)     | ![Class Select](screenshots/class-select.png)  |
 
-|                  Battle                  |                  Shop                  |
-| :--------------------------------------: | :------------------------------------: |
-| ![Battle](screenshots/battle.png)        | ![Shop](screenshots/shop.png)          |
+|                  Tree Map                  |                  Battle                  |
+| :----------------------------------------: | :--------------------------------------: |
+| ![Tree Map](screenshots/tree-map.png)      | ![Battle](screenshots/battle.png)        |
+
+![Upgrades](screenshots/upgrades.png)
 
 </div>
 
