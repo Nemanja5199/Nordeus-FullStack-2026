@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import { BATTLE, BG, BAR, BORDER, FONT, HP_GHOST, TXT } from "../constants";
-import { MONSTER_FRAMES } from "../sprites";
-import type { MonsterConfig } from "../types/game";
+import { BATTLE, BG, BAR, BORDER, FONT, HP_GHOST, TXT } from "../../constants";
+import { MONSTER_FRAMES } from "../../sprites";
+import type { MonsterConfig } from "../../types/game";
 
 const BAR_W = BATTLE.PANEL_W - 24;
 

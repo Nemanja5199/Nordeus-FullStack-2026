@@ -1,6 +1,13 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT, MOVE_CARD } from "../constants";
-import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import { Scene, type SceneKey, FONT } from "../constants";
+import {
+  createModalFooter,
+  TooltipManager,
+  LearnedMovesPanel,
+  EquippedMovesPanel,
+  StatPointsPanel,
+  type StatPointKey,
+} from "../ui";
 import { GameState } from "../state";
 import type { MoveConfig } from "../types/game";
 import { buildMoveStatLines } from "../combat";
@@ -13,12 +20,11 @@ interface MoveManagementData {
 export class MoveManagementScene extends Phaser.Scene {
   private selectedLearnedIndex = -1;
   private selectedEquippedSlot = -1;
-  private learnedButtons: Phaser.GameObjects.Container[] = [];
-  private equippedButtons: Phaser.GameObjects.Container[] = [];
+  private learnedPanel?: LearnedMovesPanel;
+  private equippedPanel?: EquippedMovesPanel;
   private infoText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
   private returnScene!: SceneKey;
-  private learnedScroll?: ScrollableArea;
 
   constructor() {
     super(Scene.MoveManagement);
@@ -28,10 +34,9 @@ export class MoveManagementScene extends Phaser.Scene {
     this.returnScene = data.returnScene ?? Scene.TreeMap;
     this.selectedLearnedIndex = -1;
     this.selectedEquippedSlot = -1;
-    this.learnedButtons = [];
-    this.equippedButtons = [];
-    this.learnedScroll?.destroy();
-    this.learnedScroll = undefined;
+    this.learnedPanel?.scroll.destroy();
+    this.learnedPanel = undefined;
+    this.equippedPanel = undefined;
 
     const { width, height } = this.scale;
 
@@ -51,47 +56,15 @@ export class MoveManagementScene extends Phaser.Scene {
     const colEquippedX = width * 0.5;
     const colStatsX = width * 0.78;
 
-    this.add
-      .text(colLearnedX, 90, "LEARNED MOVES", {
-        fontSize: FONT.BODY,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD_MID,
-      })
-      .setOrigin(0.5);
-    this.add
-      .text(colEquippedX, 90, "EQUIPPED SLOTS", {
-        fontSize: FONT.BODY,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD_MID,
-      })
-      .setOrigin(0.5);
-    this.add
-      .text(colStatsX, 90, "STAT POINTS", {
-        fontSize: FONT.BODY,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD_MID,
-      })
-      .setOrigin(0.5);
+    this.add.text(colLearnedX, 90, "LEARNED MOVES", { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5);
+    this.add.text(colEquippedX, 90, "EQUIPPED SLOTS", { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5);
+    this.add.text(colStatsX, 90, "STAT POINTS", { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5);
 
     const divAlpha = 0.25;
     const divTop = 90;
     const divBot = height - 80;
-    this.add.rectangle(
-      width * 0.36,
-      (divTop + divBot) / 2,
-      1,
-      divBot - divTop,
-      BORDER.GOLD,
-      divAlpha,
-    );
-    this.add.rectangle(
-      width * 0.64,
-      (divTop + divBot) / 2,
-      1,
-      divBot - divTop,
-      BORDER.GOLD,
-      divAlpha,
-    );
+    this.add.rectangle(width * 0.36, (divTop + divBot) / 2, 1, divBot - divTop, BORDER.GOLD, divAlpha);
+    this.add.rectangle(width * 0.64, (divTop + divBot) / 2, 1, divBot - divTop, BORDER.GOLD, divAlpha);
 
     this.infoText = createModalFooter(this, {
       hint: "Hover a move to see its description.",
@@ -102,9 +75,50 @@ export class MoveManagementScene extends Phaser.Scene {
     });
     this.tooltip = new TooltipManager(this, this.infoText);
 
-    this.buildLearnedPanel(colLearnedX);
-    this.buildEquippedPanel(colEquippedX);
-    this.buildStatPanel(colStatsX);
+    const moves = GameState.runConfig!.moves;
+    this.learnedPanel = new LearnedMovesPanel(
+      this,
+      colLearnedX,
+      GameState.hero.learnedMoves,
+      moves,
+      GameState.hero.equippedMoves,
+      {
+        onSelect: (i, moveId) => this.selectLearned(i, moveId),
+        onHover: (move) => this.showMoveTooltip(move),
+        onHoverEnd: () => this.tooltip.clear(),
+      },
+    );
+
+    this.equippedPanel = new EquippedMovesPanel(
+      this,
+      colEquippedX,
+      GameState.hero.equippedMoves,
+      moves,
+      {
+        onSelect: (slot) => this.selectEquipped(slot),
+        onHover: (move) => this.showMoveTooltip(move),
+        onHoverEnd: () => this.tooltip.clear(),
+      },
+    );
+
+    new StatPointsPanel(
+      this,
+      colStatsX,
+      {
+        attack: GameState.hero.attack,
+        defense: GameState.hero.defense,
+        magic: GameState.hero.magic,
+        maxHp: GameState.hero.maxHp,
+        skillPoints: GameState.hero.skillPoints ?? 0,
+      },
+      { onSpend: (key) => this.spendSkillPoint(key) },
+    );
+  }
+
+  private spendSkillPoint(key: StatPointKey) {
+    GameState.spendSkillPoint(key);
+    this.children.removeAll(true);
+    this.create({ returnScene: this.returnScene });
   }
 
   private showMoveTooltip(move: MoveConfig): void {
@@ -122,186 +136,11 @@ export class MoveManagementScene extends Phaser.Scene {
     this.tooltip.addHorizontalRow(buildMoveStatLines(move), baseY + 26, FONT.LG);
   }
 
-  private clearMoveTooltip(): void {
-    this.tooltip.clear();
-  }
-
-  private buildLearnedPanel(panelX: number) {
-    const learned = GameState.hero.learnedMoves;
-    const rowStep = MOVE_CARD.H + MOVE_CARD.GAP;
-    const contentH = learned.length * rowStep - MOVE_CARD.GAP;
-    const { width: scaleW, height: scaleH } = this.scale;
-    const viewportH = Math.max(120, scaleH - MOVE_CARD.START_Y - 160);
-
-    this.learnedScroll = createScrollableArea(this, {
-      x: 0,
-      y: MOVE_CARD.START_Y - MOVE_CARD.H / 2,
-      width: scaleW,
-      height: viewportH + MOVE_CARD.H,
-      contentHeight: contentH + MOVE_CARD.H,
-    });
-
-    learned.forEach((moveId, i) => {
-      const move = GameState.runConfig!.moves[moveId];
-      if (!move) return;
-
-      const isEquipped = GameState.hero.equippedMoves.includes(moveId);
-      const cardCenterY = i * rowStep + MOVE_CARD.H / 2;
-
-      const container = this.add.container(panelX, cardCenterY);
-      const bg = this.add
-        .rectangle(0, 0, MOVE_CARD.W, MOVE_CARD.H, isEquipped ? BG.MOVE_EQUIPPED : BG.MOVE_CARD, 0.92)
-        .setStrokeStyle(1, isEquipped ? BORDER.GOLD : BORDER.LOCKED);
-
-      const nameTxt = this.add.text(-MOVE_CARD.W / 2 + 14, -12, move.name, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD_LIGHT,
-      });
-      const typeTxt = this.add.text(-MOVE_CARD.W / 2 + 14, 10, `[${move.moveType}]`, {
-        fontSize: FONT.SM,
-        color: TXT.MUTED,
-      });
-
-      bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerdown", () => this.selectLearned(i, moveId));
-      bg.on("pointerover", () => { bg.setAlpha(0.7); this.showMoveTooltip(move); });
-      bg.on("pointerout", () => { bg.setAlpha(1); this.clearMoveTooltip(); });
-
-      container.add([bg, nameTxt, typeTxt]);
-      this.learnedButtons.push(container);
-      this.learnedScroll!.container.add(container);
-    });
-
-    this.learnedScroll.refreshInputState();
-  }
-
-  private buildEquippedPanel(panelX: number) {
-    for (let slot = 0; slot < 4; slot++) {
-      const moveId = GameState.hero.equippedMoves[slot];
-      const move = moveId ? GameState.runConfig!.moves[moveId] : null;
-      const y = MOVE_CARD.START_Y + slot * (MOVE_CARD.H + MOVE_CARD.GAP);
-
-      const container = this.add.container(panelX, y);
-      const bg = this.add
-        .rectangle(0, 0, MOVE_CARD.W, MOVE_CARD.H, BG.MOVE_CARD, 0.92)
-        .setStrokeStyle(1, BORDER.LOCKED);
-
-      const slotTxt = this.add.text(-MOVE_CARD.W / 2 + 14, -18, `SLOT ${slot + 1}`, {
-        fontSize: FONT.XS,
-        color: TXT.MUTED,
-      });
-      const nameTxt = this.add.text(-MOVE_CARD.W / 2 + 14, 4, move ? move.name : "(empty)", {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: move ? TXT.HERO : TXT.LOCKED,
-      });
-
-      bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerdown", () => this.selectEquipped(slot));
-      bg.on("pointerover", () => { bg.setAlpha(0.7); if (move) this.showMoveTooltip(move); });
-      bg.on("pointerout", () => { bg.setAlpha(1); this.clearMoveTooltip(); });
-
-      container.add([bg, slotTxt, nameTxt]);
-      this.equippedButtons.push(container);
-    }
-  }
-
-  private buildStatPanel(panelX: number) {
-    const pts = GameState.hero.skillPoints ?? 0;
-    const cardW = 200;
-    const cardH = 80;
-    const gap = 16;
-
-    this.add
-      .text(panelX, 112, pts > 0 ? `✦ ${pts} to spend` : "no points", {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: pts > 0 ? TXT.SKILL_POINTS : TXT.MUTED,
-      })
-      .setOrigin(0.5);
-
-    const stats: {
-      label: string;
-      key: "attack" | "defense" | "magic" | "maxHp";
-      gain: string;
-      sub: string;
-    }[] = [
-      { label: "ATTACK", key: "attack", gain: "+2", sub: "Physical damage" },
-      { label: "DEFENSE", key: "defense", gain: "+2", sub: "Damage reduction" },
-      { label: "MAGIC", key: "magic", gain: "+3", sub: "Spell power" },
-      { label: "MAX HP", key: "maxHp", gain: "+8", sub: "Max health" },
-    ];
-
-    const cardsStartY = 156;
-
-    stats.forEach(({ label, key, gain, sub }, i) => {
-      const y = cardsStartY + cardH / 2 + i * (cardH + gap);
-      const haspts = pts > 0;
-      const val = key === "maxHp" ? GameState.hero.maxHp : GameState.hero[key];
-
-      this.add
-        .rectangle(panelX, y, cardW, cardH, haspts ? BG.STAT_CARD_AVAIL : BG.STAT_CARD, 0.95)
-        .setStrokeStyle(haspts ? 2 : 1, haspts ? BORDER.STAT_AVAIL : BORDER.LOCKED);
-
-      this.add.text(panelX - cardW / 2 + 14, y - 22, label, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD,
-      });
-      this.add.text(panelX - cardW / 2 + 14, y - 2, sub, {
-        fontSize: FONT.SM,
-        color: TXT.MUTED,
-      });
-
-      this.add.text(panelX - cardW / 2 + 14, y + 16, String(val), {
-        fontSize: FONT.LG,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD_LIGHT,
-      });
-
-      this.add.text(panelX - cardW / 2 + 66, y + 16, gain, {
-        fontSize: FONT.BODY,
-        fontFamily: "EnchantedLand",
-        color: haspts ? TXT.SKILL_POINTS : TXT.MUTED,
-      });
-
-      if (haspts) {
-        const btnX = panelX + cardW / 2 - 36;
-        const btn = this.add
-          .rectangle(btnX, y, 56, 36, BG.BTN_STAT, 0.95)
-          .setStrokeStyle(1, BORDER.STAT_AVAIL)
-          .setInteractive({ useHandCursor: true });
-
-        this.add
-          .text(btnX, y, "+ Add", {
-            fontSize: FONT.SM,
-            fontFamily: "EnchantedLand",
-            color: TXT.SKILL_POINTS,
-          })
-          .setOrigin(0.5);
-
-        btn.on("pointerover", () => btn.setFillStyle(BG.BTN_STAT_HOVER));
-        btn.on("pointerout", () => btn.setFillStyle(BG.BTN_STAT));
-        btn.on("pointerdown", () => {
-          GameState.spendSkillPoint(key);
-          this.children.removeAll(true);
-          this.create({ returnScene: this.returnScene });
-        });
-      }
-    });
-  }
-
   private selectLearned(index: number, moveId: string) {
     this.selectedLearnedIndex = index;
     this.selectedEquippedSlot = -1;
-
-    this.learnedButtons.forEach((c, i) => {
-      (c.getAt(0) as Phaser.GameObjects.Rectangle).setStrokeStyle(
-        2,
-        i === index ? BORDER.GOLD_BRIGHT : BORDER.LOCKED,
-      );
-    });
+    this.learnedPanel?.highlightSelected(index);
+    this.equippedPanel?.highlightSelected(-1);
 
     const name = GameState.runConfig!.moves[moveId]?.name;
     this.infoText.setText(`"${name}" selected — click an equipped slot to place it.`);
@@ -310,13 +149,7 @@ export class MoveManagementScene extends Phaser.Scene {
 
   private selectEquipped(slot: number) {
     this.selectedEquippedSlot = slot;
-
-    this.equippedButtons.forEach((c, i) => {
-      (c.getAt(0) as Phaser.GameObjects.Rectangle).setStrokeStyle(
-        2,
-        i === slot ? BORDER.GOLD_BRIGHT : BORDER.LOCKED,
-      );
-    });
+    this.equippedPanel?.highlightSelected(slot);
 
     if (this.selectedLearnedIndex >= 0) {
       const moveId = GameState.hero.learnedMoves[this.selectedLearnedIndex];

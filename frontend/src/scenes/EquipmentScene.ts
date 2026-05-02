@@ -1,11 +1,15 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT, EQ_CARD, INV_GRID } from "../constants";
-import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import { Scene, type SceneKey, FONT } from "../constants";
+import {
+  createModalFooter,
+  TooltipManager,
+  EquippedSlot,
+  InventoryGrid,
+} from "../ui";
 import { GameState, getGearBonuses } from "../state";
 import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem, GearSlot } from "../types/game";
-import { itemFrames } from "../sprites";
-import { BG, BORDER, TXT, RARITY_COLOR, RARITY_COLOR_NUM, STAT_COLOR } from "../constants";
+import { BG, BORDER, TXT, RARITY_COLOR, STAT_COLOR, EQ_CARD } from "../constants";
 
 const SLOTS: GearSlot[] = ["weapon", "helmet", "chestplate", "gloves", "ring"];
 const SLOT_LABELS: Record<GearSlot, string> = {
@@ -24,7 +28,7 @@ export class EquipmentScene extends Phaser.Scene {
   private returnScene!: SceneKey;
   private hintText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
-  private inventoryScroll?: ScrollableArea;
+  private inventory?: InventoryGrid;
 
   constructor() {
     super(Scene.Equipment);
@@ -32,8 +36,8 @@ export class EquipmentScene extends Phaser.Scene {
 
   create(data: EquipmentData) {
     this.returnScene = data.returnScene ?? Scene.TreeMap;
-    this.inventoryScroll?.destroy();
-    this.inventoryScroll = undefined;
+    this.inventory?.scroll?.destroy();
+    this.inventory = undefined;
 
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, BG.DARKEST, 0.97).setOrigin(0).setInteractive();
@@ -83,8 +87,43 @@ export class EquipmentScene extends Phaser.Scene {
     });
     this.tooltip = new TooltipManager(this, this.hintText);
 
-    this.buildEquippedSlots(colLeft);
-    this.buildInventoryGrid(colRight);
+    this.buildEquippedSlots(colLeft, items);
+    this.inventory = new InventoryGrid(
+      this,
+      colRight,
+      GameState.hero.inventory ?? [],
+      items,
+      {
+        onEquip: (itemId) => {
+          GameState.equipItem(itemId);
+          SfxPlayer.play(this, Sfx.Equip);
+          this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+          this.children.removeAll(true);
+          this.create({ returnScene: this.returnScene });
+        },
+        onHover: (item) => this.showItemTooltip(item),
+        onHoverEnd: () => this.tooltip.clear(),
+      },
+    );
+  }
+
+  private buildEquippedSlots(panelX: number, items: Record<string, GearItem>) {
+    SLOTS.forEach((slot, i) => {
+      const itemId = GameState.hero.equipment?.[slot];
+      const item = itemId ? items[itemId] : undefined;
+      const y = EQ_CARD.START_Y + i * (EQ_CARD.H + EQ_CARD.GAP);
+      new EquippedSlot(this, panelX, y, slot, SLOT_LABELS[slot], item, itemId, {
+        onUnequip: () => {
+          GameState.unequipItem(slot);
+          SfxPlayer.play(this, Sfx.Unequip);
+          this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+          this.children.removeAll(true);
+          this.create({ returnScene: this.returnScene });
+        },
+        onHover: () => item && this.showItemTooltip(item),
+        onHoverEnd: () => this.tooltip.clear(),
+      });
+    });
   }
 
   private showItemTooltip(item: GearItem): void {
@@ -111,140 +150,5 @@ export class EquipmentScene extends Phaser.Scene {
       fontSize: FONT.SM,
       color: TXT.MUTED,
     });
-  }
-
-  private clearItemTooltip(): void {
-    this.tooltip.clear();
-  }
-
-  private buildEquippedSlots(panelX: number) {
-    const items = GameState.runConfig!.items;
-    SLOTS.forEach((slot, i) => {
-      const itemId = GameState.hero.equipment?.[slot];
-      const item = itemId ? items[itemId] : undefined;
-      const y = EQ_CARD.START_Y + i * (EQ_CARD.H + EQ_CARD.GAP);
-
-      const bg = this.add
-        .rectangle(panelX, y, EQ_CARD.W, EQ_CARD.H, item ? BG.MOVE_EQUIPPED : BG.MOVE_CARD, 0.92)
-        .setStrokeStyle(1, item ? BORDER.GOLD_BRIGHT : BORDER.LOCKED)
-        .setInteractive({ useHandCursor: !!item });
-
-      this.add.text(panelX - EQ_CARD.W / 2 + 10, y - EQ_CARD.H / 2 + 7, SLOT_LABELS[slot], {
-        fontSize: FONT.SM,
-        color: TXT.MUTED,
-      });
-
-      const iconX = panelX - EQ_CARD.W / 2 + EQ_CARD.ICON_SIZE / 2 + 10;
-      const contentY = y + 12;
-      if (item && itemId) {
-        const frameKey = itemFrames[itemId];
-        if (frameKey && this.textures.exists(frameKey)) {
-          this.add.image(iconX, contentY, frameKey).setDisplaySize(EQ_CARD.ICON_SIZE, EQ_CARD.ICON_SIZE);
-        }
-      }
-
-      const nameX = panelX - EQ_CARD.W / 2 + EQ_CARD.ICON_SIZE + 24;
-      this.add.text(nameX, contentY, item ? item.name : "(empty)", {
-        fontSize: FONT.BODY,
-        fontFamily: "EnchantedLand",
-        color: item ? RARITY_COLOR[item.rarity] ?? TXT.GOLD : TXT.LOCKED,
-      }).setOrigin(0, 0.5);
-
-      if (item) {
-        bg.on("pointerover", () => {
-          bg.setAlpha(0.75);
-          this.showItemTooltip(item);
-        });
-        bg.on("pointerout", () => {
-          bg.setAlpha(1);
-          this.clearItemTooltip();
-        });
-        bg.on("pointerdown", () => {
-          GameState.unequipItem(slot);
-          SfxPlayer.play(this, Sfx.Unequip);
-          this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
-          this.children.removeAll(true);
-          this.create({ returnScene: this.returnScene });
-        });
-      }
-    });
-  }
-
-  private buildInventoryGrid(originX: number) {
-    const items = GameState.runConfig!.items;
-    const inv = GameState.hero.inventory ?? [];
-
-    if (inv.length === 0) {
-      this.add
-        .text(originX, INV_GRID.START_Y + 30, "Inventory empty.", { fontSize: FONT.BODY, color: TXT.MUTED })
-        .setOrigin(0.5);
-      return;
-    }
-
-    const step = INV_GRID.CELL + INV_GRID.GAP;
-    const gridW = INV_GRID.COLS * step - INV_GRID.GAP;
-    const gridLeft = originX - gridW / 2 + INV_GRID.CELL / 2;
-
-    const rowCount = Math.ceil(inv.length / INV_GRID.COLS);
-    const contentH = rowCount * step - INV_GRID.GAP;
-    const { width: scaleW, height: scaleH } = this.scale;
-    const viewportH = Math.max(120, scaleH - INV_GRID.START_Y - 160);
-
-    this.inventoryScroll = createScrollableArea(this, {
-      x: 0,
-      y: INV_GRID.START_Y,
-      width: scaleW,
-      height: viewportH,
-      contentHeight: contentH,
-    });
-
-    inv.forEach((itemId, i) => {
-      const item: GearItem | undefined = items[itemId];
-      if (!item) return;
-
-      const col = i % INV_GRID.COLS;
-      const row = Math.floor(i / INV_GRID.COLS);
-      const cx = gridLeft + col * step;
-      const cy = row * step + INV_GRID.CELL / 2;
-
-      const bg = this.add
-        .rectangle(cx, cy, INV_GRID.CELL, INV_GRID.CELL, BG.MOVE_EQUIPPED, 0.9)
-        .setStrokeStyle(1, BORDER.GOLD)
-        .setInteractive({ useHandCursor: true });
-
-      const frameKey = itemFrames[itemId];
-      const icon = frameKey && this.textures.exists(frameKey)
-        ? this.add.image(cx, cy - 6, frameKey).setDisplaySize(INV_GRID.CELL - 16, INV_GRID.CELL - 16)
-        : null;
-
-      const rarityStrip = this.add.rectangle(
-        cx,
-        cy + INV_GRID.CELL / 2 - 6,
-        INV_GRID.CELL - 4,
-        8,
-        RARITY_COLOR_NUM[item.rarity] ?? 0xc8a035,
-        0.8,
-      );
-
-      bg.on("pointerover", () => {
-        bg.setAlpha(0.7);
-        this.showItemTooltip(item);
-      });
-      bg.on("pointerout", () => {
-        bg.setAlpha(1);
-        this.clearItemTooltip();
-      });
-      bg.on("pointerdown", () => {
-        GameState.equipItem(itemId);
-        SfxPlayer.play(this, Sfx.Equip);
-        this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
-        this.children.removeAll(true);
-        this.create({ returnScene: this.returnScene });
-      });
-
-      this.inventoryScroll!.container.add([bg, ...(icon ? [icon] : []), rarityStrip]);
-    });
-
-    this.inventoryScroll.refreshInputState();
   }
 }

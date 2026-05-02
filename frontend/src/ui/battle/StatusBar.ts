@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BG, BORDER, FONT, TXT } from "../constants";
+import { BG, BORDER, FONT, TXT } from "../../constants";
 
 // Top status bar + the description line that hover-previews show under it.
 // One owner for both makes "clear on action" easier to reason about.

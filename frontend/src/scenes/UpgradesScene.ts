@@ -4,8 +4,8 @@ import { MetaProgress, GameState } from "../state";
 import type { MetaUpgrade } from "../types/game";
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
-import { createButton, BTN_MD } from "../ui";
-import { BG, BORDER, TXT } from "../constants";
+import { createButton, BTN_MD, UpgradeCard } from "../ui";
+import { BG, TXT } from "../constants";
 
 const CATEGORIES = [
   { key: "vitality", label: "VITALITY", color: TXT.STAT_HP },
@@ -121,65 +121,21 @@ export class UpgradesScene extends Phaser.Scene {
     const purchased = MetaProgress.purchased.has(upgrade.id);
     const available = MetaProgress.canBuy(upgrade.id);
     const locked = !purchased && !available && !!upgrade.requires && !MetaProgress.purchased.has(upgrade.requires);
-    const affordable = available; // canBuy already checks shards
 
-    const bgColor = purchased ? BG.UPGRADE_PURCHASED : available ? BG.UPGRADE_AVAILABLE : BG.UPGRADE_LOCKED;
-    const borderColor = purchased ? BORDER.UPGRADE_OWNED : available ? BORDER.SHARD : BORDER.LOCKED;
-
-    const bg = this.add
-      .rectangle(cx, cy, UPGRADE_CARD.W, UPGRADE_CARD.H, bgColor, 0.95)
-      .setStrokeStyle(purchased ? 2 : 1, borderColor);
-
-    if (available) bg.setInteractive({ useHandCursor: true });
-
-    this.add
-      .text(cx, cy - 52, upgrade.name, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: purchased ? TXT.STAT_HP : available ? accentColor : TXT.LOCKED,
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, cy - 18, upgrade.description.replace("Start each run with ", ""), {
-        fontSize: FONT.BODY,
-        color: purchased ? TXT.MUTED : available ? TXT.GOLD_LIGHT : TXT.LOCKED,
-        wordWrap: { width: UPGRADE_CARD.W - 20 },
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    if (purchased) {
-      this.add.text(cx, cy + 28, "✓ Purchased", { fontSize: FONT.BODY, color: TXT.STAT_HP }).setOrigin(0.5);
-    } else if (locked) {
-      this.add.text(cx, cy + 28, "🔒 Locked", { fontSize: FONT.BODY, color: TXT.LOCKED }).setOrigin(0.5);
-    } else {
-      const costColor = MetaProgress.shards >= upgrade.cost ? TXT.SHARD : TXT.STAT_ATTACK;
-      this.add
-        .text(cx, cy + 28, `◆ ${upgrade.cost} Shards`, {
-          fontSize: FONT.BODY,
-          fontFamily: "EnchantedLand",
-          color: costColor,
-        })
-        .setOrigin(0.5);
-    }
-
-    if (affordable) {
-      const btn = this.add
-        .rectangle(cx, cy + 56, UPGRADE_CARD.W - 28, 32, BG.BTN_BUY, 0.95)
-        .setStrokeStyle(1, BORDER.SHARD)
-        .setInteractive({ useHandCursor: true });
-      this.add
-        .text(cx, cy + 56, "BUY", { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.SHARD })
-        .setOrigin(0.5);
-
-      btn.on("pointerover", () => btn.setFillStyle(BG.BTN_BUY_HOVER));
-      btn.on("pointerout", () => btn.setFillStyle(BG.BTN_BUY));
-      btn.on("pointerdown", () => {
-        MetaProgress.buy(upgrade.id);
-        SfxPlayer.play(this, Sfx.ShardPickup);
-        this.scene.restart();
-      });
-    }
+    new UpgradeCard(
+      this,
+      cx,
+      cy,
+      upgrade,
+      accentColor,
+      { purchased, available, locked, affordable: available, shardsHeld: MetaProgress.shards },
+      {
+        onBuy: () => {
+          MetaProgress.buy(upgrade.id);
+          SfxPlayer.play(this, Sfx.ShardPickup);
+          this.scene.restart();
+        },
+      },
+    );
   }
 }

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { BG, BORDER, FONT, TXT } from "../constants";
-import type { MoveConfig } from "../types/game";
+import { BG, BORDER, FONT, TXT } from "../../constants";
+import type { MoveConfig } from "../../types/game";
 
 export interface MoveButtonRowCallbacks {
   onClick: (moveId: string) => void;

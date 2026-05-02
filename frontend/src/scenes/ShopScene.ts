@@ -1,22 +1,24 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey, FONT } from "../constants";
-import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import {
+  createModalFooter,
+  TooltipManager,
+  createScrollableArea,
+  type ScrollableArea,
+  ShopGearRow,
+  ShopPotionRow,
+} from "../ui";
 import { GameState, POTION_PRICE } from "../state";
 import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem } from "../types/game";
-import { itemFrames } from "../sprites";
-import { BG, BORDER, TXT, RARITY_COLOR } from "../constants";
+import { BG, TXT, RARITY_COLOR } from "../constants";
 
 interface ShopData {
   returnScene: SceneKey;
 }
 
+const ROW_GAP = 8;
 const ROW_H = 76;
-const POTION_ROW_H = 60;
-const ICON_SIZE = 48;
-const POTION_ICON_SIZE = 40;
-const GEAR_ROW_W = 460;
-const POTION_ROW_W = 580;
 const TIER_UNLOCK_LEVEL: Record<1 | 2 | 3, number> = { 1: 1, 2: 3, 3: 6 };
 
 export class ShopScene extends Phaser.Scene {
@@ -31,7 +33,6 @@ export class ShopScene extends Phaser.Scene {
 
   create(data: ShopData) {
     this.returnScene = data.returnScene ?? Scene.TreeMap;
-    // children.removeAll doesn't drop the wheel listener — destroy explicitly.
     this.gearScroll?.destroy();
     this.gearScroll = undefined;
 
@@ -85,15 +86,11 @@ export class ShopScene extends Phaser.Scene {
     const colLeft = width * 0.27;
     const colRight = width * 0.73;
     const startY = 148;
-    const rowGap = 8;
 
-    // Layout (h=800): 148–440 gear viewport · 470–580 potions · 605–660 tooltip
-    // · 670 hint · 745 close. Capping gear at 440 prevents bottom-row bleed
-    // into the potion stripe while scrolling.
     const GEAR_VIEWPORT_BOTTOM = 440;
     const viewportH = Math.max(220, GEAR_VIEWPORT_BOTTOM - startY);
     const rowCount = Math.ceil(items.length / 2);
-    const contentH = rowCount * (ROW_H + rowGap);
+    const contentH = rowCount * (ROW_H + ROW_GAP);
 
     this.gearScroll = createScrollableArea(this, {
       x: 0,
@@ -107,117 +104,38 @@ export class ShopScene extends Phaser.Scene {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = col === 0 ? colLeft : colRight;
-      const y = row * (ROW_H + rowGap) + ROW_H / 2;
-      this.buildGearRow(x, y, item, this.gearScroll!);
+      const y = row * (ROW_H + ROW_GAP) + ROW_H / 2;
+      const owned = GameState.isItemOwned(item.id);
+      const lockedByLv = item.tier > GameState.unlockedTier();
+      const canAfford = (GameState.hero.gold ?? 0) >= item.cost;
+      new ShopGearRow(
+        this,
+        x,
+        y,
+        item,
+        { owned, lockedByLv, canAfford, reqLevel: TIER_UNLOCK_LEVEL[item.tier] },
+        this.gearScroll!,
+        {
+          onBuy: () => this.onBuyItem(item.id),
+          onDenied: () => SfxPlayer.play(this, Sfx.Denied),
+          onHover: () => this.showItemTooltip(item),
+          onHoverEnd: () => this.tooltip.clear(),
+        },
+      );
     });
 
     this.gearScroll.refreshInputState();
   }
 
-  private buildGearRow(x: number, y: number, item: GearItem, scroll: ScrollableArea) {
-    const owned = GameState.isItemOwned(item.id);
-    const lockedByLv = item.tier > GameState.unlockedTier();
-    const canAfford = (GameState.hero.gold ?? 0) >= item.cost;
-    const buyable = !owned && !lockedByLv && canAfford;
-
-    const bg = this.add
-      .rectangle(x, y, GEAR_ROW_W, ROW_H, BG.MOVE_CARD, 0.92)
-      .setStrokeStyle(1, BORDER.LOCKED)
-      .setInteractive({ useHandCursor: buyable });
-
-    const iconKey = itemFrames[item.id];
-    const iconLeft = x - GEAR_ROW_W / 2 + ICON_SIZE / 2 + 10;
-    const icon = iconKey && this.textures.exists(iconKey)
-      ? this.add.image(iconLeft, y, iconKey).setDisplaySize(ICON_SIZE, ICON_SIZE)
-      : null;
-
-    const textLeft = x - GEAR_ROW_W / 2 + ICON_SIZE + 22;
-    const nameTxt = this.add
-      .text(textLeft, y - 16, item.name, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: RARITY_COLOR[item.rarity] ?? TXT.GOLD_LIGHT,
-      })
-      .setOrigin(0, 0.5);
-
-    // Per-stat colored chunks (Phaser.Text has no inline coloring).
-    const statTexts = this.buildStatChunks(item, textLeft, y + 14);
-
-    let badgeText: string;
-    let badgeColor: string;
-    if (owned) {
-      badgeText = "OWNED";
-      badgeColor = TXT.LOCKED;
-    } else if (lockedByLv) {
-      badgeText = `Req Lv ${TIER_UNLOCK_LEVEL[item.tier]}`;
-      badgeColor = TXT.LOCKED;
+  private onBuyItem(itemId: string) {
+    if (GameState.buyItem(itemId)) {
+      SfxPlayer.play(this, Sfx.GoldPickup);
+      this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+      this.children.removeAll(true);
+      this.create({ returnScene: this.returnScene });
     } else {
-      badgeText = `${item.cost}g`;
-      badgeColor = canAfford ? TXT.GOLD : TXT.DEFEAT;
+      SfxPlayer.play(this, Sfx.Denied);
     }
-    const badgeTxt = this.add
-      .text(x + GEAR_ROW_W / 2 - 16, y, badgeText, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: badgeColor,
-      })
-      .setOrigin(1, 0.5);
-
-    bg.on("pointerover", () => {
-      bg.setFillStyle(buyable ? BG.BTN_HOVER : BG.MOVE_CARD);
-      bg.setStrokeStyle(1, buyable ? BORDER.GOLD_BRIGHT : BORDER.LOCKED);
-      this.showItemTooltip(item);
-    });
-    bg.on("pointerout", () => {
-      bg.setFillStyle(BG.MOVE_CARD);
-      bg.setStrokeStyle(1, BORDER.LOCKED);
-      this.tooltip.clear();
-    });
-    if (buyable) {
-      bg.on("pointerdown", () => {
-        if (GameState.buyItem(item.id)) {
-          SfxPlayer.play(this, Sfx.GoldPickup);
-          this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
-          this.children.removeAll(true);
-          this.create({ returnScene: this.returnScene });
-        } else {
-          SfxPlayer.play(this, Sfx.Denied);
-        }
-      });
-    } else if (!owned) {
-      // Insufficient gold / locked tier — denied tick so the click isn't silent.
-      bg.on("pointerdown", () => SfxPlayer.play(this, Sfx.Denied));
-    }
-
-    if (owned || lockedByLv) bg.setAlpha(0.55);
-    else if (!canAfford) bg.setAlpha(0.8);
-
-    scroll.container.add([bg, ...(icon ? [icon] : []), nameTxt, ...statTexts, badgeTxt]);
-  }
-
-  // Lays out +N STAT chunks left-to-right, each in its stat color.
-  private buildStatChunks(item: GearItem, x: number, y: number): Phaser.GameObjects.Text[] {
-    const chunks: Array<{ value: number; label: string; color: string }> = [];
-    if (item.statBonuses.attack) chunks.push({ value: item.statBonuses.attack, label: "ATK", color: TXT.STAT_ATTACK });
-    if (item.statBonuses.defense) chunks.push({ value: item.statBonuses.defense, label: "DEF", color: TXT.STAT_DEFENSE });
-    if (item.statBonuses.magic) chunks.push({ value: item.statBonuses.magic, label: "MAG", color: TXT.STAT_MAGIC });
-    if (item.statBonuses.maxHp) chunks.push({ value: item.statBonuses.maxHp, label: "HP",  color: TXT.STAT_HP });
-
-    const out: Phaser.GameObjects.Text[] = [];
-    let cursor = x;
-    for (const c of chunks) {
-      const sign = c.value >= 0 ? "+" : "";
-      const txt = this.add
-        .text(cursor, y, `${sign}${c.value} ${c.label}`, {
-          fontSize: FONT.BODY,
-          fontFamily: "EnchantedLand",
-          color: c.color,
-        })
-        .setOrigin(0, 0.5);
-      out.push(txt);
-      cursor += txt.width + 12;
-    }
-    return out;
   }
 
   private showItemTooltip(item: GearItem) {
@@ -237,8 +155,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private buildPotionSection(width: number, height: number) {
-    // Sits just below the gear viewport. Falls back above the tooltip stripe on tiny screens.
-    const sectionH = 38 + POTION_ROW_H + 6 + POTION_ROW_H / 2;
+    const sectionH = 38 + ShopPotionRow.HEIGHT + 6 + ShopPotionRow.HEIGHT / 2;
     const startY = Math.min(470, height - 205 - sectionH);
     this.add
       .text(width / 2, startY, "POTIONS", {
@@ -248,91 +165,44 @@ export class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.buildPotionRow(
+    new ShopPotionRow(
+      this,
       width / 2,
       startY + 38,
       "potion_hp",
       "HP Potion",
       "Heals 40 HP",
       POTION_PRICE.HP,
-      () => GameState.buyHpPotion(),
+      (GameState.hero.gold ?? 0) >= POTION_PRICE.HP,
+      {
+        onBuy: () => this.onBuyPotion(GameState.buyHpPotion()),
+        onDenied: () => SfxPlayer.play(this, Sfx.Denied),
+      },
     );
-    this.buildPotionRow(
+    new ShopPotionRow(
+      this,
       width / 2,
-      startY + 38 + POTION_ROW_H + 6,
+      startY + 38 + ShopPotionRow.HEIGHT + 6,
       "potion_mp",
       "Mana Potion",
       "Restores 30 MP",
       POTION_PRICE.MANA,
-      () => GameState.buyManaPotion(),
+      (GameState.hero.gold ?? 0) >= POTION_PRICE.MANA,
+      {
+        onBuy: () => this.onBuyPotion(GameState.buyManaPotion()),
+        onDenied: () => SfxPlayer.play(this, Sfx.Denied),
+      },
     );
   }
 
-  private buildPotionRow(
-    x: number,
-    y: number,
-    iconKey: string,
-    name: string,
-    desc: string,
-    cost: number,
-    onBuy: () => boolean,
-  ) {
-    const canAfford = (GameState.hero.gold ?? 0) >= cost;
-
-    const bg = this.add
-      .rectangle(x, y, POTION_ROW_W, POTION_ROW_H, BG.MOVE_CARD, 0.92)
-      .setStrokeStyle(1, BORDER.LOCKED)
-      .setInteractive({ useHandCursor: canAfford });
-
-    const iconLeft = x - POTION_ROW_W / 2 + POTION_ICON_SIZE / 2 + 10;
-    if (this.textures.exists(iconKey)) {
-      this.add.image(iconLeft, y, iconKey).setDisplaySize(POTION_ICON_SIZE, POTION_ICON_SIZE);
-    }
-    const textLeft = x - POTION_ROW_W / 2 + POTION_ICON_SIZE + 20;
-    this.add
-      .text(textLeft, y - 12, name, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD_LIGHT,
-      })
-      .setOrigin(0, 0.5);
-    this.add
-      .text(textLeft, y + 12, desc, {
-        fontSize: FONT.BODY,
-        color: TXT.MUTED,
-      })
-      .setOrigin(0, 0.5);
-
-    this.add
-      .text(x + POTION_ROW_W / 2 - 16, y, `${cost}g`, {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: canAfford ? TXT.GOLD : TXT.DEFEAT,
-      })
-      .setOrigin(1, 0.5);
-
-    bg.on("pointerover", () => {
-      bg.setFillStyle(canAfford ? BG.BTN_HOVER : BG.MOVE_CARD);
-      bg.setStrokeStyle(1, canAfford ? BORDER.GOLD_BRIGHT : BORDER.LOCKED);
-    });
-    bg.on("pointerout", () => {
-      bg.setFillStyle(BG.MOVE_CARD);
-      bg.setStrokeStyle(1, BORDER.LOCKED);
-    });
-    if (canAfford) {
-      bg.on("pointerdown", () => {
-        if (onBuy()) {
-          SfxPlayer.play(this, Sfx.GoldPickup);
-          this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
-          this.children.removeAll(true);
-          this.create({ returnScene: this.returnScene });
-        } else {
-          SfxPlayer.play(this, Sfx.Denied);
-        }
-      });
+  private onBuyPotion(success: boolean) {
+    if (success) {
+      SfxPlayer.play(this, Sfx.GoldPickup);
+      this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
+      this.children.removeAll(true);
+      this.create({ returnScene: this.returnScene });
     } else {
-      bg.setAlpha(0.8);
-      bg.on("pointerdown", () => SfxPlayer.play(this, Sfx.Denied));
+      SfxPlayer.play(this, Sfx.Denied);
     }
   }
 }

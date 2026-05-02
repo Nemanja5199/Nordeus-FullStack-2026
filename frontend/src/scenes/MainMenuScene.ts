@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import { Scene, FONT } from "../constants";
-import { createButton, BTN_LG } from "../ui";
+import { createButton, BTN_LG, spawnDustMotes, TestModeToggle } from "../ui";
 import { api } from "../services/api";
 import { GameState, TestMode } from "../state";
 import { Audio, TrackGroup } from "../audio";
-import { BG, DUST_MOTE_COLOR, TXT } from "../constants";
+import { BG, TXT } from "../constants";
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -19,13 +19,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.tileSprite(0, 0, width, height, "bg_brick").setOrigin(0);
     this.add.rectangle(0, 0, width, height, BG.BLACK, 0.62).setOrigin(0);
 
-    // Dust motes
-    for (let i = 0; i < 80; i++) {
-      const x = Phaser.Math.Between(0, width);
-      const y = Phaser.Math.Between(0, height);
-      const size = Math.random() < 0.3 ? 2 : 1;
-      this.add.circle(x, y, size, DUST_MOTE_COLOR, Math.random() * 0.35 + 0.05);
-    }
+    spawnDustMotes(this, width, height);
 
     this.add
       .text(width / 2, height * 0.22, "RPG Gauntlet", {
@@ -77,50 +71,16 @@ export class MainMenuScene extends Phaser.Scene {
       onClick: () => this.scene.start(Scene.Options, { returnScene: Scene.MainMenu }),
     });
 
-    this.createTestModeToggle();
-  }
-
-  // Dev toggle: drops persisted hero on flip so the next NEW GAME picks
-  // up the test-mode defaults without a manual reset.
-  private createTestModeToggle() {
-    const { width, height } = this.scale;
-    const padX = 24;
-    const padY = 24;
-    const boxSize = 18;
-
-    const labelText = this.add
-      .text(width - padX, height - padY, "Test Mode", {
-        fontSize: FONT.SM,
-        color: TestMode.isOn() ? TXT.GOLD : TXT.MUTED,
-      })
-      .setOrigin(1, 0.5);
-
-    const boxX = labelText.x - labelText.width - 14;
-    this.add
-      .rectangle(boxX, height - padY, boxSize, boxSize, BG.BLACK)
-      .setStrokeStyle(2, 0xb0b0b0)
-      .setOrigin(0.5);
-
-    const check = this.add
-      .text(boxX, height - padY, "✓", {
-        fontSize: FONT.SM,
-        color: TXT.GOLD,
-      })
-      .setOrigin(0.5)
-      .setVisible(TestMode.isOn());
-
-    const hitWidth = labelText.width + boxSize + 24;
-    const hitX = width - padX - hitWidth;
-    this.add
-      .zone(hitX, height - padY - 16, hitWidth, 32)
-      .setOrigin(0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerup", () => {
+    new TestModeToggle(this, {
+      read: () => TestMode.isOn(),
+      onToggle: () => {
+        // Dev toggle: drops persisted hero on flip so the next NEW GAME
+        // picks up the test-mode defaults without a manual reset.
         const on = TestMode.toggle();
-        check.setVisible(on);
-        labelText.setColor(on ? TXT.GOLD : TXT.MUTED);
         localStorage.removeItem("rpg_hero");
-      });
+        return on;
+      },
+    });
   }
 
   private async startNewGame() {

@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey, FONT } from "../constants";
-import { createButton, BTN_MD } from "../ui";
+import { createButton, BTN_MD, LearnedMoveCard } from "../ui";
 import { GameState, MetaProgress } from "../state";
 import { Audio, TrackGroup, MusicAsset, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
-import { BG, BORDER, TXT } from "../constants";
+import { BG, TXT } from "../constants";
 
 interface PostBattleData {
   won: boolean;
@@ -133,40 +133,8 @@ export class PostBattleScene extends Phaser.Scene {
 
       if (data.learnedMoveId) {
         const move = GameState.runConfig!.moves[data.learnedMoveId];
-
-        const cardH = 52;
-        const cardBg = this.add
-          .rectangle(width / 2, y + cardH / 2, 380, cardH, BG.HERO_BATTLE, 0.92)
-          .setStrokeStyle(2, BORDER.HERO_BATTLE);
-
-        this.add
-          .text(width / 2, y + 14, `New move learned:  ${move.name}`, {
-            fontSize: FONT.MD,
-            fontFamily: "EnchantedLand",
-            color: TXT.DEFEATED,
-          })
-          .setOrigin(0.5);
-        this.add
-          .text(width / 2, y + 34, `[${move.moveType}]`, {
-            fontSize: FONT.SM,
-            color: TXT.MUTED,
-          })
-          .setOrigin(0.5);
-
-        const descText = this.add
-          .text(width / 2, y + cardH + 16, "", {
-            fontSize: FONT.SM,
-            color: TXT.HERO,
-            wordWrap: { width: 380 },
-            align: "center",
-          })
-          .setOrigin(0.5);
-
-        cardBg.setInteractive({ useHandCursor: false });
-        cardBg.on("pointerover", () => descText.setText(move.description));
-        cardBg.on("pointerout", () => descText.setText(""));
-
-        y += cardH + 36;
+        new LearnedMoveCard(this, width / 2, y, move);
+        y += LearnedMoveCard.H + 36;
       } else {
         this.add
           .text(width / 2, y, "No new moves to learn from this monster.", {

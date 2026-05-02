@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import { BATTLE, BG, BAR, BORDER, FONT, HP_BAR, HP_GHOST, TXT } from "../constants";
-import { heroFrameFor } from "../sprites";
-import type { HeroClass } from "../types/game";
+import { BATTLE, BG, BAR, BORDER, FONT, HP_BAR, HP_GHOST, TXT } from "../../constants";
+import { heroFrameFor } from "../../sprites";
+import type { HeroClass } from "../../types/game";
 
 const BAR_W = BATTLE.PANEL_W - 24;
 

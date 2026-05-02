@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BG, BORDER, FONT, TXT } from "../constants";
+import { BG, BORDER, FONT, TXT } from "../../constants";
 
 export interface PotionRowCallbacks {
   onUseHp: () => void;

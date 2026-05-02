@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BATTLE, BG, FONT, TXT } from "../constants";
+import { BATTLE, BG, FONT, TXT } from "../../constants";
 
 // Bottom 3-line battle log. Newest message at the bottom; older lines
 // scroll up as new ones arrive.
