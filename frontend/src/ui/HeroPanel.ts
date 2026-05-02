@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { GearItem, HeroState, MoveConfig } from "../types/game";
 import { GameState, getGearBonuses } from "../state/gameState";
-import { heroFrameFor } from "../sprites/spriteFrames";
+import { heroFrameFor, heroNameFor } from "../sprites/spriteFrames";
 import { FONT } from "../constants";
 import { BG, BORDER, TXT, BAR } from "../constants";
 
@@ -36,7 +36,7 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
 
   add(scene.add.rectangle(panelX, panelY, w, h, BG.PANEL, 0.88).setOrigin(0).setStrokeStyle(2, BORDER.GOLD));
 
-  add(scene.add.text(cx, panelY + 26, `Knight  Lv.${hero.level}`, {
+  add(scene.add.text(cx, panelY + 26, `${heroNameFor(GameState.selectedClass)}  Lv.${hero.level}`, {
     fontSize: FONT.LG, fontFamily: "EnchantedLand", color: TXT.GOLD,
   }).setOrigin(0.5));
 

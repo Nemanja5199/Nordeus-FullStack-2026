@@ -10,8 +10,17 @@ export const HERO_FRAMES: Record<HeroClass, { key: string; frame: number }> = {
   mage:   { key: "rogues", frame: rogueFrame(4, 0) }, // 5.a female wizard
 };
 
+export const HERO_NAMES: Record<HeroClass, string> = {
+  knight: "Knight",
+  mage:   "Mage",
+};
+
 export function heroFrameFor(cls: HeroClass): { key: string; frame: number } {
   return HERO_FRAMES[cls] ?? HERO_FRAMES.knight;
+}
+
+export function heroNameFor(cls: HeroClass): string {
+  return HERO_NAMES[cls] ?? HERO_NAMES.knight;
 }
 
 export const SHOPKEEPER_FRAME = { key: "rogues", frame: rogueFrame(6, 0) }; // 8.a

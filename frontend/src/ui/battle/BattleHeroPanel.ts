@@ -22,7 +22,14 @@ export class BattleHeroPanel {
   private barY: number;
   private scene: Phaser.Scene;
 
-  constructor(scene: Phaser.Scene, width: number, height: number, heroLevel: number, classKey: HeroClass) {
+  constructor(
+    scene: Phaser.Scene,
+    width: number,
+    height: number,
+    heroName: string,
+    heroLevel: number,
+    classKey: HeroClass,
+  ) {
     this.scene = scene;
     const panelH = height * 0.58;
     const panelTop = height * 0.04;
@@ -33,7 +40,7 @@ export class BattleHeroPanel {
       .setStrokeStyle(2, BORDER.HERO_BATTLE);
 
     scene.add
-      .text(cx, panelTop + 20, `Knight  Lv.${heroLevel}`, {
+      .text(cx, panelTop + 20, `${heroName}  Lv.${heroLevel}`, {
         fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
         color: TXT.HERO,

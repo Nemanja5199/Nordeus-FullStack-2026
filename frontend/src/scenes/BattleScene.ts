@@ -6,6 +6,7 @@ import { POTIONS, MANA, MONSTER_LEVEL_SCALING } from "../constants";
 import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../state";
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
+import { heroNameFor } from "../sprites";
 import { BattleLog, StatusBar, PotionRow, MoveButtonRow, BattleHeroPanel, BattleMonsterPanel } from "../ui";
 import { BG, TXT } from "../constants";
 
@@ -67,7 +68,7 @@ export class BattleScene extends Phaser.Scene {
     const effMaxHp = hs.maxHp + (gear.maxHp ?? 0);
     this.hero = {
       id: "hero",
-      name: "Knight",
+      name: heroNameFor(GameState.selectedClass),
       hp: effMaxHp,
       maxHp: effMaxHp,
       baseStats: {
@@ -104,7 +105,7 @@ export class BattleScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, BG.DARKEST).setOrigin(0);
 
-    this.heroPanel = new BattleHeroPanel(this, width, height, GameState.hero.level, GameState.selectedClass);
+    this.heroPanel = new BattleHeroPanel(this, width, height, this.hero.name, GameState.hero.level, GameState.selectedClass);
     this.monsterPanel = new BattleMonsterPanel(this, width, height, this.monsterCfg, this.monster.baseStats);
     this.statusBar = new StatusBar(this, width, height);
     this.potions = new PotionRow(this, width, height, {
