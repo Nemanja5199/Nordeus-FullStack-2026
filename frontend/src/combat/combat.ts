@@ -1,12 +1,5 @@
 import type { ActiveBuff, CombatCharacter, MoveConfig, MoveResult } from "../types/game";
-import {
-  TXT_STAT_ATTACK,
-  TXT_STAT_MAGIC,
-  TXT_STAT_HP,
-  TXT_MOVE_BUFF,
-  TXT_MOVE_DEBUFF,
-  TXT_SHARD,
-} from "../constants";
+import { TXT } from "../constants";
 
 const STAT_LABEL: Record<string, string> = { attack: "ATK", defense: "DEF", magic: "MAG" };
 
@@ -15,33 +8,33 @@ export function buildMoveStatLines(move: MoveConfig): { text: string; color: str
 
   if (move.baseValue > 0) {
     if (move.moveType === "physical")
-      lines.push({ text: `⚔  ${move.baseValue} physical dmg`, color: TXT_STAT_ATTACK });
+      lines.push({ text: `⚔  ${move.baseValue} physical dmg`, color: TXT.STAT_ATTACK });
     else if (move.moveType === "magic")
-      lines.push({ text: `✦  ${move.baseValue} magic dmg`, color: TXT_STAT_MAGIC });
+      lines.push({ text: `✦  ${move.baseValue} magic dmg`, color: TXT.STAT_MAGIC });
     else if (move.moveType === "heal")
-      lines.push({ text: `♥  ${move.baseValue} HP restored`, color: TXT_STAT_HP });
+      lines.push({ text: `♥  ${move.baseValue} HP restored`, color: TXT.STAT_HP });
   }
 
   for (const fx of move.effects) {
     if (fx.type === "buff" && fx.stat) {
       const pct = Math.round((fx.multiplier! - 1) * 100);
-      lines.push({ text: `▲  ${STAT_LABEL[fx.stat]} +${pct}%  (${fx.turns}t)`, color: TXT_MOVE_BUFF });
+      lines.push({ text: `▲  ${STAT_LABEL[fx.stat]} +${pct}%  (${fx.turns}t)`, color: TXT.MOVE_BUFF });
     } else if (fx.type === "debuff" && fx.stat) {
       const pct = Math.round((1 - fx.multiplier!) * 100);
-      lines.push({ text: `▼  Enemy ${STAT_LABEL[fx.stat]} -${pct}%  (${fx.turns}t)`, color: TXT_MOVE_DEBUFF });
+      lines.push({ text: `▼  Enemy ${STAT_LABEL[fx.stat]} -${pct}%  (${fx.turns}t)`, color: TXT.MOVE_DEBUFF });
     } else if (fx.type === "drain") {
-      lines.push({ text: `↺  Drain: heal for dmg dealt`, color: TXT_SHARD });
+      lines.push({ text: `↺  Drain: heal for dmg dealt`, color: TXT.SHARD });
     } else if (fx.type === "hp_cost" && fx.value) {
-      lines.push({ text: `↓  Costs ${fx.value} HP`, color: TXT_STAT_ATTACK });
+      lines.push({ text: `↓  Costs ${fx.value} HP`, color: TXT.STAT_ATTACK });
     } else if (fx.type === "dot" && fx.value && fx.turns) {
       lines.push({
         text: `☠  ${fx.value} dmg/turn × ${fx.turns} turns`,
-        color: TXT_MOVE_DEBUFF,
+        color: TXT.MOVE_DEBUFF,
       });
     } else if (fx.type === "mp_drain" && fx.value) {
       lines.push({
         text: `✦  Burns ${fx.value} MP`,
-        color: TXT_MOVE_DEBUFF,
+        color: TXT.MOVE_DEBUFF,
       });
     }
   }

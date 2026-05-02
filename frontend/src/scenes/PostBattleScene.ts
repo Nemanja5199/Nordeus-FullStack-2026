@@ -1,25 +1,10 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_SCENE_TITLE, FONT_CONQUEST } from "../constants";
+import { Scene, type SceneKey, FONT } from "../constants";
 import { createButton, BTN_MD } from "../ui";
 import { GameState, MetaProgress } from "../state";
 import { Audio, TrackGroup, MusicAsset, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
-import {
-  BG_DARKEST,
-  BG_HERO_BATTLE,
-  BG_BTN_SUCCESS,
-  BG_BTN_NEUTRAL,
-  BG_BTN_DANGER,
-  BORDER_HERO_BATTLE,
-  TXT_GOLD,
-  TXT_GOLD_MID,
-  TXT_MUTED,
-  TXT_HERO,
-  TXT_DEFEATED,
-  TXT_DEFEAT,
-  TXT_SHARD,
-  TXT_BLACK,
-} from "../constants";
+import { BG, BORDER, TXT } from "../constants";
 
 interface PostBattleData {
   won: boolean;
@@ -72,7 +57,7 @@ export class PostBattleScene extends Phaser.Scene {
       Audio.play(this, TrackGroup.Death);
     }
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, BG_DARKEST).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG.DARKEST).setOrigin(0);
 
     const isFinalBoss = data.won && data.monsterIndex === GameState.runConfig!.monsters.length - 1;
 
@@ -81,14 +66,14 @@ export class PostBattleScene extends Phaser.Scene {
       return;
     }
 
-    const titleColor = data.won ? TXT_GOLD : TXT_DEFEAT;
+    const titleColor = data.won ? TXT.GOLD : TXT.DEFEAT;
     const titleText = data.won ? "VICTORY!" : "DEFEATED";
     this.add
       .text(width / 2, height * 0.18, titleText, {
-        fontSize: FONT_SCENE_TITLE,
+        fontSize: FONT.SCENE_TITLE,
         fontFamily: "EnchantedLand",
         color: titleColor,
-        stroke: TXT_BLACK,
+        stroke: TXT.BLACK,
         strokeThickness: 6,
       })
       .setOrigin(0.5);
@@ -98,8 +83,8 @@ export class PostBattleScene extends Phaser.Scene {
     if (data.won) {
       this.add
         .text(width / 2, y, `+${data.xpGained} XP earned`, {
-          fontSize: FONT_LG,
-          color: TXT_GOLD_MID,
+          fontSize: FONT.LG,
+          color: TXT.GOLD_MID,
         })
         .setOrigin(0.5);
       y += 36;
@@ -107,9 +92,9 @@ export class PostBattleScene extends Phaser.Scene {
       if (data.goldEarned) {
         this.add
           .text(width / 2, y, `+${data.goldEarned} Gold  (Total: ${GameState.hero.gold})`, {
-            fontSize: FONT_MD,
+            fontSize: FONT.MD,
             fontFamily: "EnchantedLand",
-            color: TXT_GOLD,
+            color: TXT.GOLD,
           })
           .setOrigin(0.5);
         y += 36;
@@ -118,9 +103,9 @@ export class PostBattleScene extends Phaser.Scene {
       if (data.shardsEarned) {
         this.add
           .text(width / 2, y, `+${data.shardsEarned} ◆ Shards  (Total: ${MetaProgress.shards})`, {
-            fontSize: FONT_MD,
+            fontSize: FONT.MD,
             fontFamily: "EnchantedLand",
-            color: TXT_SHARD,
+            color: TXT.SHARD,
           })
           .setOrigin(0.5);
         y += 36;
@@ -129,9 +114,9 @@ export class PostBattleScene extends Phaser.Scene {
       if (data.leveledUp) {
         this.add
           .text(width / 2, y, `LEVEL UP!  Now Lv.${GameState.hero.level}`, {
-            fontSize: FONT_LG,
+            fontSize: FONT.LG,
             fontFamily: "EnchantedLand",
-            color: TXT_GOLD,
+            color: TXT.GOLD,
           })
           .setOrigin(0.5);
         y += 44;
@@ -139,8 +124,8 @@ export class PostBattleScene extends Phaser.Scene {
         const spGained = 1 + MetaProgress.getLevelUpSkillBonus();
         this.add
           .text(width / 2, y, `+${spGained} Skill Point${spGained === 1 ? "" : "s"} — allocate ${spGained === 1 ? "it" : "them"} in Manage Moves`, {
-            fontSize: FONT_BODY,
-            color: TXT_HERO,
+            fontSize: FONT.BODY,
+            color: TXT.HERO,
           })
           .setOrigin(0.5);
         y += 36;
@@ -151,27 +136,27 @@ export class PostBattleScene extends Phaser.Scene {
 
         const cardH = 52;
         const cardBg = this.add
-          .rectangle(width / 2, y + cardH / 2, 380, cardH, BG_HERO_BATTLE, 0.92)
-          .setStrokeStyle(2, BORDER_HERO_BATTLE);
+          .rectangle(width / 2, y + cardH / 2, 380, cardH, BG.HERO_BATTLE, 0.92)
+          .setStrokeStyle(2, BORDER.HERO_BATTLE);
 
         this.add
           .text(width / 2, y + 14, `New move learned:  ${move.name}`, {
-            fontSize: FONT_MD,
+            fontSize: FONT.MD,
             fontFamily: "EnchantedLand",
-            color: TXT_DEFEATED,
+            color: TXT.DEFEATED,
           })
           .setOrigin(0.5);
         this.add
           .text(width / 2, y + 34, `[${move.moveType}]`, {
-            fontSize: FONT_SM,
-            color: TXT_MUTED,
+            fontSize: FONT.SM,
+            color: TXT.MUTED,
           })
           .setOrigin(0.5);
 
         const descText = this.add
           .text(width / 2, y + cardH + 16, "", {
-            fontSize: FONT_SM,
-            color: TXT_HERO,
+            fontSize: FONT.SM,
+            color: TXT.HERO,
             wordWrap: { width: 380 },
             align: "center",
           })
@@ -185,8 +170,8 @@ export class PostBattleScene extends Phaser.Scene {
       } else {
         this.add
           .text(width / 2, y, "No new moves to learn from this monster.", {
-            fontSize: FONT_BODY,
-            color: TXT_MUTED,
+            fontSize: FONT.BODY,
+            color: TXT.MUTED,
           })
           .setOrigin(0.5);
         y += 30;
@@ -195,17 +180,17 @@ export class PostBattleScene extends Phaser.Scene {
     } else {
       this.add
         .text(width / 2, y, `◆ ${MetaProgress.shards} Shards saved`, {
-          fontSize: FONT_LG,
+          fontSize: FONT.LG,
           fontFamily: "EnchantedLand",
-          color: TXT_SHARD,
+          color: TXT.SHARD,
         })
         .setOrigin(0.5);
       y += 36;
 
       this.add
         .text(width / 2, y, "Your shards persist — spend them to grow stronger.", {
-          fontSize: FONT_BODY,
-          color: TXT_MUTED,
+          fontSize: FONT.BODY,
+          color: TXT.MUTED,
         })
         .setOrigin(0.5);
       y += 36;
@@ -217,7 +202,7 @@ export class PostBattleScene extends Phaser.Scene {
       createButton(this, width / 2, y, {
         ...BTN_MD,
         label: "BACK TO MAP",
-        color: BG_BTN_SUCCESS,
+        color: BG.BTN_SUCCESS,
         onClick: () => this.scene.start(Scene.TreeMap),
       });
       y += 60;
@@ -225,7 +210,7 @@ export class PostBattleScene extends Phaser.Scene {
       createButton(this, width / 2, y, {
         ...BTN_MD,
         label: "REPLAY BATTLE",
-        color: BG_BTN_NEUTRAL,
+        color: BG.BTN_NEUTRAL,
         onClick: () => {
           const monster = GameState.runConfig!.monsters[data.monsterIndex];
           this.scene.start(Scene.Battle, {
@@ -241,7 +226,7 @@ export class PostBattleScene extends Phaser.Scene {
       createButton(this, width / 2, y, {
         ...BTN_MD,
         label: "FIGHT AGAIN",
-        color: BG_BTN_SUCCESS,
+        color: BG.BTN_SUCCESS,
         onClick: () => this.startFreshRun(),
       });
       y += 60;
@@ -249,7 +234,7 @@ export class PostBattleScene extends Phaser.Scene {
       createButton(this, width / 2, y, {
         ...BTN_MD,
         label: "UPGRADES",
-        color: BG_BTN_NEUTRAL,
+        color: BG.BTN_NEUTRAL,
         onClick: () => this.scene.start(Scene.Upgrades),
       });
       y += 60;
@@ -257,7 +242,7 @@ export class PostBattleScene extends Phaser.Scene {
       createButton(this, width / 2, y, {
         ...BTN_MD,
         label: "MAIN MENU",
-        color: BG_BTN_DANGER,
+        color: BG.BTN_DANGER,
         onClick: () => this.scene.start(Scene.MainMenu),
       });
     }
@@ -266,10 +251,10 @@ export class PostBattleScene extends Phaser.Scene {
   private buildConquestScreen(width: number, height: number) {
     this.add
       .text(width / 2, height * 0.22, "GAUNTLET CONQUERED!", {
-        fontSize: FONT_CONQUEST,
+        fontSize: FONT.CONQUEST,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_BLACK,
+        color: TXT.GOLD,
+        stroke: TXT.BLACK,
         strokeThickness: 8,
       })
       .setOrigin(0.5);
@@ -280,9 +265,9 @@ export class PostBattleScene extends Phaser.Scene {
         height * 0.38,
         "You have defeated every monster and proven\nyourself the greatest warrior in the land.",
         {
-          fontSize: FONT_LG,
+          fontSize: FONT.LG,
           fontFamily: "EnchantedLand",
-          color: TXT_HERO,
+          color: TXT.HERO,
           align: "center",
         },
       )
@@ -290,8 +275,8 @@ export class PostBattleScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.52, `Final level: ${GameState.hero.level}`, {
-        fontSize: FONT_MD,
-        color: TXT_GOLD_MID,
+        fontSize: FONT.MD,
+        color: TXT.GOLD_MID,
       })
       .setOrigin(0.5);
 
@@ -301,8 +286,8 @@ export class PostBattleScene extends Phaser.Scene {
         height * 0.62,
         "Your legend will be remembered.\nA new challenger may now begin.",
         {
-          fontSize: FONT_BODY,
-          color: TXT_MUTED,
+          fontSize: FONT.BODY,
+          color: TXT.MUTED,
           align: "center",
         },
       )
@@ -311,7 +296,7 @@ export class PostBattleScene extends Phaser.Scene {
     createButton(this, width / 2, height * 0.76, {
       ...BTN_MD,
       label: "MAIN MENU",
-      color: BG_BTN_NEUTRAL,
+      color: BG.BTN_NEUTRAL,
       onClick: () => {
         GameState.resetHero(GameState.runConfig!);
         GameState.clearRun();

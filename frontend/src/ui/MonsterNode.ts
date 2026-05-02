@@ -1,21 +1,8 @@
 import Phaser from "phaser";
 import type { MonsterConfig } from "../types/game";
 import { MONSTER_FRAMES } from "../sprites/spriteFrames";
-import { FONT_MD, FONT_SM } from "../constants";
-import {
-  BG_NODE_DEFEATED,
-  BG_NODE_ACTIVE,
-  BG_NODE_LOCKED,
-  BORDER_DEFEATED,
-  BORDER_GOLD_BRIGHT,
-  BORDER_LOCKED,
-  BAR_HP_FILL,
-  BG_ROW_MID,
-  TXT_GOLD,
-  TXT_DEFEATED,
-  TXT_LOCKED,
-  TXT_LOCKED_NAME,
-} from "../constants";
+import { FONT } from "../constants";
+import { BG, BORDER, BAR, TXT } from "../constants";
 
 export type NodeState = "defeated" | "next" | "locked";
 
@@ -36,8 +23,8 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
   const isNext = state === "next";
   const isLocked = state === "locked";
 
-  const fillColor = isDefeated ? BG_NODE_DEFEATED : isNext ? BG_NODE_ACTIVE : BG_NODE_LOCKED;
-  const strokeColor = isDefeated ? BORDER_DEFEATED : isNext ? BORDER_GOLD_BRIGHT : BORDER_LOCKED;
+  const fillColor = isDefeated ? BG.NODE_DEFEATED : isNext ? BG.NODE_ACTIVE : BG.NODE_LOCKED;
+  const strokeColor = isDefeated ? BORDER.DEFEATED : isNext ? BORDER.GOLD_BRIGHT : BORDER.LOCKED;
 
   const node = scene.add
     .rectangle(x, y, w, h, fillColor, 0.92)
@@ -50,10 +37,10 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
     node.on("pointerdown", onFight);
   }
 
-  const nameColor = isDefeated ? TXT_DEFEATED : isNext ? TXT_GOLD : TXT_LOCKED_NAME;
+  const nameColor = isDefeated ? TXT.DEFEATED : isNext ? TXT.GOLD : TXT.LOCKED_NAME;
   scene.add
     .text(x, y - h * 0.42, m.name, {
-      fontSize: FONT_MD,
+      fontSize: FONT.MD,
       fontFamily: "EnchantedLand",
       color: nameColor,
     })
@@ -70,26 +57,26 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
 
   // Decorative HP bar — always full, doesn't reflect current HP.
   const hpBarW = w - 20;
-  scene.add.rectangle(x, y + h * 0.28, hpBarW, 8, BG_ROW_MID, 0.9).setOrigin(0.5);
+  scene.add.rectangle(x, y + h * 0.28, hpBarW, 8, BG.ROW_MID, 0.9).setOrigin(0.5);
   scene.add
     .image(x - hpBarW / 2 - 8, y + h * 0.28, "stat_hp")
     .setScale(0.38)
     .setAlpha(isLocked ? 0.3 : 0.9);
-  scene.add.rectangle(x - hpBarW / 2, y + h * 0.28, hpBarW, 8, BAR_HP_FILL).setOrigin(0, 0.5);
+  scene.add.rectangle(x - hpBarW / 2, y + h * 0.28, hpBarW, 8, BAR.HP_FILL).setOrigin(0, 0.5);
 
   scene.add
     .text(x, y + h * 0.37, `ATK ${m.stats.attack}   DEF ${m.stats.defense}`, {
-      fontSize: FONT_SM,
+      fontSize: FONT.SM,
       color: isLocked ? "#3a2818" : "#a09060",
       align: "center",
     })
     .setOrigin(0.5);
 
   const statusLabel = isDefeated ? "Defeated" : isNext ? "Fight!" : "Locked";
-  const statusColor = isDefeated ? TXT_DEFEATED : isNext ? TXT_GOLD : TXT_LOCKED;
+  const statusColor = isDefeated ? TXT.DEFEATED : isNext ? TXT.GOLD : TXT.LOCKED;
   scene.add
     .text(x, y + h * 0.46, statusLabel, {
-      fontSize: FONT_MD,
+      fontSize: FONT.MD,
       fontFamily: "EnchantedLand",
       color: statusColor,
     })

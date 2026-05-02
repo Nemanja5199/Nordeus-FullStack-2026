@@ -35,8 +35,10 @@ export const SAVE_VERSION = 1;
 
 type PersistedHero = HeroState & { saveVersion?: number };
 
-export const HP_POTION_PRICE = 18;
-export const MANA_POTION_PRICE = 21;
+export const POTION_PRICE = {
+  HP:   18,
+  MANA: 21,
+} as const;
 
 function defaultHero(config: RunConfig, cls: HeroClass): HeroState {
   const defaults = config.heroClasses?.[cls] ?? config.heroDefaults;
@@ -337,16 +339,16 @@ class GameStateManager {
   }
 
   buyHpPotion(): boolean {
-    if ((this.hero.gold ?? 0) < HP_POTION_PRICE) return false;
-    this.hero.gold -= HP_POTION_PRICE;
+    if ((this.hero.gold ?? 0) < POTION_PRICE.HP) return false;
+    this.hero.gold -= POTION_PRICE.HP;
     this.hero.hpPotions = (this.hero.hpPotions ?? 0) + 1;
     this.saveHero();
     return true;
   }
 
   buyManaPotion(): boolean {
-    if ((this.hero.gold ?? 0) < MANA_POTION_PRICE) return false;
-    this.hero.gold -= MANA_POTION_PRICE;
+    if ((this.hero.gold ?? 0) < POTION_PRICE.MANA) return false;
+    this.hero.gold -= POTION_PRICE.MANA;
     this.hero.manaPotions = (this.hero.manaPotions ?? 0) + 1;
     this.saveHero();
     return true;

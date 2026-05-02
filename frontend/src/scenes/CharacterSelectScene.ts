@@ -1,29 +1,10 @@
 import Phaser from "phaser";
-import { Scene, FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../constants";
+import { Scene, FONT } from "../constants";
 import { createButton, BTN_MD } from "../ui";
 import { GameState, MetaProgress } from "../state";
 import { HERO_FRAMES } from "../sprites";
 import type { HeroClass, RunConfig } from "../types/game";
-import {
-  BG_BLACK,
-  BG_MOVE_CARD,
-  BG_CARD_LOCKED,
-  BG_CARD_SELECTED,
-  BG_BTN_SUCCESS,
-  BG_BTN_NEUTRAL,
-  BORDER_GOLD,
-  BORDER_CARD_LOCKED,
-  BORDER_GOLD_BRIGHT,
-  TINT_GOLD,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_GOLD_WARM,
-  TXT_MUTED,
-  TXT_STROKE_TITLE,
-  TXT_CARD_LOCKED,
-  TXT_CLASS_LOCKED,
-  TXT_COMING_SOON,
-} from "../constants";
+import { BG, BORDER, TINT_GOLD, TXT } from "../constants";
 
 interface CharacterSelectData {
   runConfig: RunConfig;
@@ -106,23 +87,23 @@ export class CharacterSelectScene extends Phaser.Scene {
     const { width, height } = this.scale;
 
     this.add.tileSprite(0, 0, width, height, "bg_brick").setOrigin(0);
-    this.add.rectangle(0, 0, width, height, BG_BLACK, 0.68).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG.BLACK, 0.68).setOrigin(0);
 
     this.add
       .text(width / 2, height * 0.08, "Choose Your Hero", {
-        fontSize: FONT_SCENE_TITLE,
+        fontSize: FONT.SCENE_TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_STROKE_TITLE,
+        color: TXT.GOLD,
+        stroke: TXT.STROKE_TITLE,
         strokeThickness: 6,
       })
       .setOrigin(0.5);
 
     this.add
       .text(width / 2, height * 0.15, "Your choice defines your playstyle for the entire run.", {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_MUTED,
+        color: TXT.MUTED,
       })
       .setOrigin(0.5);
 
@@ -146,13 +127,13 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     // Stat hover info bar
     this.statInfoBg = this.add
-      .rectangle(width / 2, height * 0.835, width * 0.55, 32, BG_MOVE_CARD, 0.92)
-      .setStrokeStyle(1, BORDER_GOLD)
+      .rectangle(width / 2, height * 0.835, width * 0.55, 32, BG.MOVE_CARD, 0.92)
+      .setStrokeStyle(1, BORDER.GOLD)
       .setVisible(false);
     this.statInfoText = this.add
       .text(width / 2, height * 0.835, "", {
-        fontSize: FONT_SM,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.SM,
+        color: TXT.GOLD_LIGHT,
         align: "center",
       })
       .setOrigin(0.5)
@@ -161,13 +142,13 @@ export class CharacterSelectScene extends Phaser.Scene {
     createButton(this, width / 2 + 140, height * 0.9, {
       ...BTN_MD,
       label: "START RUN",
-      color: BG_BTN_SUCCESS,
+      color: BG.BTN_SUCCESS,
       onClick: () => this.confirm(),
     });
     createButton(this, width / 2 - 140, height * 0.9, {
       ...BTN_MD,
       label: "BACK",
-      color: BG_BTN_NEUTRAL,
+      color: BG.BTN_NEUTRAL,
       onClick: () => this.scene.start(Scene.MainMenu),
     });
   }
@@ -193,8 +174,8 @@ export class CharacterSelectScene extends Phaser.Scene {
     const container = this.add.container(x, y);
 
     const bg = this.add
-      .rectangle(0, 0, w, h, cls.locked ? BG_CARD_LOCKED : BG_MOVE_CARD, 0.95)
-      .setStrokeStyle(2, cls.locked ? BORDER_CARD_LOCKED : BORDER_GOLD);
+      .rectangle(0, 0, w, h, cls.locked ? BG.CARD_LOCKED : BG.MOVE_CARD, 0.95)
+      .setStrokeStyle(2, cls.locked ? BORDER.CARD_LOCKED : BORDER.GOLD);
 
     const sprite = this.add
       .image(0, -h * 0.3, cls.spriteKey, cls.spriteFrame)
@@ -203,9 +184,9 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const nameText = this.add
       .text(0, -h * 0.13, cls.name, {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: cls.locked ? TXT_CLASS_LOCKED : TXT_GOLD,
+        color: cls.locked ? TXT.CLASS_LOCKED : TXT.GOLD,
       })
       .setOrigin(0.5);
 
@@ -227,8 +208,8 @@ export class CharacterSelectScene extends Phaser.Scene {
 
       const valueText = this.add
         .text(textX, sy, `${stat.label}  ${statValues[i]}`, {
-          fontSize: FONT_SM,
-          color: cls.locked ? TXT_CARD_LOCKED : TXT_GOLD_LIGHT,
+          fontSize: FONT.SM,
+          color: cls.locked ? TXT.CARD_LOCKED : TXT.GOLD_LIGHT,
         })
         .setOrigin(0, 0.5);
 
@@ -240,12 +221,12 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         hit.on("pointerover", () => {
           icon.setTint(TINT_GOLD);
-          valueText.setColor(TXT_GOLD);
+          valueText.setColor(TXT.GOLD);
           this.showStatInfo(`${stat.label} — ${stat.desc}`);
         });
         hit.on("pointerout", () => {
           icon.clearTint();
-          valueText.setColor(TXT_GOLD_LIGHT);
+          valueText.setColor(TXT.GOLD_LIGHT);
           this.hideStatInfo();
         });
         statObjs.push(icon, valueText, hit);
@@ -256,8 +237,8 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const descText = this.add
       .text(0, h * 0.22, cls.description, {
-        fontSize: FONT_SM,
-        color: cls.locked ? TXT_CARD_LOCKED : TXT_GOLD_LIGHT,
+        fontSize: FONT.SM,
+        color: cls.locked ? TXT.CARD_LOCKED : TXT.GOLD_LIGHT,
         align: "center",
         wordWrap: { width: w - 24 },
       })
@@ -265,16 +246,16 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const movesLabel = this.add
       .text(0, h * 0.35, "Moves", {
-        fontSize: FONT_SM,
+        fontSize: FONT.SM,
         fontFamily: "EnchantedLand",
-        color: cls.locked ? TXT_CARD_LOCKED : TXT_MUTED,
+        color: cls.locked ? TXT.CARD_LOCKED : TXT.MUTED,
       })
       .setOrigin(0.5);
 
     const movesText = this.add
       .text(0, h * 0.42, cls.moves.join("  ·  "), {
-        fontSize: FONT_XS,
-        color: cls.locked ? TXT_CARD_LOCKED : TXT_GOLD_WARM,
+        fontSize: FONT.XS,
+        color: cls.locked ? TXT.CARD_LOCKED : TXT.GOLD_WARM,
         align: "center",
         wordWrap: { width: w - 16 },
       })
@@ -283,9 +264,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     if (cls.locked) {
       const lockText = this.add
         .text(0, 0, "COMING\nSOON", {
-          fontSize: FONT_LG,
+          fontSize: FONT.LG,
           fontFamily: "EnchantedLand",
-          color: TXT_COMING_SOON,
+          color: TXT.COMING_SOON,
           align: "center",
           stroke: "#000",
           strokeThickness: 3,
@@ -310,11 +291,11 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.cardContainers.forEach((c, i) => {
       const bg = c.getAt(0) as Phaser.GameObjects.Rectangle;
       if (i === index && !CLASSES[i].locked) {
-        bg.setStrokeStyle(3, BORDER_GOLD_BRIGHT);
-        bg.setFillStyle(BG_CARD_SELECTED);
+        bg.setStrokeStyle(3, BORDER.GOLD_BRIGHT);
+        bg.setFillStyle(BG.CARD_SELECTED);
       } else if (!CLASSES[i].locked) {
-        bg.setStrokeStyle(2, BORDER_GOLD);
-        bg.setFillStyle(BG_MOVE_CARD);
+        bg.setStrokeStyle(2, BORDER.GOLD);
+        bg.setFillStyle(BG.MOVE_CARD);
       }
     });
   }

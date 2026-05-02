@@ -1,45 +1,12 @@
 import Phaser from "phaser";
-import { Scene, FONT_MD, FONT_SM, FONT_MAP_TITLE, HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE, XP_CURVE_FACTOR } from "../constants";
+import { Scene, FONT, HERO_PANEL, NODE, XP_CURVE_FACTOR } from "../constants";
 import { createHeroPanel, createButton, BTN_SM } from "../ui";
 import { GameState } from "../state";
 import { Audio, TrackGroup } from "../audio";
 import { MONSTER_FRAMES, SHOPKEEPER_FRAME } from "../sprites";
 import { getNodeState } from "../map";
 import type { MapTree, MapTreeNode, TreeNodeState } from "../map";
-import {
-  BG_BLACK,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_MUTED,
-  TXT_DEFEATED,
-  TXT_LOCKED,
-  TXT_LOCKED_NAME,
-  BG_SEPIA,
-  BG_NODE_ACTIVE,
-  BG_NODE_DEFEATED,
-  BG_NODE_LOCKED,
-  BORDER_GOLD_BRIGHT,
-  BORDER_DEFEATED,
-  BORDER_LOCKED,
-  BORDER_HERO_BATTLE,
-  BORDER_MON_BATTLE,
-  DOT_PATH_DEFEATED,
-  DOT_PATH_ACTIVE,
-  BG_BTN_CLOSE,
-  BG_NODE_SHOP,
-  BG_NODE_SHOP_DONE,
-  BG_NODE_SHOP_LOCKED,
-  BORDER_SHOP,
-  BORDER_SHOP_DONE,
-  BORDER_SHOP_LOCKED,
-  TXT_SHOP,
-  TXT_SHOP_DONE,
-  TXT_SHOP_LOCKED,
-  STROKE_TITLE_DARK,
-  TXT_BOSS,
-  TXT_TIER_BOSS,
-  TXT_BLACK,
-} from "../constants";
+import { BG, TXT, BORDER, DOT, STROKE_TITLE_DARK } from "../constants";
 
 interface NodeColors {
   fillColor: number;
@@ -52,18 +19,18 @@ interface NodeColors {
 
 function getNodeColors(isShop: boolean, isBoss: boolean, state: TreeNodeState): NodeColors {
   const fillColor = isShop
-    ? state === "completed" ? BG_NODE_SHOP_DONE : state === "available" ? BG_NODE_SHOP : BG_NODE_SHOP_LOCKED
-    : state === "completed" ? BG_NODE_DEFEATED : state === "available" ? BG_NODE_ACTIVE : BG_NODE_LOCKED;
+    ? state === "completed" ? BG.NODE_SHOP_DONE : state === "available" ? BG.NODE_SHOP : BG.NODE_SHOP_LOCKED
+    : state === "completed" ? BG.NODE_DEFEATED : state === "available" ? BG.NODE_ACTIVE : BG.NODE_LOCKED;
 
   const strokeColor = isShop
-    ? state === "completed" ? BORDER_SHOP_DONE : state === "available" ? BORDER_SHOP : BORDER_SHOP_LOCKED
-    : state === "completed" ? BORDER_DEFEATED : state === "available" ? BORDER_GOLD_BRIGHT : BORDER_LOCKED;
+    ? state === "completed" ? BORDER.SHOP_DONE : state === "available" ? BORDER.SHOP : BORDER.SHOP_LOCKED
+    : state === "completed" ? BORDER.DEFEATED : state === "available" ? BORDER.GOLD_BRIGHT : BORDER.LOCKED;
 
-  const glowColor = isShop ? BORDER_SHOP : BORDER_GOLD_BRIGHT;
+  const glowColor = isShop ? BORDER.SHOP : BORDER.GOLD_BRIGHT;
 
   const nameColor = isShop
-    ? state === "completed" ? TXT_SHOP_DONE : state === "available" ? TXT_SHOP : TXT_SHOP_LOCKED
-    : state === "completed" ? TXT_DEFEATED : state === "available" ? TXT_GOLD : TXT_LOCKED_NAME;
+    ? state === "completed" ? TXT.SHOP_DONE : state === "available" ? TXT.SHOP : TXT.SHOP_LOCKED
+    : state === "completed" ? TXT.DEFEATED : state === "available" ? TXT.GOLD : TXT.LOCKED_NAME;
 
   const statusLabel =
     state === "completed"
@@ -74,10 +41,10 @@ function getNodeColors(isShop: boolean, isBoss: boolean, state: TreeNodeState): 
 
   const statusColor =
     state === "completed"
-      ? isShop ? TXT_SHOP_DONE : TXT_DEFEATED
+      ? isShop ? TXT.SHOP_DONE : TXT.DEFEATED
       : state === "available"
-        ? isBoss ? TXT_BOSS : isShop ? TXT_SHOP : TXT_GOLD_LIGHT
-        : TXT_LOCKED;
+        ? isBoss ? TXT.BOSS : isShop ? TXT.SHOP : TXT.GOLD_LIGHT
+        : TXT.LOCKED;
 
   return { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor };
 }
@@ -102,12 +69,12 @@ export class TreeMapScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.06, "The Gauntlet", {
-        fontSize: FONT_MAP_TITLE,
+        fontSize: FONT.MAP_TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
+        color: TXT.GOLD,
         stroke: STROKE_TITLE_DARK,
         strokeThickness: 10,
-        shadow: { offsetX: 4, offsetY: 4, color: TXT_BLACK, blur: 8, fill: true },
+        shadow: { offsetX: 4, offsetY: 4, color: TXT.BLACK, blur: 8, fill: true },
       })
       .setOrigin(0.5);
 
@@ -115,9 +82,9 @@ export class TreeMapScene extends Phaser.Scene {
       ...BTN_SM,
       width: 170,
       height: 45,
-      fontSize: FONT_MD,
+      fontSize: FONT.MD,
       label: "SAVE & EXIT",
-      color: BG_BTN_CLOSE,
+      color: BG.BTN_CLOSE,
       onClick: () => {
         this.scene.stop(Scene.MoveManagement);
         GameState.saveHero();
@@ -135,10 +102,10 @@ export class TreeMapScene extends Phaser.Scene {
   private buildHeroPanel(): Phaser.GameObjects.Container {
     const { height } = this.scale;
     return createHeroPanel(this, {
-      x: PANEL_GAP,
-      y: (height - PANEL_H) / 2,
-      width: PANEL_W,
-      height: PANEL_H,
+      x: HERO_PANEL.GAP,
+      y: (height - HERO_PANEL.H) / 2,
+      width: HERO_PANEL.W,
+      height: HERO_PANEL.H,
       hero: GameState.hero,
       xpToNextLevel: Math.floor(GameState.hero.level * GameState.hero.level * XP_CURVE_FACTOR),
       moves: GameState.runConfig?.moves ?? {},
@@ -168,14 +135,14 @@ export class TreeMapScene extends Phaser.Scene {
 
   private drawBackground(width: number, height: number) {
     this.add.tileSprite(0, 0, width, height, "bg_sand").setOrigin(0);
-    this.add.rectangle(0, 0, width, height, BG_SEPIA, 0.38).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG.SEPIA, 0.38).setOrigin(0);
 
     const g = this.add.graphics();
-    g.fillGradientStyle(BG_BLACK, BG_BLACK, BG_BLACK, BG_BLACK, 0.65, 0.65, 0, 0);
+    g.fillGradientStyle(BG.BLACK, BG.BLACK, BG.BLACK, BG.BLACK, 0.65, 0.65, 0, 0);
     g.fillRect(0, 0, width, height * 0.28);
-    g.fillGradientStyle(BG_BLACK, BG_BLACK, BG_BLACK, BG_BLACK, 0, 0, 0.65, 0.65);
+    g.fillGradientStyle(BG.BLACK, BG.BLACK, BG.BLACK, BG.BLACK, 0, 0, 0.65, 0.65);
     g.fillRect(0, height * 0.72, width, height * 0.28);
-    g.fillGradientStyle(BG_BLACK, BG_BLACK, BG_BLACK, BG_BLACK, 0.5, 0, 0, 0.5);
+    g.fillGradientStyle(BG.BLACK, BG.BLACK, BG.BLACK, BG.BLACK, 0.5, 0, 0, 0.5);
     g.fillRect(0, 0, width * 0.18, height);
   }
 
@@ -184,8 +151,8 @@ export class TreeMapScene extends Phaser.Scene {
     const completed = GameState.completedNodes;
     const currentNode = GameState.currentNode;
 
-    const treeLeft = PANEL_GAP + PANEL_W + 24;
-    const treeRight = width - PANEL_GAP - 8;
+    const treeLeft = HERO_PANEL.GAP + HERO_PANEL.W + 24;
+    const treeRight = width - HERO_PANEL.GAP - 8;
     const treeW = treeRight - treeLeft;
     const treeTop = height * 0.22;
     const treeBot = height * 0.85;
@@ -261,13 +228,13 @@ export class TreeMapScene extends Phaser.Scene {
     const midBoss = (y4 + yB) / 2;
     const bandPad = 40;
 
-    g.fillStyle(BORDER_GOLD_BRIGHT, bandAlpha);
+    g.fillStyle(BORDER.GOLD_BRIGHT, bandAlpha);
     g.fillRect(treeLeft, y1 - bandPad, treeW, midTier2 - y1 + bandPad);
 
-    g.fillStyle(BORDER_HERO_BATTLE, bandAlpha);
+    g.fillStyle(BORDER.HERO_BATTLE, bandAlpha);
     g.fillRect(treeLeft, midTier2, treeW, midBoss - midTier2);
 
-    g.fillStyle(BORDER_MON_BATTLE, bandAlpha);
+    g.fillStyle(BORDER.MON_BATTLE, bandAlpha);
     g.fillRect(treeLeft, midBoss, treeW, height - midBoss);
   }
 
@@ -288,22 +255,22 @@ export class TreeMapScene extends Phaser.Scene {
 
         let color: number, alpha: number, lineW: number;
         if (nodeComplete && childComplete) {
-          color = DOT_PATH_DEFEATED;
+          color = DOT.PATH_DEFEATED;
           alpha = 1.0;
           lineW = 3;
         } else if (nodeComplete) {
-          color = DOT_PATH_ACTIVE;
+          color = DOT.PATH_ACTIVE;
           alpha = 0.9;
           lineW = 2;
         } else {
-          color = BORDER_LOCKED;
+          color = BORDER.LOCKED;
           alpha = 0.65;
           lineW = 3;
         }
 
         const childNode = tree.nodes[childId];
-        const fromY = from.y + (node.level === 5 ? BOSS_H : NODE_H) / 2;
-        const toY = to.y - (childNode?.level === 5 ? BOSS_H : NODE_H) / 2;
+        const fromY = from.y + (node.level === 5 ? NODE.BOSS_H : NODE.H) / 2;
+        const toY = to.y - (childNode?.level === 5 ? NODE.BOSS_H : NODE.H) / 2;
 
         g.lineStyle(lineW, color, alpha);
         g.beginPath();
@@ -320,7 +287,7 @@ export class TreeMapScene extends Phaser.Scene {
     byLevel: Record<number, string[]>,
   ) {
     const labelX = treeRight - 4;
-    const style = { fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_MUTED };
+    const style = { fontSize: FONT.SM, fontFamily: "EnchantedLand", color: TXT.MUTED };
 
     const yAt = (level: number) => positions[byLevel[level]?.[0]]?.y ?? 0;
     const y12 = (yAt(1) + yAt(2)) / 2;
@@ -329,7 +296,7 @@ export class TreeMapScene extends Phaser.Scene {
 
     this.add.text(labelX, y12, "TIER I", style).setOrigin(1, 0.5);
     this.add.text(labelX, y34, "TIER II", style).setOrigin(1, 0.5);
-    this.add.text(labelX, yB, "BOSS", { ...style, color: TXT_TIER_BOSS }).setOrigin(1, 0.5);
+    this.add.text(labelX, yB, "BOSS", { ...style, color: TXT.TIER_BOSS }).setOrigin(1, 0.5);
   }
 
   private drawNode(
@@ -341,8 +308,8 @@ export class TreeMapScene extends Phaser.Scene {
   ) {
     const isShop = node.type === "shop";
     const isBoss = node.type === "boss" || node.level === 5;
-    const nodeW = isBoss ? BOSS_W : NODE_W;
-    const nodeH = isBoss ? BOSS_H : NODE_H;
+    const nodeW = isBoss ? NODE.BOSS_W : NODE.W;
+    const nodeH = isBoss ? NODE.BOSS_H : NODE.H;
 
     const { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor } =
       getNodeColors(isShop, isBoss, state);
@@ -380,12 +347,12 @@ export class TreeMapScene extends Phaser.Scene {
     container.add(
       this.add
         .text(0, -nodeH / 2 - 14, displayName, {
-          fontSize: FONT_SM,
+          fontSize: FONT.SM,
           fontFamily: "EnchantedLand",
           color: nameColor,
           stroke: "#000000",
           strokeThickness: 4,
-          shadow: { offsetX: 2, offsetY: 2, color: TXT_BLACK, blur: 4, fill: true },
+          shadow: { offsetX: 2, offsetY: 2, color: TXT.BLACK, blur: 4, fill: true },
         })
         .setOrigin(0.5),
     );
@@ -393,7 +360,7 @@ export class TreeMapScene extends Phaser.Scene {
     container.add(
       this.add
         .text(0, nodeH / 2 - 12, statusLabel, {
-          fontSize: FONT_SM,
+          fontSize: FONT.SM,
           fontFamily: "EnchantedLand",
           color: statusColor,
         })
@@ -409,8 +376,8 @@ export class TreeMapScene extends Phaser.Scene {
       this.tweens.killTweensOf(container);
       this.tweens.add({
         targets: container,
-        scaleX: HOVER_SCALE,
-        scaleY: HOVER_SCALE,
+        scaleX: NODE.HOVER_SCALE,
+        scaleY: NODE.HOVER_SCALE,
         duration: 140,
         ease: "Back.easeOut",
       });

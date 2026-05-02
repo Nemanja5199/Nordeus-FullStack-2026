@@ -1,27 +1,11 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from "../constants";
+import { Scene, type SceneKey, FONT, EQ_CARD, INV_GRID } from "../constants";
 import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
 import { GameState, getGearBonuses } from "../state";
 import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem, GearSlot } from "../types/game";
 import { itemFrames } from "../sprites";
-import {
-  BG_DARKEST,
-  BG_MOVE_CARD,
-  BG_MOVE_EQUIPPED,
-  BORDER_GOLD,
-  BORDER_GOLD_BRIGHT,
-  BORDER_LOCKED,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_GOLD_MID,
-  TXT_MUTED,
-  TXT_LOCKED,
-  TXT_STROKE_HEADER,
-  RARITY_COLOR,
-  RARITY_COLOR_NUM,
-  STAT_COLOR,
-} from "../constants";
+import { BG, BORDER, TXT, RARITY_COLOR, RARITY_COLOR_NUM, STAT_COLOR } from "../constants";
 
 const SLOTS: GearSlot[] = ["weapon", "helmet", "chestplate", "gloves", "ring"];
 const SLOT_LABELS: Record<GearSlot, string> = {
@@ -52,14 +36,14 @@ export class EquipmentScene extends Phaser.Scene {
     this.inventoryScroll = undefined;
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
+    this.add.rectangle(0, 0, width, height, BG.DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 34, "EQUIPMENT", {
-        fontSize: FONT_TITLE,
+        fontSize: FONT.TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_STROKE_HEADER,
+        color: TXT.GOLD,
+        stroke: TXT.STROKE_HEADER,
         strokeThickness: 3,
       })
       .setOrigin(0.5);
@@ -68,13 +52,13 @@ export class EquipmentScene extends Phaser.Scene {
     const colRight = width * 0.66;
 
     this.add
-      .text(colLeft, 90, "EQUIPPED", { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
+      .text(colLeft, 90, "EQUIPPED", { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD_MID })
       .setOrigin(0.5);
     this.add
-      .text(colRight, 90, "INVENTORY", { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_MID })
+      .text(colRight, 90, "INVENTORY", { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD_MID })
       .setOrigin(0.5);
 
-    this.add.rectangle(width / 2, (90 + height - 80) / 2, 1, height - 170, BORDER_GOLD, 0.25);
+    this.add.rectangle(width / 2, (90 + height - 80) / 2, 1, height - 170, BORDER.GOLD, 0.25);
 
     const items = GameState.runConfig!.items;
     const bonuses = getGearBonuses(GameState.hero.equipment ?? {}, items);
@@ -85,8 +69,8 @@ export class EquipmentScene extends Phaser.Scene {
     if (bonuses.maxHp) bonusParts.push(`HP +${bonuses.maxHp}`);
     this.add
       .text(colLeft, 110, bonusParts.length ? bonusParts.join("   ") : "No gear equipped", {
-        fontSize: FONT_SM,
-        color: bonusParts.length ? TXT_GOLD_LIGHT : TXT_MUTED,
+        fontSize: FONT.SM,
+        color: bonusParts.length ? TXT.GOLD_LIGHT : TXT.MUTED,
       })
       .setOrigin(0.5);
 
@@ -111,9 +95,9 @@ export class EquipmentScene extends Phaser.Scene {
     this.tooltip.begin();
 
     this.tooltip.addText(cx, baseY, item.name, {
-      fontSize: FONT_MD,
+      fontSize: FONT.MD,
       fontFamily: "EnchantedLand",
-      color: RARITY_COLOR[item.rarity] ?? TXT_GOLD,
+      color: RARITY_COLOR[item.rarity] ?? TXT.GOLD,
     });
 
     const statParts: { text: string; color: string }[] = [];
@@ -121,11 +105,11 @@ export class EquipmentScene extends Phaser.Scene {
     if (item.statBonuses.defense) statParts.push({ text: `DEF +${item.statBonuses.defense}`, color: STAT_COLOR.defense });
     if (item.statBonuses.magic) statParts.push({ text: `MAG +${item.statBonuses.magic}`, color: STAT_COLOR.magic });
     if (item.statBonuses.maxHp) statParts.push({ text: `HP +${item.statBonuses.maxHp}`, color: STAT_COLOR.maxHp });
-    this.tooltip.addHorizontalRow(statParts, baseY + 22, FONT_BODY, 90);
+    this.tooltip.addHorizontalRow(statParts, baseY + 22, FONT.BODY, 90);
 
     this.tooltip.addText(cx, baseY + 44, item.description, {
-      fontSize: FONT_SM,
-      color: TXT_MUTED,
+      fontSize: FONT.SM,
+      color: TXT.MUTED,
     });
   }
 
@@ -138,32 +122,32 @@ export class EquipmentScene extends Phaser.Scene {
     SLOTS.forEach((slot, i) => {
       const itemId = GameState.hero.equipment?.[slot];
       const item = itemId ? items[itemId] : undefined;
-      const y = EQ_START_Y + i * (EQ_CARD_H + EQ_CARD_GAP);
+      const y = EQ_CARD.START_Y + i * (EQ_CARD.H + EQ_CARD.GAP);
 
       const bg = this.add
-        .rectangle(panelX, y, EQ_CARD_W, EQ_CARD_H, item ? BG_MOVE_EQUIPPED : BG_MOVE_CARD, 0.92)
-        .setStrokeStyle(1, item ? BORDER_GOLD_BRIGHT : BORDER_LOCKED)
+        .rectangle(panelX, y, EQ_CARD.W, EQ_CARD.H, item ? BG.MOVE_EQUIPPED : BG.MOVE_CARD, 0.92)
+        .setStrokeStyle(1, item ? BORDER.GOLD_BRIGHT : BORDER.LOCKED)
         .setInteractive({ useHandCursor: !!item });
 
-      this.add.text(panelX - EQ_CARD_W / 2 + 10, y - EQ_CARD_H / 2 + 7, SLOT_LABELS[slot], {
-        fontSize: FONT_SM,
-        color: TXT_MUTED,
+      this.add.text(panelX - EQ_CARD.W / 2 + 10, y - EQ_CARD.H / 2 + 7, SLOT_LABELS[slot], {
+        fontSize: FONT.SM,
+        color: TXT.MUTED,
       });
 
-      const iconX = panelX - EQ_CARD_W / 2 + EQ_ICON / 2 + 10;
+      const iconX = panelX - EQ_CARD.W / 2 + EQ_CARD.ICON_SIZE / 2 + 10;
       const contentY = y + 12;
       if (item && itemId) {
         const frameKey = itemFrames[itemId];
         if (frameKey && this.textures.exists(frameKey)) {
-          this.add.image(iconX, contentY, frameKey).setDisplaySize(EQ_ICON, EQ_ICON);
+          this.add.image(iconX, contentY, frameKey).setDisplaySize(EQ_CARD.ICON_SIZE, EQ_CARD.ICON_SIZE);
         }
       }
 
-      const nameX = panelX - EQ_CARD_W / 2 + EQ_ICON + 24;
+      const nameX = panelX - EQ_CARD.W / 2 + EQ_CARD.ICON_SIZE + 24;
       this.add.text(nameX, contentY, item ? item.name : "(empty)", {
-        fontSize: FONT_BODY,
+        fontSize: FONT.BODY,
         fontFamily: "EnchantedLand",
-        color: item ? RARITY_COLOR[item.rarity] ?? TXT_GOLD : TXT_LOCKED,
+        color: item ? RARITY_COLOR[item.rarity] ?? TXT.GOLD : TXT.LOCKED,
       }).setOrigin(0, 0.5);
 
       if (item) {
@@ -192,23 +176,23 @@ export class EquipmentScene extends Phaser.Scene {
 
     if (inv.length === 0) {
       this.add
-        .text(originX, GRID_START_Y + 30, "Inventory empty.", { fontSize: FONT_BODY, color: TXT_MUTED })
+        .text(originX, INV_GRID.START_Y + 30, "Inventory empty.", { fontSize: FONT.BODY, color: TXT.MUTED })
         .setOrigin(0.5);
       return;
     }
 
-    const step = GRID_CELL + GRID_GAP;
-    const gridW = GRID_COLS * step - GRID_GAP;
-    const gridLeft = originX - gridW / 2 + GRID_CELL / 2;
+    const step = INV_GRID.CELL + INV_GRID.GAP;
+    const gridW = INV_GRID.COLS * step - INV_GRID.GAP;
+    const gridLeft = originX - gridW / 2 + INV_GRID.CELL / 2;
 
-    const rowCount = Math.ceil(inv.length / GRID_COLS);
-    const contentH = rowCount * step - GRID_GAP;
+    const rowCount = Math.ceil(inv.length / INV_GRID.COLS);
+    const contentH = rowCount * step - INV_GRID.GAP;
     const { width: scaleW, height: scaleH } = this.scale;
-    const viewportH = Math.max(120, scaleH - GRID_START_Y - 160);
+    const viewportH = Math.max(120, scaleH - INV_GRID.START_Y - 160);
 
     this.inventoryScroll = createScrollableArea(this, {
       x: 0,
-      y: GRID_START_Y,
+      y: INV_GRID.START_Y,
       width: scaleW,
       height: viewportH,
       contentHeight: contentH,
@@ -218,25 +202,25 @@ export class EquipmentScene extends Phaser.Scene {
       const item: GearItem | undefined = items[itemId];
       if (!item) return;
 
-      const col = i % GRID_COLS;
-      const row = Math.floor(i / GRID_COLS);
+      const col = i % INV_GRID.COLS;
+      const row = Math.floor(i / INV_GRID.COLS);
       const cx = gridLeft + col * step;
-      const cy = row * step + GRID_CELL / 2;
+      const cy = row * step + INV_GRID.CELL / 2;
 
       const bg = this.add
-        .rectangle(cx, cy, GRID_CELL, GRID_CELL, BG_MOVE_EQUIPPED, 0.9)
-        .setStrokeStyle(1, BORDER_GOLD)
+        .rectangle(cx, cy, INV_GRID.CELL, INV_GRID.CELL, BG.MOVE_EQUIPPED, 0.9)
+        .setStrokeStyle(1, BORDER.GOLD)
         .setInteractive({ useHandCursor: true });
 
       const frameKey = itemFrames[itemId];
       const icon = frameKey && this.textures.exists(frameKey)
-        ? this.add.image(cx, cy - 6, frameKey).setDisplaySize(GRID_CELL - 16, GRID_CELL - 16)
+        ? this.add.image(cx, cy - 6, frameKey).setDisplaySize(INV_GRID.CELL - 16, INV_GRID.CELL - 16)
         : null;
 
       const rarityStrip = this.add.rectangle(
         cx,
-        cy + GRID_CELL / 2 - 6,
-        GRID_CELL - 4,
+        cy + INV_GRID.CELL / 2 - 6,
+        INV_GRID.CELL - 4,
         8,
         RARITY_COLOR_NUM[item.rarity] ?? 0xc8a035,
         0.8,

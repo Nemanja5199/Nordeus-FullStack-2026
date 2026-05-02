@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { createButton, BTN_SM } from "./Button";
-import { BG_BTN_CLOSE, TXT_MUTED, FONT_BODY } from "../constants";
+import { BG, TXT, FONT } from "../constants";
 
 export interface ModalFooterOptions {
   hint: string;
@@ -15,8 +15,8 @@ export function createModalFooter(
 
   const infoText = scene.add
     .text(width / 2, height - 130, opts.hint, {
-      fontSize: FONT_BODY,
-      color: TXT_MUTED,
+      fontSize: FONT.BODY,
+      color: TXT.MUTED,
       wordWrap: { width: width * 0.8 },
       align: "center",
     })
@@ -25,7 +25,7 @@ export function createModalFooter(
   createButton(scene, width / 2, height - 55, {
     ...BTN_SM,
     label: "CLOSE",
-    color: BG_BTN_CLOSE,
+    color: BG.BTN_CLOSE,
     onClick: opts.onClose,
   });
 

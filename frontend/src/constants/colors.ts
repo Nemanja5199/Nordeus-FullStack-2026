@@ -1,161 +1,139 @@
-// ─── Backgrounds ─────────────────────────────────────────────────────────────
-export const BG_DARKEST = 0x0d0905; // scene fill (battle, post-battle)
-export const BG_PANEL = 0x1c1008; // main panel background
-export const BG_ROW = 0x120e06; // inner row / node fill
-export const BG_ROW_MID = 0x2a1a08; // XP / HP bar background
-export const BG_BTN = 0x2a1e0a; // button default fill
-export const BG_BTN_HOVER = 0x3a2a10; // button hover fill
-export const BG_SEPIA = 0x3a1f05; // map sand overlay tint
+// Backgrounds (hex). Includes panels, rows, buttons, node states, cards.
+export const BG = {
+  DARKEST:           0x0d0905,
+  PANEL:             0x1c1008,
+  ROW:               0x120e06,
+  ROW_MID:           0x2a1a08,
+  BTN:               0x2a1e0a,
+  BTN_HOVER:         0x3a2a10,
+  SEPIA:             0x3a1f05,
+  HERO_BATTLE:       0x1c3018,
+  MONSTER_BATTLE:    0x301010,
+  NODE_DEFEATED:     0x1a2808,
+  NODE_ACTIVE:       0x2a1a06,
+  NODE_LOCKED:       0x120e06,
+  NODE_SHOP:         0x0e1e38,
+  NODE_SHOP_DONE:    0x0a1830,
+  NODE_SHOP_LOCKED:  0x080e18,
+  BTN_SUCCESS:       0x1c2e14,
+  BTN_NEUTRAL:       0x1a1c20,
+  BTN_DANGER:        0x2e1008,
+  BTN_CLOSE:         0x1a1a2e,
+  BTN_STAT:          0x2a4a18,
+  BTN_STAT_HOVER:    0x3a6a24,
+  BTN_BUY:           0x2a1040,
+  BTN_BUY_HOVER:     0x3d1a5e,
+  MOVE_CARD:         0x1c1408,
+  MOVE_EQUIPPED:     0x1a2010,
+  CARD_LOCKED:       0x100c08,
+  CARD_SELECTED:     0x2a1e08,
+  STAT_CARD:         0x1a1408,
+  STAT_CARD_AVAIL:   0x1c2a10,
+  UPGRADE_AVAILABLE: 0x1a0f2a,
+  UPGRADE_PURCHASED: 0x0a1f0a,
+  UPGRADE_LOCKED:    0x100c08,
+  BAR_TRACK:         0x1a1a1a,
+  LOAD_BAR_TRACK:    0x2a2010,
+  TITLE_BAND:        0x000000,
+  BLACK:             0x000000,
+} as const;
 
-// ─── Map path dots ───────────────────────────────────────────────────────────
-export const DOT_PATH_DEFEATED = 0x6ab830; // bright green — defeated segment
-export const DOT_PATH_ACTIVE = 0xc89040; // amber — upcoming / locked segment
+// Text colours (CSS strings used by Phaser text objects).
+export const TXT = {
+  GOLD:          "#c8a035",
+  GOLD_LIGHT:    "#d4b483",
+  GOLD_MID:      "#a07840",
+  GOLD_WARM:     "#c8b078",
+  MUTED:         "#8a7a5a",
+  DARK:          "#3a2808",
+  BLACK:         "#000000",
+  HERO:          "#a8c888",
+  MONSTER:       "#c87870",
+  DEFEATED:      "#5aaa3a",
+  DEFEAT:        "#8a3a3a",
+  LOCKED:        "#4a3418",
+  LOCKED_NAME:   "#6a5030",
+  CARD_LOCKED:   "#2a2418",
+  CLASS_LOCKED:  "#3a3020",
+  COMING_SOON:   "#4a3820",
+  MANA:          "#5588ff",
+  MANA_LOW:      "#cc4444",
+  LOG:           "#a09070",
+  LOG_MAGIC:     "#a060e0",
+  SHOP:          "#70aaff",
+  SHOP_DONE:     "#3a6aaa",
+  SHOP_LOCKED:   "#1a2a44",
+  BOSS:          "#c84a2a",
+  TAGLINE:       "#a09060",
+  TIER_BOSS:     "#8a3a3a",
+  DUST_MOTE:     "#c87840",
+  SKILL_POINTS:  "#70cc50",
+  SHARD:         "#c084fc",
+  STROKE_TITLE:  "#3a2008",
+  STROKE_HEADER: "#4a3010",
+  INTENT_ATTACK: "#c85030",
+  INTENT_DEBUFF: "#9060c0",
+  INTENT_BUFF:   "#c8a035",
+  INTENT_HEAL:   "#50aa50",
+  MOVE_BUFF:     "#fbbf24",
+  MOVE_DEBUFF:   "#fb923c",
+  RARITY_EPIC:   "#f97316",
+  STAT_ATTACK:   "#ef4444",
+  STAT_DEFENSE:  "#9ca3af",
+  STAT_MAGIC:    "#a78bfa",
+  STAT_HP:       "#4ade80",
+} as const;
 
-// ─── Node states ─────────────────────────────────────────────────────────────
-export const BG_NODE_DEFEATED = 0x1a2808;
-export const BG_NODE_ACTIVE = 0x2a1a06;
-export const BG_NODE_LOCKED = 0x120e06;
+export const BORDER = {
+  GOLD:           0x7a5828,
+  GOLD_BRIGHT:    0xb88820,
+  LOCKED:         0x4a3818,
+  ROW:            0x3a2a14,
+  DEFEATED:       0x5a8a2a,
+  HERO_BATTLE:    0x4a8a3a,
+  MON_BATTLE:     0x8a3a3a,
+  SHOP:           0x5090e0,
+  SHOP_DONE:      0x3a6aaa,
+  SHOP_LOCKED:    0x1a2a44,
+  CARD_LOCKED:    0x2a2018,
+  STAT_AVAIL:     0x5a8a3a,
+  SHARD:          0x9333ea,
+  UPGRADE_OWNED:  0x4ade80,
+} as const;
 
-// ─── Battle panels ───────────────────────────────────────────────────────────
-export const BG_HERO_BATTLE = 0x1c3018;
-export const BG_MONSTER_BATTLE = 0x301010;
+// HP / mana / XP bar fills.
+export const BAR = {
+  HP_FILL:    0x8a3a3a,
+  HERO_HP:    0x4a8a3a,
+  HP_HIGH:    0x44cc44,
+  HP_MID:     0xddaa00,
+  HP_LOW:     0xcc3333,
+  XP_FILL:    0xb88820,
+  MANA_FILL:  0x2255cc,
+} as const;
 
-// ─── Borders ─────────────────────────────────────────────────────────────────
-export const BORDER_GOLD = 0x7a5828; // default panel border
-export const BORDER_GOLD_BRIGHT = 0xb88820; // selected / active highlight
-export const BORDER_LOCKED = 0x4a3818; // dimmed / locked border
-export const BORDER_ROW = 0x3a2a14; // inner row border
-export const BORDER_DEFEATED = 0x5a8a2a; // green defeated border
-export const BORDER_HERO_BATTLE = 0x4a8a3a;
-export const BORDER_MON_BATTLE = 0x8a3a3a;
+// Map-tree path segments.
+export const DOT = {
+  PATH_DEFEATED: 0x6ab830,
+  PATH_ACTIVE:   0xc89040,
+} as const;
 
-// ─── Text (CSS strings used by Phaser text objects) ──────────────────────────
-export const TXT_GOLD = "#c8a035"; // headers, selected state
-export const TXT_GOLD_LIGHT = "#d4b483"; // normal body text
-export const TXT_GOLD_MID = "#a07840"; // secondary / XP text
-export const TXT_MUTED = "#8a7a5a"; // dim / subtext
-export const TXT_DARK = "#3a2808"; // dark-bg label (title stroke fill)
-export const TXT_HERO = "#a8c888"; // hero in battle
-export const TXT_MONSTER = "#c87870"; // monster in battle
-export const TXT_DEFEATED = "#5aaa3a"; // defeated status
-export const TXT_LOCKED = "#4a3418"; // locked status
-export const TXT_LOCKED_NAME = "#6a5030"; // locked node name
+// Damage / heal preview overlay on HP bars.
+export const HP_GHOST = {
+  HERO:    0x8a1a1a,
+  MONSTER: 0x3a0808,
+} as const;
 
-// ─── Post-battle buttons ─────────────────────────────────────────────────────
-export const BG_BTN_SUCCESS = 0x1c2e14; // green — positive action (Back to Map win)
-export const BG_BTN_NEUTRAL = 0x1a1c20; // grey — neutral action (Replay)
-export const BG_BTN_DANGER = 0x2e1008; // red — negative action (Try Again)
-export const TXT_DEFEAT = "#8a3a3a"; // defeat title colour
-
-// ─── Move management ─────────────────────────────────────────────────────────
-export const BG_MOVE_CARD = 0x1c1408; // default move card bg
-export const BG_MOVE_EQUIPPED = 0x1a2010; // learned card bg when already equipped
-export const BG_BTN_CLOSE = 0x1a1a2e; // close / cancel button
-
-// ─── Battle HP ghosts (damage / heal preview overlay on bars) ────────────────
-export const HP_GHOST_HERO = 0x8a1a1a; // dark red — incoming damage preview on hero bar
-export const HP_GHOST_MONSTER = 0x3a0808; // darker red — incoming damage preview on monster bar
-
-// ─── Stat bars ───────────────────────────────────────────────────────────────
-export const BAR_HP_FILL = 0x8a3a3a; // monster HP
-export const BAR_HERO_HP = 0x4a8a3a; // hero HP default
-export const BAR_HP_HIGH = 0x44cc44; // >50% HP
-export const BAR_HP_MID = 0xddaa00; // 25-50% HP
-export const BAR_HP_LOW = 0xcc3333; // <25% HP
-export const BAR_XP_FILL = 0xb88820;
-export const BG_BAR_TRACK = 0x1a1a1a; // HP bar background track
-export const BAR_MANA_FILL = 0x2255cc; // mana bar fill
-export const TXT_MANA = "#5588ff"; // mana label / cost text
-export const TXT_MANA_LOW = "#cc4444"; // mana cost when hero can't afford
-
-// ─── Battle log ──────────────────────────────────────────────────────────────
-export const TXT_LOG = "#a09070";
-
-// ─── Shop nodes (tree map) ────────────────────────────────────────────────────
-export const BG_NODE_SHOP = 0x0e1e38;
-export const BG_NODE_SHOP_DONE = 0x0a1830;
-export const BG_NODE_SHOP_LOCKED = 0x080e18;
-export const BORDER_SHOP = 0x5090e0;
-export const BORDER_SHOP_DONE = 0x3a6aaa;
-export const BORDER_SHOP_LOCKED = 0x1a2a44;
-export const TXT_SHOP = "#70aaff";
-export const TXT_SHOP_DONE = "#3a6aaa";
-export const TXT_SHOP_LOCKED = "#1a2a44";
-
-// ─── Overlays / gradient base ────────────────────────────────────────────────
-export const BG_BLACK = 0x000000;
-
-// ─── Preload ─────────────────────────────────────────────────────────────────
-export const BG_LOAD_BAR_TRACK = 0x2a2010; // progress bar background in PreloadScene
-
-// ─── Character select cards ──────────────────────────────────────────────────
-export const BG_CARD_LOCKED = 0x100c08; // locked class card background
-export const BORDER_CARD_LOCKED = 0x2a2018; // locked class card border
-export const BG_CARD_SELECTED = 0x2a1e08; // selected (highlighted) card background
-export const TINT_GOLD = 0xffd700; // stat icon hover tint
-export const DUST_MOTE_COLOR = 0xb89050; // main menu ambient dust particles
-
-// ─── Stat-point "Add" button in Move Management ──────────────────────────────
-export const BG_BTN_STAT = 0x2a4a18; // "add stat point" button default
-export const BG_BTN_STAT_HOVER = 0x3a6a24; // "add stat point" button hover
-
-// ─── Title stroke (used on light/textured backgrounds) ───────────────────────
+// One-off tints / small singletons that don't fit a group.
+export const TINT_GOLD       = 0xffd700;
+export const DUST_MOTE_COLOR = 0xb89050;
 export const STROKE_TITLE_DARK = "#2a1404";
-export const TXT_STROKE_TITLE = "#3a2008"; // title stroke on dark backgrounds
-export const TXT_STROKE_HEADER = "#4a3010"; // scene header stroke (lighter dark-gold)
-export const BG_TITLE_BAND = 0x000000;
-export const TXT_BOSS = "#c84a2a";
-export const TXT_TAGLINE = "#a09060"; // main menu subtitle / tagline
-export const TXT_TIER_BOSS = "#8a3a3a"; // boss-tier band label in TreeMap
 
-// ─── Locked card text ────────────────────────────────────────────────────────
-export const TXT_CARD_LOCKED = "#2a2418"; // body text on locked class cards
-export const TXT_CLASS_LOCKED = "#3a3020"; // class name text on locked cards
-export const TXT_COMING_SOON = "#4a3820"; // "COMING SOON" overlay on locked cards
-export const TXT_GOLD_WARM = "#c8b078"; // warm mid-gold (class moves list)
-
-// ─── Particles / ambient ─────────────────────────────────────────────────────
-export const TXT_DUST_MOTE = "#c87840"; // dust motes + monster active-buff text
-
-// ─── Skill points ────────────────────────────────────────────────────────────
-export const BG_STAT_CARD = 0x1a1408;
-export const BG_STAT_CARD_AVAIL = 0x1c2a10;
-export const BORDER_STAT_AVAIL = 0x5a8a3a;
-export const TXT_SKILL_POINTS = "#70cc50"; // green — unspent points badge
-
-// ─── Enemy intent + battle log colors ────────────────────────────────────────
-export const TXT_INTENT_ATTACK = "#c85030"; // red — physical damage
-export const TXT_LOG_MAGIC = "#a060e0"; // purple — magic damage
-export const TXT_INTENT_DEBUFF = "#9060c0"; // purple — debuff
-export const TXT_INTENT_BUFF = "#c8a035"; // gold — buff
-export const TXT_INTENT_HEAL = "#50aa50"; // green — heal/drain
-
-// ─── Meta-progression (shards) ──────────────────────────────────────────────
-export const TXT_SHARD  = "#c084fc"; // purple — shard currency
-export const BG_UPGRADE_AVAILABLE  = 0x1a0f2a; // dark purple card bg
-export const BG_UPGRADE_PURCHASED  = 0x0a1f0a; // dark green card bg (owned)
-export const BG_UPGRADE_LOCKED     = 0x100c08; // dim bg (locked)
-export const BORDER_SHARD          = 0x9333ea; // purple border
-export const BORDER_UPGRADE_OWNED  = 0x4ade80; // bright green — purchased upgrade border
-export const BG_BTN_BUY            = 0x2a1040; // dark purple — buy button default
-export const BG_BTN_BUY_HOVER      = 0x3d1a5e; // lighter purple — buy button hover
-
-// ─── Stat colours (equipment tooltips, move previews, upgrade grid) ──────────
-export const TXT_STAT_ATTACK  = "#ef4444"; // red   — ATK
-export const TXT_STAT_DEFENSE = "#9ca3af"; // grey  — DEF
-export const TXT_STAT_MAGIC   = "#a78bfa"; // purple — MAG
-export const TXT_STAT_HP      = "#4ade80"; // green — HP / heal
-export const TXT_MOVE_BUFF    = "#fbbf24"; // amber — self-buff effect
-export const TXT_MOVE_DEBUFF  = "#fb923c"; // orange — enemy debuff effect
-
-// ─── Item rarity colours ──────────────────────────────────────────────────────
-export const TXT_RARITY_EPIC  = "#f97316"; // orange — epic rarity
-// rare reuses TXT_STAT_MAGIC (#a78bfa); common reuses TXT_GOLD_MID
-
+// Lookups keyed by gameplay enums.
 export const RARITY_COLOR: Record<string, string> = {
-  common: "#a07840", // TXT_GOLD_MID value
-  rare:   TXT_STAT_MAGIC,
-  epic:   TXT_RARITY_EPIC,
+  common: TXT.GOLD_MID,
+  rare:   TXT.STAT_MAGIC,
+  epic:   TXT.RARITY_EPIC,
 };
 
 export const RARITY_COLOR_NUM: Record<string, number> = {
@@ -165,11 +143,8 @@ export const RARITY_COLOR_NUM: Record<string, number> = {
 };
 
 export const STAT_COLOR: Record<string, string> = {
-  attack:  TXT_STAT_ATTACK,
-  defense: TXT_STAT_DEFENSE,
-  magic:   TXT_STAT_MAGIC,
-  maxHp:   TXT_STAT_HP,
+  attack:  TXT.STAT_ATTACK,
+  defense: TXT.STAT_DEFENSE,
+  magic:   TXT.STAT_MAGIC,
+  maxHp:   TXT.STAT_HP,
 };
-
-// ─── Generic black (shadow / stroke strings) ─────────────────────────────────
-export const TXT_BLACK = "#000000";

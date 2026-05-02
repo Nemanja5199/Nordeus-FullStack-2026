@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { Scene, BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD, FONT_LOAD } from "../constants";
+import { Scene, BG, BORDER, TXT, FONT } from "../constants";
 import { MetaProgress, GameState, Cloud } from "../state";
 import { MusicAsset, SFX_FILES } from "../audio";
 
@@ -11,18 +11,18 @@ export class PreloadScene extends Phaser.Scene {
   preload() {
     const { width, height } = this.scale;
 
-    this.add.rectangle(0, 0, width, height, BG_DARKEST).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG.DARKEST).setOrigin(0);
     this.add
       .text(width / 2, height / 2 - 40, "Loading...", {
-        fontSize: FONT_LOAD,
-        color: TXT_GOLD,
+        fontSize: FONT.LOAD,
+        color: TXT.GOLD,
       })
       .setOrigin(0.5);
 
     const bar = this.add
-      .rectangle(width / 2 - 200, height / 2 + 10, 0, 20, BORDER_GOLD)
+      .rectangle(width / 2 - 200, height / 2 + 10, 0, 20, BORDER.GOLD)
       .setOrigin(0, 0.5);
-    this.add.rectangle(width / 2, height / 2 + 10, 400, 20, BG_LOAD_BAR_TRACK).setOrigin(0.5);
+    this.add.rectangle(width / 2, height / 2 + 10, 400, 20, BG.LOAD_BAR_TRACK).setOrigin(0.5);
 
     this.load.on("progress", (v: number) => bar.setSize(400 * v, 20));
 

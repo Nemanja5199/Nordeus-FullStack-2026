@@ -1,17 +1,9 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT_TITLE, FONT_LG, FONT_BODY } from "../constants";
+import { Scene, type SceneKey, FONT } from "../constants";
 import { createModalFooter } from "../ui";
 import { Settings } from "../state";
 import { Audio, SfxPlayer, Sfx } from "../audio";
-import {
-  BG_BLACK,
-  BG_DARKEST,
-  BORDER_GOLD,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_MUTED,
-  TXT_STROKE_HEADER,
-} from "../constants";
+import { BG, BORDER, TXT } from "../constants";
 
 interface OptionsData {
   returnScene?: SceneKey;
@@ -34,14 +26,14 @@ export class OptionsScene extends Phaser.Scene {
     this.returnScene = data.returnScene ?? Scene.MainMenu;
     const { width, height } = this.scale;
 
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
+    this.add.rectangle(0, 0, width, height, BG.DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 60, "OPTIONS", {
-        fontSize: FONT_TITLE,
+        fontSize: FONT.TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_STROKE_HEADER,
+        color: TXT.GOLD,
+        stroke: TXT.STROKE_HEADER,
         strokeThickness: 3,
       })
       .setOrigin(0.5);
@@ -122,29 +114,29 @@ export class OptionsScene extends Phaser.Scene {
 
     const label = this.add
       .text(boxX + 50, cy, title, {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: read() ? TXT_GOLD : TXT_MUTED,
+        color: read() ? TXT.GOLD : TXT.MUTED,
       })
       .setOrigin(0, 0.5);
 
     this.add
-      .rectangle(boxX, cy, boxSize, boxSize, BG_BLACK)
+      .rectangle(boxX, cy, boxSize, boxSize, BG.BLACK)
       .setStrokeStyle(2, 0xb0b0b0)
       .setOrigin(0.5);
 
     const check = this.add
       .text(boxX, cy, "✓", {
-        fontSize: FONT_LG,
-        color: TXT_GOLD,
+        fontSize: FONT.LG,
+        color: TXT.GOLD,
       })
       .setOrigin(0.5)
       .setVisible(read());
 
     const desc = this.add
       .text(boxX, cy + 36, description, {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_LIGHT,
         wordWrap: { width: 540 },
       })
       .setOrigin(0, 0);
@@ -159,7 +151,7 @@ export class OptionsScene extends Phaser.Scene {
         onToggle();
         const on = read();
         check.setVisible(on);
-        label.setColor(on ? TXT_GOLD : TXT_MUTED);
+        label.setColor(on ? TXT.GOLD : TXT.MUTED);
       });
 
     return { label, check, desc };
@@ -182,15 +174,15 @@ export class OptionsScene extends Phaser.Scene {
 
     this.add
       .text(trackX, cy - 16, title, {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
+        color: TXT.GOLD,
       })
       .setOrigin(0, 0.5);
 
     const track = this.add
-      .rectangle(trackX, trackY, trackW, trackH, BG_BLACK)
-      .setStrokeStyle(2, BORDER_GOLD)
+      .rectangle(trackX, trackY, trackW, trackH, BG.BLACK)
+      .setStrokeStyle(2, BORDER.GOLD)
       .setOrigin(0, 0.5)
       .setInteractive({ useHandCursor: true });
 
@@ -206,16 +198,16 @@ export class OptionsScene extends Phaser.Scene {
 
     const valueText = this.add
       .text(trackX + trackW + 18, trackY, `${Math.round(read() * 100)}%`, {
-        fontSize: FONT_BODY,
+        fontSize: FONT.BODY,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_LIGHT,
+        color: TXT.GOLD_LIGHT,
       })
       .setOrigin(0, 0.5);
 
     this.add
       .text(trackX, cy + 36, description, {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_LIGHT,
         wordWrap: { width: 540 },
       })
       .setOrigin(0, 0);

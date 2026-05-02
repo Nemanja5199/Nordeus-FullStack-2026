@@ -1,30 +1,10 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS, MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../constants";
+import { Scene, type SceneKey, FONT, MOVE_CARD } from "../constants";
 import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
 import { GameState } from "../state";
 import type { MoveConfig } from "../types/game";
 import { buildMoveStatLines } from "../combat";
-import {
-  BG_DARKEST,
-  BG_MOVE_CARD,
-  BG_MOVE_EQUIPPED,
-  BORDER_GOLD,
-  BORDER_GOLD_BRIGHT,
-  BORDER_LOCKED,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_GOLD_MID,
-  TXT_MUTED,
-  TXT_HERO,
-  TXT_LOCKED,
-  BG_STAT_CARD,
-  BG_STAT_CARD_AVAIL,
-  BORDER_STAT_AVAIL,
-  TXT_SKILL_POINTS,
-  BG_BTN_STAT,
-  BG_BTN_STAT_HOVER,
-  TXT_STROKE_HEADER,
-} from "../constants";
+import { BG, BORDER, TXT } from "../constants";
 
 interface MoveManagementData {
   returnScene: SceneKey;
@@ -55,14 +35,14 @@ export class MoveManagementScene extends Phaser.Scene {
 
     const { width, height } = this.scale;
 
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
+    this.add.rectangle(0, 0, width, height, BG.DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 34, "MOVE MANAGEMENT", {
-        fontSize: FONT_TITLE,
+        fontSize: FONT.TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_STROKE_HEADER,
+        color: TXT.GOLD,
+        stroke: TXT.STROKE_HEADER,
         strokeThickness: 3,
       })
       .setOrigin(0.5);
@@ -73,23 +53,23 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.add
       .text(colLearnedX, 90, "LEARNED MOVES", {
-        fontSize: FONT_BODY,
+        fontSize: FONT.BODY,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_MID,
+        color: TXT.GOLD_MID,
       })
       .setOrigin(0.5);
     this.add
       .text(colEquippedX, 90, "EQUIPPED SLOTS", {
-        fontSize: FONT_BODY,
+        fontSize: FONT.BODY,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_MID,
+        color: TXT.GOLD_MID,
       })
       .setOrigin(0.5);
     this.add
       .text(colStatsX, 90, "STAT POINTS", {
-        fontSize: FONT_BODY,
+        fontSize: FONT.BODY,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_MID,
+        color: TXT.GOLD_MID,
       })
       .setOrigin(0.5);
 
@@ -101,7 +81,7 @@ export class MoveManagementScene extends Phaser.Scene {
       (divTop + divBot) / 2,
       1,
       divBot - divTop,
-      BORDER_GOLD,
+      BORDER.GOLD,
       divAlpha,
     );
     this.add.rectangle(
@@ -109,7 +89,7 @@ export class MoveManagementScene extends Phaser.Scene {
       (divTop + divBot) / 2,
       1,
       divBot - divTop,
-      BORDER_GOLD,
+      BORDER.GOLD,
       divAlpha,
     );
 
@@ -134,12 +114,12 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.tooltip.begin();
     this.tooltip.addText(cx, baseY, move.description, {
-      fontSize: FONT_SM,
-      color: TXT_MUTED,
+      fontSize: FONT.SM,
+      color: TXT.MUTED,
       wordWrap: { width: width * 0.75 },
       align: "center",
     });
-    this.tooltip.addHorizontalRow(buildMoveStatLines(move), baseY + 26, FONT_LG);
+    this.tooltip.addHorizontalRow(buildMoveStatLines(move), baseY + 26, FONT.LG);
   }
 
   private clearMoveTooltip(): void {
@@ -148,17 +128,17 @@ export class MoveManagementScene extends Phaser.Scene {
 
   private buildLearnedPanel(panelX: number) {
     const learned = GameState.hero.learnedMoves;
-    const rowStep = CARD_H + CARD_GAP;
-    const contentH = learned.length * rowStep - CARD_GAP;
+    const rowStep = MOVE_CARD.H + MOVE_CARD.GAP;
+    const contentH = learned.length * rowStep - MOVE_CARD.GAP;
     const { width: scaleW, height: scaleH } = this.scale;
-    const viewportH = Math.max(120, scaleH - START_Y - 160);
+    const viewportH = Math.max(120, scaleH - MOVE_CARD.START_Y - 160);
 
     this.learnedScroll = createScrollableArea(this, {
       x: 0,
-      y: START_Y - CARD_H / 2,
+      y: MOVE_CARD.START_Y - MOVE_CARD.H / 2,
       width: scaleW,
-      height: viewportH + CARD_H,
-      contentHeight: contentH + CARD_H,
+      height: viewportH + MOVE_CARD.H,
+      contentHeight: contentH + MOVE_CARD.H,
     });
 
     learned.forEach((moveId, i) => {
@@ -166,21 +146,21 @@ export class MoveManagementScene extends Phaser.Scene {
       if (!move) return;
 
       const isEquipped = GameState.hero.equippedMoves.includes(moveId);
-      const cardCenterY = i * rowStep + CARD_H / 2;
+      const cardCenterY = i * rowStep + MOVE_CARD.H / 2;
 
       const container = this.add.container(panelX, cardCenterY);
       const bg = this.add
-        .rectangle(0, 0, CARD_W, CARD_H, isEquipped ? BG_MOVE_EQUIPPED : BG_MOVE_CARD, 0.92)
-        .setStrokeStyle(1, isEquipped ? BORDER_GOLD : BORDER_LOCKED);
+        .rectangle(0, 0, MOVE_CARD.W, MOVE_CARD.H, isEquipped ? BG.MOVE_EQUIPPED : BG.MOVE_CARD, 0.92)
+        .setStrokeStyle(1, isEquipped ? BORDER.GOLD : BORDER.LOCKED);
 
-      const nameTxt = this.add.text(-CARD_W / 2 + 14, -12, move.name, {
-        fontSize: FONT_MD,
+      const nameTxt = this.add.text(-MOVE_CARD.W / 2 + 14, -12, move.name, {
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_LIGHT,
+        color: TXT.GOLD_LIGHT,
       });
-      const typeTxt = this.add.text(-CARD_W / 2 + 14, 10, `[${move.moveType}]`, {
-        fontSize: FONT_SM,
-        color: TXT_MUTED,
+      const typeTxt = this.add.text(-MOVE_CARD.W / 2 + 14, 10, `[${move.moveType}]`, {
+        fontSize: FONT.SM,
+        color: TXT.MUTED,
       });
 
       bg.setInteractive({ useHandCursor: true });
@@ -200,21 +180,21 @@ export class MoveManagementScene extends Phaser.Scene {
     for (let slot = 0; slot < 4; slot++) {
       const moveId = GameState.hero.equippedMoves[slot];
       const move = moveId ? GameState.runConfig!.moves[moveId] : null;
-      const y = START_Y + slot * (CARD_H + CARD_GAP);
+      const y = MOVE_CARD.START_Y + slot * (MOVE_CARD.H + MOVE_CARD.GAP);
 
       const container = this.add.container(panelX, y);
       const bg = this.add
-        .rectangle(0, 0, CARD_W, CARD_H, BG_MOVE_CARD, 0.92)
-        .setStrokeStyle(1, BORDER_LOCKED);
+        .rectangle(0, 0, MOVE_CARD.W, MOVE_CARD.H, BG.MOVE_CARD, 0.92)
+        .setStrokeStyle(1, BORDER.LOCKED);
 
-      const slotTxt = this.add.text(-CARD_W / 2 + 14, -18, `SLOT ${slot + 1}`, {
-        fontSize: FONT_XS,
-        color: TXT_MUTED,
+      const slotTxt = this.add.text(-MOVE_CARD.W / 2 + 14, -18, `SLOT ${slot + 1}`, {
+        fontSize: FONT.XS,
+        color: TXT.MUTED,
       });
-      const nameTxt = this.add.text(-CARD_W / 2 + 14, 4, move ? move.name : "(empty)", {
-        fontSize: FONT_MD,
+      const nameTxt = this.add.text(-MOVE_CARD.W / 2 + 14, 4, move ? move.name : "(empty)", {
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: move ? TXT_HERO : TXT_LOCKED,
+        color: move ? TXT.HERO : TXT.LOCKED,
       });
 
       bg.setInteractive({ useHandCursor: true });
@@ -235,9 +215,9 @@ export class MoveManagementScene extends Phaser.Scene {
 
     this.add
       .text(panelX, 112, pts > 0 ? `✦ ${pts} to spend` : "no points", {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: pts > 0 ? TXT_SKILL_POINTS : TXT_MUTED,
+        color: pts > 0 ? TXT.SKILL_POINTS : TXT.MUTED,
       })
       .setOrigin(0.5);
 
@@ -261,48 +241,48 @@ export class MoveManagementScene extends Phaser.Scene {
       const val = key === "maxHp" ? GameState.hero.maxHp : GameState.hero[key];
 
       this.add
-        .rectangle(panelX, y, cardW, cardH, haspts ? BG_STAT_CARD_AVAIL : BG_STAT_CARD, 0.95)
-        .setStrokeStyle(haspts ? 2 : 1, haspts ? BORDER_STAT_AVAIL : BORDER_LOCKED);
+        .rectangle(panelX, y, cardW, cardH, haspts ? BG.STAT_CARD_AVAIL : BG.STAT_CARD, 0.95)
+        .setStrokeStyle(haspts ? 2 : 1, haspts ? BORDER.STAT_AVAIL : BORDER.LOCKED);
 
       this.add.text(panelX - cardW / 2 + 14, y - 22, label, {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
+        color: TXT.GOLD,
       });
       this.add.text(panelX - cardW / 2 + 14, y - 2, sub, {
-        fontSize: FONT_SM,
-        color: TXT_MUTED,
+        fontSize: FONT.SM,
+        color: TXT.MUTED,
       });
 
       this.add.text(panelX - cardW / 2 + 14, y + 16, String(val), {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_LIGHT,
+        color: TXT.GOLD_LIGHT,
       });
 
       this.add.text(panelX - cardW / 2 + 66, y + 16, gain, {
-        fontSize: FONT_BODY,
+        fontSize: FONT.BODY,
         fontFamily: "EnchantedLand",
-        color: haspts ? TXT_SKILL_POINTS : TXT_MUTED,
+        color: haspts ? TXT.SKILL_POINTS : TXT.MUTED,
       });
 
       if (haspts) {
         const btnX = panelX + cardW / 2 - 36;
         const btn = this.add
-          .rectangle(btnX, y, 56, 36, BG_BTN_STAT, 0.95)
-          .setStrokeStyle(1, BORDER_STAT_AVAIL)
+          .rectangle(btnX, y, 56, 36, BG.BTN_STAT, 0.95)
+          .setStrokeStyle(1, BORDER.STAT_AVAIL)
           .setInteractive({ useHandCursor: true });
 
         this.add
           .text(btnX, y, "+ Add", {
-            fontSize: FONT_SM,
+            fontSize: FONT.SM,
             fontFamily: "EnchantedLand",
-            color: TXT_SKILL_POINTS,
+            color: TXT.SKILL_POINTS,
           })
           .setOrigin(0.5);
 
-        btn.on("pointerover", () => btn.setFillStyle(BG_BTN_STAT_HOVER));
-        btn.on("pointerout", () => btn.setFillStyle(BG_BTN_STAT));
+        btn.on("pointerover", () => btn.setFillStyle(BG.BTN_STAT_HOVER));
+        btn.on("pointerout", () => btn.setFillStyle(BG.BTN_STAT));
         btn.on("pointerdown", () => {
           GameState.spendSkillPoint(key);
           this.children.removeAll(true);
@@ -319,7 +299,7 @@ export class MoveManagementScene extends Phaser.Scene {
     this.learnedButtons.forEach((c, i) => {
       (c.getAt(0) as Phaser.GameObjects.Rectangle).setStrokeStyle(
         2,
-        i === index ? BORDER_GOLD_BRIGHT : BORDER_LOCKED,
+        i === index ? BORDER.GOLD_BRIGHT : BORDER.LOCKED,
       );
     });
 
@@ -334,7 +314,7 @@ export class MoveManagementScene extends Phaser.Scene {
     this.equippedButtons.forEach((c, i) => {
       (c.getAt(0) as Phaser.GameObjects.Rectangle).setStrokeStyle(
         2,
-        i === slot ? BORDER_GOLD_BRIGHT : BORDER_LOCKED,
+        i === slot ? BORDER.GOLD_BRIGHT : BORDER.LOCKED,
       );
     });
 

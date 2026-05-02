@@ -1,29 +1,11 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../constants";
+import { Scene, type SceneKey, FONT } from "../constants";
 import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
-import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../state";
+import { GameState, POTION_PRICE } from "../state";
 import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem } from "../types/game";
 import { itemFrames } from "../sprites";
-import {
-  BG_DARKEST,
-  BG_MOVE_CARD,
-  BG_BTN_HOVER,
-  BORDER_GOLD_BRIGHT,
-  BORDER_LOCKED,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_GOLD_MID,
-  TXT_MUTED,
-  TXT_LOCKED,
-  TXT_STROKE_HEADER,
-  TXT_DEFEAT,
-  TXT_STAT_ATTACK,
-  TXT_STAT_DEFENSE,
-  TXT_STAT_MAGIC,
-  TXT_STAT_HP,
-  RARITY_COLOR,
-} from "../constants";
+import { BG, BORDER, TXT, RARITY_COLOR } from "../constants";
 
 interface ShopData {
   returnScene: SceneKey;
@@ -54,23 +36,23 @@ export class ShopScene extends Phaser.Scene {
     this.gearScroll = undefined;
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
+    this.add.rectangle(0, 0, width, height, BG.DARKEST, 0.97).setOrigin(0).setInteractive();
 
     this.add
       .text(width / 2, 34, "SHOP", {
-        fontSize: FONT_TITLE,
+        fontSize: FONT.TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_STROKE_HEADER,
+        color: TXT.GOLD,
+        stroke: TXT.STROKE_HEADER,
         strokeThickness: 3,
       })
       .setOrigin(0.5);
 
     this.add
       .text(width / 2, 78, `Gold: ${GameState.hero.gold ?? 0}g`, {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
+        color: TXT.GOLD,
       })
       .setOrigin(0.5);
 
@@ -90,9 +72,9 @@ export class ShopScene extends Phaser.Scene {
   private buildGearSection(width: number, _height: number) {
     this.add
       .text(width / 2, 116, "GEAR", {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_MID,
+        color: TXT.GOLD_MID,
       })
       .setOrigin(0.5);
 
@@ -139,8 +121,8 @@ export class ShopScene extends Phaser.Scene {
     const buyable = !owned && !lockedByLv && canAfford;
 
     const bg = this.add
-      .rectangle(x, y, GEAR_ROW_W, ROW_H, BG_MOVE_CARD, 0.92)
-      .setStrokeStyle(1, BORDER_LOCKED)
+      .rectangle(x, y, GEAR_ROW_W, ROW_H, BG.MOVE_CARD, 0.92)
+      .setStrokeStyle(1, BORDER.LOCKED)
       .setInteractive({ useHandCursor: buyable });
 
     const iconKey = itemFrames[item.id];
@@ -152,9 +134,9 @@ export class ShopScene extends Phaser.Scene {
     const textLeft = x - GEAR_ROW_W / 2 + ICON_SIZE + 22;
     const nameTxt = this.add
       .text(textLeft, y - 16, item.name, {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: RARITY_COLOR[item.rarity] ?? TXT_GOLD_LIGHT,
+        color: RARITY_COLOR[item.rarity] ?? TXT.GOLD_LIGHT,
       })
       .setOrigin(0, 0.5);
 
@@ -165,30 +147,30 @@ export class ShopScene extends Phaser.Scene {
     let badgeColor: string;
     if (owned) {
       badgeText = "OWNED";
-      badgeColor = TXT_LOCKED;
+      badgeColor = TXT.LOCKED;
     } else if (lockedByLv) {
       badgeText = `Req Lv ${TIER_UNLOCK_LEVEL[item.tier]}`;
-      badgeColor = TXT_LOCKED;
+      badgeColor = TXT.LOCKED;
     } else {
       badgeText = `${item.cost}g`;
-      badgeColor = canAfford ? TXT_GOLD : TXT_DEFEAT;
+      badgeColor = canAfford ? TXT.GOLD : TXT.DEFEAT;
     }
     const badgeTxt = this.add
       .text(x + GEAR_ROW_W / 2 - 16, y, badgeText, {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
         color: badgeColor,
       })
       .setOrigin(1, 0.5);
 
     bg.on("pointerover", () => {
-      bg.setFillStyle(buyable ? BG_BTN_HOVER : BG_MOVE_CARD);
-      bg.setStrokeStyle(1, buyable ? BORDER_GOLD_BRIGHT : BORDER_LOCKED);
+      bg.setFillStyle(buyable ? BG.BTN_HOVER : BG.MOVE_CARD);
+      bg.setStrokeStyle(1, buyable ? BORDER.GOLD_BRIGHT : BORDER.LOCKED);
       this.showItemTooltip(item);
     });
     bg.on("pointerout", () => {
-      bg.setFillStyle(BG_MOVE_CARD);
-      bg.setStrokeStyle(1, BORDER_LOCKED);
+      bg.setFillStyle(BG.MOVE_CARD);
+      bg.setStrokeStyle(1, BORDER.LOCKED);
       this.tooltip.clear();
     });
     if (buyable) {
@@ -216,10 +198,10 @@ export class ShopScene extends Phaser.Scene {
   // Lays out +N STAT chunks left-to-right, each in its stat color.
   private buildStatChunks(item: GearItem, x: number, y: number): Phaser.GameObjects.Text[] {
     const chunks: Array<{ value: number; label: string; color: string }> = [];
-    if (item.statBonuses.attack) chunks.push({ value: item.statBonuses.attack, label: "ATK", color: TXT_STAT_ATTACK });
-    if (item.statBonuses.defense) chunks.push({ value: item.statBonuses.defense, label: "DEF", color: TXT_STAT_DEFENSE });
-    if (item.statBonuses.magic) chunks.push({ value: item.statBonuses.magic, label: "MAG", color: TXT_STAT_MAGIC });
-    if (item.statBonuses.maxHp) chunks.push({ value: item.statBonuses.maxHp, label: "HP",  color: TXT_STAT_HP });
+    if (item.statBonuses.attack) chunks.push({ value: item.statBonuses.attack, label: "ATK", color: TXT.STAT_ATTACK });
+    if (item.statBonuses.defense) chunks.push({ value: item.statBonuses.defense, label: "DEF", color: TXT.STAT_DEFENSE });
+    if (item.statBonuses.magic) chunks.push({ value: item.statBonuses.magic, label: "MAG", color: TXT.STAT_MAGIC });
+    if (item.statBonuses.maxHp) chunks.push({ value: item.statBonuses.maxHp, label: "HP",  color: TXT.STAT_HP });
 
     const out: Phaser.GameObjects.Text[] = [];
     let cursor = x;
@@ -227,7 +209,7 @@ export class ShopScene extends Phaser.Scene {
       const sign = c.value >= 0 ? "+" : "";
       const txt = this.add
         .text(cursor, y, `${sign}${c.value} ${c.label}`, {
-          fontSize: FONT_BODY,
+          fontSize: FONT.BODY,
           fontFamily: "EnchantedLand",
           color: c.color,
         })
@@ -244,13 +226,13 @@ export class ShopScene extends Phaser.Scene {
     const baseY = height - 195;
     this.tooltip.begin();
     this.tooltip.addText(cx, baseY, item.name, {
-      fontSize: FONT_LG,
+      fontSize: FONT.LG,
       fontFamily: "EnchantedLand",
-      color: RARITY_COLOR[item.rarity] ?? TXT_GOLD,
+      color: RARITY_COLOR[item.rarity] ?? TXT.GOLD,
     });
     this.tooltip.addText(cx, baseY + 28, item.description, {
-      fontSize: FONT_BODY,
-      color: TXT_MUTED,
+      fontSize: FONT.BODY,
+      color: TXT.MUTED,
     });
   }
 
@@ -260,9 +242,9 @@ export class ShopScene extends Phaser.Scene {
     const startY = Math.min(470, height - 205 - sectionH);
     this.add
       .text(width / 2, startY, "POTIONS", {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_MID,
+        color: TXT.GOLD_MID,
       })
       .setOrigin(0.5);
 
@@ -272,7 +254,7 @@ export class ShopScene extends Phaser.Scene {
       "potion_hp",
       "HP Potion",
       "Heals 40 HP",
-      HP_POTION_PRICE,
+      POTION_PRICE.HP,
       () => GameState.buyHpPotion(),
     );
     this.buildPotionRow(
@@ -281,7 +263,7 @@ export class ShopScene extends Phaser.Scene {
       "potion_mp",
       "Mana Potion",
       "Restores 30 MP",
-      MANA_POTION_PRICE,
+      POTION_PRICE.MANA,
       () => GameState.buyManaPotion(),
     );
   }
@@ -298,8 +280,8 @@ export class ShopScene extends Phaser.Scene {
     const canAfford = (GameState.hero.gold ?? 0) >= cost;
 
     const bg = this.add
-      .rectangle(x, y, POTION_ROW_W, POTION_ROW_H, BG_MOVE_CARD, 0.92)
-      .setStrokeStyle(1, BORDER_LOCKED)
+      .rectangle(x, y, POTION_ROW_W, POTION_ROW_H, BG.MOVE_CARD, 0.92)
+      .setStrokeStyle(1, BORDER.LOCKED)
       .setInteractive({ useHandCursor: canAfford });
 
     const iconLeft = x - POTION_ROW_W / 2 + POTION_ICON_SIZE / 2 + 10;
@@ -309,33 +291,33 @@ export class ShopScene extends Phaser.Scene {
     const textLeft = x - POTION_ROW_W / 2 + POTION_ICON_SIZE + 20;
     this.add
       .text(textLeft, y - 12, name, {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD_LIGHT,
+        color: TXT.GOLD_LIGHT,
       })
       .setOrigin(0, 0.5);
     this.add
       .text(textLeft, y + 12, desc, {
-        fontSize: FONT_BODY,
-        color: TXT_MUTED,
+        fontSize: FONT.BODY,
+        color: TXT.MUTED,
       })
       .setOrigin(0, 0.5);
 
     this.add
       .text(x + POTION_ROW_W / 2 - 16, y, `${cost}g`, {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: canAfford ? TXT_GOLD : TXT_DEFEAT,
+        color: canAfford ? TXT.GOLD : TXT.DEFEAT,
       })
       .setOrigin(1, 0.5);
 
     bg.on("pointerover", () => {
-      bg.setFillStyle(canAfford ? BG_BTN_HOVER : BG_MOVE_CARD);
-      bg.setStrokeStyle(1, canAfford ? BORDER_GOLD_BRIGHT : BORDER_LOCKED);
+      bg.setFillStyle(canAfford ? BG.BTN_HOVER : BG.MOVE_CARD);
+      bg.setStrokeStyle(1, canAfford ? BORDER.GOLD_BRIGHT : BORDER.LOCKED);
     });
     bg.on("pointerout", () => {
-      bg.setFillStyle(BG_MOVE_CARD);
-      bg.setStrokeStyle(1, BORDER_LOCKED);
+      bg.setFillStyle(BG.MOVE_CARD);
+      bg.setStrokeStyle(1, BORDER.LOCKED);
     });
     if (canAfford) {
       bg.on("pointerdown", () => {

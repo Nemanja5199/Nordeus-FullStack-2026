@@ -1,21 +1,10 @@
 import Phaser from "phaser";
-import { Scene, FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../constants";
+import { Scene, FONT } from "../constants";
 import { createButton, BTN_LG } from "../ui";
 import { api } from "../services/api";
 import { GameState, TestMode } from "../state";
 import { Audio, TrackGroup } from "../audio";
-import {
-  BG_BLACK,
-  BG_BTN_SUCCESS,
-  BG_BTN_NEUTRAL,
-  BG_BTN_DANGER,
-  DUST_MOTE_COLOR,
-  TXT_GOLD,
-  TXT_STROKE_TITLE,
-  TXT_TAGLINE,
-  TXT_MUTED,
-  TXT_BOSS,
-} from "../constants";
+import { BG, DUST_MOTE_COLOR, TXT } from "../constants";
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -28,7 +17,7 @@ export class MainMenuScene extends Phaser.Scene {
     Audio.play(this, TrackGroup.Menu);
 
     this.add.tileSprite(0, 0, width, height, "bg_brick").setOrigin(0);
-    this.add.rectangle(0, 0, width, height, BG_BLACK, 0.62).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG.BLACK, 0.62).setOrigin(0);
 
     // Dust motes
     for (let i = 0; i < 80; i++) {
@@ -40,19 +29,19 @@ export class MainMenuScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, height * 0.22, "RPG Gauntlet", {
-        fontSize: FONT_GAME_TITLE,
+        fontSize: FONT.GAME_TITLE,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
-        stroke: TXT_STROKE_TITLE,
+        color: TXT.GOLD,
+        stroke: TXT.STROKE_TITLE,
         strokeThickness: 8,
       })
       .setOrigin(0.5);
 
     this.add
       .text(width / 2, height * 0.36, "The dragon will break you.\nThe fire will remake you.", {
-        fontSize: FONT_TAGLINE,
+        fontSize: FONT.TAGLINE,
         fontFamily: "EnchantedLand",
-        color: TXT_TAGLINE,
+        color: TXT.TAGLINE,
         align: "center",
       })
       .setOrigin(0.5);
@@ -64,27 +53,27 @@ export class MainMenuScene extends Phaser.Scene {
     createButton(this, width / 2, btnY + btnGap * row++, {
       ...BTN_LG,
       label: "NEW GAME",
-      color: BG_BTN_SUCCESS,
+      color: BG.BTN_SUCCESS,
       onClick: () => this.startNewGame(),
     });
     if (hasSave) {
       createButton(this, width / 2, btnY + btnGap * row++, {
         ...BTN_LG,
         label: "CONTINUE",
-        color: BG_BTN_NEUTRAL,
+        color: BG.BTN_NEUTRAL,
         onClick: () => this.continueGame(),
       });
       createButton(this, width / 2, btnY + btnGap * row++, {
         ...BTN_LG,
         label: "RESET PROGRESS",
-        color: BG_BTN_DANGER,
+        color: BG.BTN_DANGER,
         onClick: () => this.resetProgress(),
       });
     }
     createButton(this, width / 2, btnY + btnGap * row++, {
       ...BTN_LG,
       label: "OPTIONS",
-      color: BG_BTN_NEUTRAL,
+      color: BG.BTN_NEUTRAL,
       onClick: () => this.scene.start(Scene.Options, { returnScene: Scene.MainMenu }),
     });
 
@@ -101,21 +90,21 @@ export class MainMenuScene extends Phaser.Scene {
 
     const labelText = this.add
       .text(width - padX, height - padY, "Test Mode", {
-        fontSize: FONT_SM,
-        color: TestMode.isOn() ? TXT_GOLD : TXT_MUTED,
+        fontSize: FONT.SM,
+        color: TestMode.isOn() ? TXT.GOLD : TXT.MUTED,
       })
       .setOrigin(1, 0.5);
 
     const boxX = labelText.x - labelText.width - 14;
     this.add
-      .rectangle(boxX, height - padY, boxSize, boxSize, BG_BLACK)
+      .rectangle(boxX, height - padY, boxSize, boxSize, BG.BLACK)
       .setStrokeStyle(2, 0xb0b0b0)
       .setOrigin(0.5);
 
     const check = this.add
       .text(boxX, height - padY, "✓", {
-        fontSize: FONT_SM,
-        color: TXT_GOLD,
+        fontSize: FONT.SM,
+        color: TXT.GOLD,
       })
       .setOrigin(0.5)
       .setVisible(TestMode.isOn());
@@ -129,7 +118,7 @@ export class MainMenuScene extends Phaser.Scene {
       .on("pointerup", () => {
         const on = TestMode.toggle();
         check.setVisible(on);
-        labelText.setColor(on ? TXT_GOLD : TXT_MUTED);
+        labelText.setColor(on ? TXT.GOLD : TXT.MUTED);
         localStorage.removeItem("rpg_hero");
       });
   }
@@ -137,8 +126,8 @@ export class MainMenuScene extends Phaser.Scene {
   private async startNewGame() {
     const loading = this.add
       .text(this.scale.width / 2, this.scale.height * 0.91, "Loading...", {
-        fontSize: FONT_MD,
-        color: TXT_MUTED,
+        fontSize: FONT.MD,
+        color: TXT.MUTED,
       })
       .setOrigin(0.5);
 
@@ -146,15 +135,15 @@ export class MainMenuScene extends Phaser.Scene {
       const config = await api.getRunConfig();
       this.scene.start(Scene.CharacterSelect, { runConfig: config });
     } catch {
-      loading.setText("Failed to connect to server. Is it running?").setColor(TXT_BOSS);
+      loading.setText("Failed to connect to server. Is it running?").setColor(TXT.BOSS);
     }
   }
 
   private async continueGame() {
     const loading = this.add
       .text(this.scale.width / 2, this.scale.height * 0.91, "Loading save...", {
-        fontSize: FONT_MD,
-        color: TXT_MUTED,
+        fontSize: FONT.MD,
+        color: TXT.MUTED,
       })
       .setOrigin(0.5);
 
@@ -166,11 +155,11 @@ export class MainMenuScene extends Phaser.Scene {
       if (localStorage.getItem("rpg_tree_state")) {
         this.scene.start(Scene.TreeMap);
       } else {
-        loading.setText("No save found — starting new game.").setColor(TXT_GOLD);
+        loading.setText("No save found — starting new game.").setColor(TXT.GOLD);
         this.time.delayedCall(1500, () => this.startNewGame());
       }
     } catch {
-      loading.setText("Failed to connect to server.").setColor(TXT_BOSS);
+      loading.setText("Failed to connect to server.").setColor(TXT.BOSS);
     }
   }
 
@@ -180,8 +169,8 @@ export class MainMenuScene extends Phaser.Scene {
     localStorage.removeItem("rpg_hero");
     this.add
       .text(this.scale.width / 2, this.scale.height * 0.91, "Progress reset.", {
-        fontSize: FONT_MD,
-        color: TXT_BOSS,
+        fontSize: FONT.MD,
+        color: TXT.BOSS,
       })
       .setOrigin(0.5);
   }

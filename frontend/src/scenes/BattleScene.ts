@@ -1,56 +1,13 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../constants";
+import { Scene, type SceneKey, FONT, BATTLE } from "../constants";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat";
-import {
-  HP_BAR_HIGH_THRESHOLD,
-  HP_BAR_MID_THRESHOLD,
-  HP_POTION_HEAL,
-  MANA_MAX,
-  MANA_REGEN,
-  MONSTER_LEVEL_SCALING,
-  MP_POTION_RESTORE,
-} from "../constants";
+import { HP_BAR, POTIONS, MANA, MONSTER_LEVEL_SCALING } from "../constants";
 import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../state";
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
 import { heroFrameFor, MONSTER_FRAMES } from "../sprites";
-import {
-  BG_DARKEST,
-  BG_HERO_BATTLE,
-  BG_MONSTER_BATTLE,
-  BG_MOVE_CARD,
-  BG_BTN_HOVER,
-  BG_PANEL,
-  BORDER_HERO_BATTLE,
-  BORDER_MON_BATTLE,
-  BORDER_LOCKED,
-  BORDER_GOLD,
-  BORDER_GOLD_BRIGHT,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_GOLD_MID,
-  TXT_MUTED,
-  TXT_HERO,
-  TXT_MONSTER,
-  BAR_HP_FILL,
-  BAR_HERO_HP,
-  BAR_HP_HIGH,
-  BAR_HP_MID,
-  BAR_HP_LOW,
-  BAR_MANA_FILL,
-  TXT_MANA,
-  TXT_MANA_LOW,
-  BG_BAR_TRACK,
-  HP_GHOST_HERO,
-  HP_GHOST_MONSTER,
-  TXT_INTENT_ATTACK,
-  TXT_INTENT_BUFF,
-  TXT_INTENT_DEBUFF,
-  TXT_INTENT_HEAL,
-  TXT_LOG_MAGIC,
-  TXT_DUST_MOTE,
-} from "../constants";
+import { BG, BORDER, TXT, BAR, HP_GHOST } from "../constants";
 
 interface BattleData {
   monster: MonsterConfig;
@@ -61,7 +18,7 @@ interface BattleData {
   levelBand?: { min: number; max: number };
 }
 
-const BAR_W = PANEL_W - 24;
+const BAR_W = BATTLE.PANEL_W - 24;
 
 export class BattleScene extends Phaser.Scene {
   private hero!: CombatCharacter;
@@ -75,8 +32,7 @@ export class BattleScene extends Phaser.Scene {
   private turnNumber = 0;
   private busy = false;
 
-  // Mana — values come from constants
-  private heroMana = MANA_MAX;
+  private heroMana: number = MANA.MAX;
   private heroManaBarLeft!: number;
   private usedPotionThisTurn = false;
   private potionButtons: Array<{
@@ -133,7 +89,7 @@ export class BattleScene extends Phaser.Scene {
     Audio.play(this, TrackGroup.Battle);
     this.busy = false;
     this.turnNumber = 0;
-    this.heroMana = MANA_MAX;
+    this.heroMana = MANA.MAX;
     this.moveButtons = [];
     this.potionButtons = [];
     this.usedPotionThisTurn = false;
@@ -187,7 +143,7 @@ export class BattleScene extends Phaser.Scene {
     };
 
     const { width, height } = this.scale;
-    this.add.rectangle(0, 0, width, height, BG_DARKEST).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, BG.DARKEST).setOrigin(0);
 
     this.buildHeroPanel(width, height);
     this.buildMonsterPanel(width, height);
@@ -208,14 +164,14 @@ export class BattleScene extends Phaser.Scene {
     const cx = width * 0.2;
 
     this.add
-      .rectangle(cx, panelTop + panelH / 2, PANEL_W, panelH, BG_HERO_BATTLE, 0.88)
-      .setStrokeStyle(2, BORDER_HERO_BATTLE);
+      .rectangle(cx, panelTop + panelH / 2, BATTLE.PANEL_W, panelH, BG.HERO_BATTLE, 0.88)
+      .setStrokeStyle(2, BORDER.HERO_BATTLE);
 
     this.add
       .text(cx, panelTop + 20, `Knight  Lv.${GameState.hero.level}`, {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_HERO,
+        color: TXT.HERO,
       })
       .setOrigin(0.5);
 
@@ -228,8 +184,8 @@ export class BattleScene extends Phaser.Scene {
     // Live effective stats (updated each turn)
     this.heroStatsText = this.add
       .text(cx, panelTop + panelH * 0.62, "", {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_LIGHT,
         align: "center",
       })
       .setOrigin(0.5);
@@ -238,39 +194,39 @@ export class BattleScene extends Phaser.Scene {
     const barY = panelTop + panelH * 0.70;
     this.heroBarLeft = cx - BAR_W / 2;
     this.heroBarY = barY;
-    this.add.rectangle(cx, barY, BAR_W, 14, BG_BAR_TRACK).setOrigin(0.5);
+    this.add.rectangle(cx, barY, BAR_W, 14, BG.BAR_TRACK).setOrigin(0.5);
     this.heroHpFill = this.add
-      .rectangle(this.heroBarLeft, barY, BAR_W, 14, BAR_HERO_HP)
+      .rectangle(this.heroBarLeft, barY, BAR_W, 14, BAR.HERO_HP)
       .setOrigin(0, 0.5);
     this.heroHpGhost = this.add
-      .rectangle(this.heroBarLeft, barY, 0, 14, HP_GHOST_HERO, 0.75)
+      .rectangle(this.heroBarLeft, barY, 0, 14, HP_GHOST.HERO, 0.75)
       .setOrigin(0, 0.5);
     this.heroHpText = this.add
       .text(cx, barY + 16, "", {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_LIGHT,
       })
       .setOrigin(0.5);
 
     // Mana bar
     const manaBarY = panelTop + panelH * 0.81;
     this.heroManaBarLeft = cx - BAR_W / 2;
-    this.add.rectangle(cx, manaBarY, BAR_W, 10, BG_BAR_TRACK).setOrigin(0.5);
+    this.add.rectangle(cx, manaBarY, BAR_W, 10, BG.BAR_TRACK).setOrigin(0.5);
     this.heroManaFill = this.add
-      .rectangle(this.heroManaBarLeft, manaBarY, BAR_W, 10, BAR_MANA_FILL)
+      .rectangle(this.heroManaBarLeft, manaBarY, BAR_W, 10, BAR.MANA_FILL)
       .setOrigin(0, 0.5);
     this.heroManaText = this.add
       .text(cx, manaBarY + 14, "", {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_LIGHT,
       })
       .setOrigin(0.5);
 
     this.heroBuffText = this.add
       .text(cx, panelTop + panelH * 0.93, "", {
-        fontSize: FONT_SM,
-        color: TXT_GOLD_MID,
-        wordWrap: { width: PANEL_W - 16 },
+        fontSize: FONT.SM,
+        color: TXT.GOLD_MID,
+        wordWrap: { width: BATTLE.PANEL_W - 16 },
         align: "center",
       })
       .setOrigin(0.5);
@@ -286,14 +242,14 @@ export class BattleScene extends Phaser.Scene {
     const cx = width * 0.8;
 
     this.add
-      .rectangle(cx, panelTop + panelH / 2, PANEL_W, panelH, BG_MONSTER_BATTLE, 0.88)
-      .setStrokeStyle(2, BORDER_MON_BATTLE);
+      .rectangle(cx, panelTop + panelH / 2, BATTLE.PANEL_W, panelH, BG.MONSTER_BATTLE, 0.88)
+      .setStrokeStyle(2, BORDER.MON_BATTLE);
 
     this.add
       .text(cx, panelTop + 20, this.monsterCfg.name, {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_MONSTER,
+        color: TXT.MONSTER,
       })
       .setOrigin(0.5);
 
@@ -312,8 +268,8 @@ export class BattleScene extends Phaser.Scene {
         panelTop + panelH * 0.62,
         `ATK ${this.monster.baseStats.attack}   DEF ${this.monster.baseStats.defense}   MAG ${this.monster.baseStats.magic}`,
         {
-          fontSize: FONT_BODY,
-          color: TXT_GOLD_LIGHT,
+          fontSize: FONT.BODY,
+          color: TXT.GOLD_LIGHT,
           align: "center",
         },
       )
@@ -323,27 +279,27 @@ export class BattleScene extends Phaser.Scene {
     const barY = panelTop + panelH * 0.72;
     this.monsterBarLeft = cx - BAR_W / 2;
     this.monsterBarY = barY;
-    this.add.rectangle(cx, barY, BAR_W, 14, BG_BAR_TRACK).setOrigin(0.5);
+    this.add.rectangle(cx, barY, BAR_W, 14, BG.BAR_TRACK).setOrigin(0.5);
     this.monsterHpFill = this.add
-      .rectangle(this.monsterBarLeft, barY, BAR_W, 14, BAR_HP_FILL)
+      .rectangle(this.monsterBarLeft, barY, BAR_W, 14, BAR.HP_FILL)
       .setOrigin(0, 0.5);
     this.monsterHpGhost = this.add
-      .rectangle(this.monsterBarLeft, barY, 0, 14, HP_GHOST_MONSTER, 0.85)
+      .rectangle(this.monsterBarLeft, barY, 0, 14, HP_GHOST.MONSTER, 0.85)
       .setOrigin(0, 0.5);
     this.monsterHpText = this.add
       .text(cx, barY + 18, "", {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_LIGHT,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_LIGHT,
       })
       .setOrigin(0.5);
 
     // Intent row — what the monster plans to do this turn
     this.monsterIntentText = this.add
       .text(cx, panelTop + panelH * 0.86, "", {
-        fontSize: FONT_MD,
+        fontSize: FONT.MD,
         fontFamily: "EnchantedLand",
-        color: TXT_MUTED,
-        wordWrap: { width: PANEL_W - 16 },
+        color: TXT.MUTED,
+        wordWrap: { width: BATTLE.PANEL_W - 16 },
         align: "center",
       })
       .setOrigin(0.5);
@@ -351,9 +307,9 @@ export class BattleScene extends Phaser.Scene {
     // Active buffs/debuffs
     this.monsterBuffText = this.add
       .text(cx, panelTop + panelH * 0.94, "", {
-        fontSize: FONT_SM,
-        color: TXT_DUST_MOTE,
-        wordWrap: { width: PANEL_W - 16 },
+        fontSize: FONT.SM,
+        color: TXT.DUST_MOTE,
+        wordWrap: { width: BATTLE.PANEL_W - 16 },
         align: "center",
       })
       .setOrigin(0.5);
@@ -365,12 +321,12 @@ export class BattleScene extends Phaser.Scene {
 
   private buildStatusBar(width: number, height: number) {
     const y = height * 0.66;
-    this.add.rectangle(width / 2, y, width - 20, 38, BG_PANEL, 0.92).setStrokeStyle(1, BORDER_GOLD);
+    this.add.rectangle(width / 2, y, width - 20, 38, BG.PANEL, 0.92).setStrokeStyle(1, BORDER.GOLD);
     this.statusText = this.add
       .text(width / 2, y, "", {
-        fontSize: FONT_LG,
+        fontSize: FONT.LG,
         fontFamily: "EnchantedLand",
-        color: TXT_GOLD,
+        color: TXT.GOLD,
       })
       .setOrigin(0.5);
   }
@@ -393,8 +349,8 @@ export class BattleScene extends Phaser.Scene {
 
     this.descText = this.add
       .text(width / 2, descY, "", {
-        fontSize: FONT_BODY,
-        color: TXT_GOLD_MID,
+        fontSize: FONT.BODY,
+        color: TXT.GOLD_MID,
         wordWrap: { width: width - 40 },
         align: "center",
       })
@@ -409,25 +365,25 @@ export class BattleScene extends Phaser.Scene {
       const cost = move.manaCost ?? 0;
 
       const bg = this.add
-        .rectangle(0, 0, btnW, btnH, BG_MOVE_CARD, 0.92)
-        .setStrokeStyle(1, BORDER_LOCKED);
+        .rectangle(0, 0, btnW, btnH, BG.MOVE_CARD, 0.92)
+        .setStrokeStyle(1, BORDER.LOCKED);
       const nameTxt = this.add
         .text(0, -12, move.name, {
-          fontSize: FONT_MD,
+          fontSize: FONT.MD,
           fontFamily: "EnchantedLand",
-          color: TXT_GOLD_LIGHT,
+          color: TXT.GOLD_LIGHT,
         })
         .setOrigin(0.5);
       const typeTxt = this.add
         .text(cost > 0 ? -20 : 0, 10, `[${move.moveType}]`, {
-          fontSize: FONT_SM,
-          color: TXT_GOLD_MID,
+          fontSize: FONT.SM,
+          color: TXT.GOLD_MID,
         })
         .setOrigin(0.5);
       const costTxt = this.add
         .text(cost > 0 ? 32 : 0, 10, cost > 0 ? `${cost} MP` : "", {
-          fontSize: FONT_SM,
-          color: TXT_MANA,
+          fontSize: FONT.SM,
+          color: TXT.MANA,
         })
         .setOrigin(0.5);
 
@@ -436,16 +392,16 @@ export class BattleScene extends Phaser.Scene {
         if (this.busy) return;
         const canAfford = this.heroMana >= cost;
         if (!canAfford) return;
-        bg.setFillStyle(BG_BTN_HOVER);
-        bg.setStrokeStyle(1, BORDER_GOLD_BRIGHT);
-        nameTxt.setColor(TXT_GOLD);
+        bg.setFillStyle(BG.BTN_HOVER);
+        bg.setStrokeStyle(1, BORDER.GOLD_BRIGHT);
+        nameTxt.setColor(TXT.GOLD);
         this.descText.setText(this.buildMoveTooltip(moveId) || move.description);
         this.showMovePreview(moveId);
       });
       bg.on("pointerout", () => {
-        bg.setFillStyle(BG_MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER_LOCKED);
-        nameTxt.setColor(TXT_GOLD_LIGHT);
+        bg.setFillStyle(BG.MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER.LOCKED);
+        nameTxt.setColor(TXT.GOLD_LIGHT);
         this.descText.setText("");
         this.hideMovePreview();
       });
@@ -463,9 +419,9 @@ export class BattleScene extends Phaser.Scene {
     this.moveButtons.forEach(({ bg, nameTxt }) => {
       bg.setAlpha(enabled ? 1 : 0.4);
       if (!enabled) {
-        bg.setFillStyle(BG_MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER_LOCKED);
-        nameTxt.setColor(TXT_GOLD_LIGHT);
+        bg.setFillStyle(BG.MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER.LOCKED);
+        nameTxt.setColor(TXT.GOLD_LIGHT);
         bg.disableInteractive();
       } else {
         bg.setInteractive({ useHandCursor: true });
@@ -494,27 +450,27 @@ export class BattleScene extends Phaser.Scene {
       const x = startX + i * (btnW + gap);
       const container = this.add.container(x, y);
       const bg = this.add
-        .rectangle(0, 0, btnW, btnH, BG_MOVE_CARD, 0.92)
-        .setStrokeStyle(1, BORDER_LOCKED);
+        .rectangle(0, 0, btnW, btnH, BG.MOVE_CARD, 0.92)
+        .setStrokeStyle(1, BORDER.LOCKED);
       const icon = this.add.image(-btnW / 2 + 22, 0, iconKey).setScale(0.85).setOrigin(0.5);
       const txt = this.add
         .text(8, 0, `× ${count}`, {
-          fontSize: FONT_BODY,
+          fontSize: FONT.BODY,
           fontFamily: "EnchantedLand",
-          color: TXT_GOLD_LIGHT,
+          color: TXT.GOLD_LIGHT,
         })
         .setOrigin(0, 0.5);
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerover", () => {
-        bg.setFillStyle(BG_BTN_HOVER);
-        bg.setStrokeStyle(1, BORDER_GOLD_BRIGHT);
-        txt.setColor(TXT_GOLD);
+        bg.setFillStyle(BG.BTN_HOVER);
+        bg.setStrokeStyle(1, BORDER.GOLD_BRIGHT);
+        txt.setColor(TXT.GOLD);
         onHoverPreview();
       });
       bg.on("pointerout", () => {
-        bg.setFillStyle(BG_MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER_LOCKED);
-        txt.setColor(TXT_GOLD_LIGHT);
+        bg.setFillStyle(BG.MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER.LOCKED);
+        txt.setColor(TXT.GOLD_LIGHT);
         this.hideMovePreview();
       });
       bg.on("pointerdown", onUse);
@@ -549,17 +505,17 @@ export class BattleScene extends Phaser.Scene {
       !this.busy &&
       !this.usedPotionThisTurn &&
       (GameState.hero.manaPotions ?? 0) > 0 &&
-      this.heroMana < MANA_MAX
+      this.heroMana < MANA.MAX
     );
   }
 
   private useHpPotion() {
     if (!this.canUseHpPotion()) return;
     if (!GameState.useHpPotion()) return;
-    this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + HP_POTION_HEAL);
+    this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + POTIONS.HP_HEAL);
     GameState.hero.currentHp = this.hero.hp;
     this.usedPotionThisTurn = true;
-    this.pushLog(`You drink an HP potion (+${HP_POTION_HEAL} HP).`);
+    this.pushLog(`You drink an HP potion (+${POTIONS.HP_HEAL} HP).`);
     this.updateHeroHp();
     this.updatePotionButtons();
     SfxPlayer.play(this, Sfx.Heal);
@@ -568,9 +524,9 @@ export class BattleScene extends Phaser.Scene {
   private useManaPotion() {
     if (!this.canUseManaPotion()) return;
     if (!GameState.useManaPotion()) return;
-    this.heroMana = Math.min(MANA_MAX, this.heroMana + MP_POTION_RESTORE);
+    this.heroMana = Math.min(MANA.MAX, this.heroMana + POTIONS.MP_RESTORE);
     this.usedPotionThisTurn = true;
-    this.pushLog(`You drink a mana potion (+${MP_POTION_RESTORE} MP).`);
+    this.pushLog(`You drink a mana potion (+${POTIONS.MP_RESTORE} MP).`);
     this.updateHeroMana();
     this.updatePotionButtons();
     SfxPlayer.play(this, Sfx.ManaDrink);
@@ -586,9 +542,9 @@ export class BattleScene extends Phaser.Scene {
         bg.setInteractive({ useHandCursor: true });
       } else {
         bg.disableInteractive();
-        bg.setFillStyle(BG_MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER_LOCKED);
-        txt.setColor(TXT_GOLD_LIGHT);
+        bg.setFillStyle(BG.MOVE_CARD);
+        bg.setStrokeStyle(1, BORDER.LOCKED);
+        txt.setColor(TXT.GOLD_LIGHT);
       }
     });
   }
@@ -600,27 +556,27 @@ export class BattleScene extends Phaser.Scene {
     const lineH = 24;
     this.add.rectangle(
       width / 2,
-      startY + (LOG_LINES * lineH) / 2,
+      startY + (BATTLE.LOG_LINES * lineH) / 2,
       width * 0.7,
-      LOG_LINES * lineH + 14,
-      BG_DARKEST,
+      BATTLE.LOG_LINES * lineH + 14,
+      BG.DARKEST,
       0.7,
     );
 
-    for (let i = 0; i < LOG_LINES; i++) {
+    for (let i = 0; i < BATTLE.LOG_LINES; i++) {
       this.logLines.push(
         this.add
           .text(width / 2, startY + i * lineH, "", {
-            fontSize: FONT_MD,
-            color: TXT_GOLD_LIGHT,
+            fontSize: FONT.MD,
+            color: TXT.GOLD_LIGHT,
           })
           .setOrigin(0.5),
       );
-      this.logColors.push(TXT_GOLD_LIGHT);
+      this.logColors.push(TXT.GOLD_LIGHT);
     }
   }
 
-  private pushLog(msg: string, color: string = TXT_GOLD_LIGHT) {
+  private pushLog(msg: string, color: string = TXT.GOLD_LIGHT) {
     for (let i = 0; i < this.logLines.length - 1; i++) {
       this.logLines[i].setText(this.logLines[i + 1].text);
       this.logLines[i].setColor(this.logColors[i + 1]);
@@ -637,13 +593,13 @@ export class BattleScene extends Phaser.Scene {
     baseValue: number;
     effects: { type: string }[];
   }): string {
-    if (move.moveType === "physical" && move.baseValue > 0) return TXT_INTENT_ATTACK;
-    if (move.moveType === "magic" && move.baseValue > 0) return TXT_LOG_MAGIC;
-    if (move.moveType === "heal") return TXT_INTENT_HEAL;
-    if (move.effects.some((e) => e.type === "drain")) return TXT_INTENT_HEAL;
-    if (move.effects.some((e) => e.type === "buff")) return TXT_INTENT_BUFF;
-    if (move.effects.some((e) => e.type === "debuff")) return TXT_INTENT_DEBUFF;
-    return TXT_GOLD_LIGHT;
+    if (move.moveType === "physical" && move.baseValue > 0) return TXT.INTENT_ATTACK;
+    if (move.moveType === "magic" && move.baseValue > 0) return TXT.LOG_MAGIC;
+    if (move.moveType === "heal") return TXT.INTENT_HEAL;
+    if (move.effects.some((e) => e.type === "drain")) return TXT.INTENT_HEAL;
+    if (move.effects.some((e) => e.type === "buff")) return TXT.INTENT_BUFF;
+    if (move.effects.some((e) => e.type === "debuff")) return TXT.INTENT_DEBUFF;
+    return TXT.GOLD_LIGHT;
   }
 
   // ── HP + live stats ──────────────────────────────────────────────────────
@@ -651,7 +607,7 @@ export class BattleScene extends Phaser.Scene {
   private updateHeroHp() {
     const pct = Math.max(0, this.hero.hp) / this.hero.maxHp;
     const color =
-      pct > HP_BAR_HIGH_THRESHOLD ? BAR_HP_HIGH : pct > HP_BAR_MID_THRESHOLD ? BAR_HP_MID : BAR_HP_LOW;
+      pct > HP_BAR.HIGH_THRESHOLD ? BAR.HP_HIGH : pct > HP_BAR.MID_THRESHOLD ? BAR.HP_MID : BAR.HP_LOW;
     // Tween the bar so HP changes drain visibly instead of snapping.
     this.heroHpFill.setFillStyle(color);
     this.tweens.killTweensOf(this.heroHpFill);
@@ -670,10 +626,10 @@ export class BattleScene extends Phaser.Scene {
   private updateHeroMana() {
     // Test mode: top mana off every refresh so the player can spam any move.
     // Cheaper than threading TestMode through every cost check.
-    if (TestMode.isOn()) this.heroMana = MANA_MAX;
-    const pct = this.heroMana / MANA_MAX;
+    if (TestMode.isOn()) this.heroMana = MANA.MAX;
+    const pct = this.heroMana / MANA.MAX;
     this.heroManaFill.setScale(pct, 1);
-    this.heroManaText.setText(`MP  ${this.heroMana} / ${MANA_MAX}`).setColor(TXT_GOLD_LIGHT);
+    this.heroManaText.setText(`MP  ${this.heroMana} / ${MANA.MAX}`).setColor(TXT.GOLD_LIGHT);
     this.updateButtonManaState();
   }
 
@@ -742,7 +698,7 @@ export class BattleScene extends Phaser.Scene {
     return new Promise((resolve) => {
       const txt = this.add
         .text(x, y, text, {
-          fontSize: heavy ? "44px" : FONT_LG,
+          fontSize: heavy ? "44px" : FONT.LG,
           fontFamily: "EnchantedLand",
           color,
           stroke: "#000000",
@@ -961,7 +917,7 @@ export class BattleScene extends Phaser.Scene {
     this.heroMana = Math.max(0, this.heroMana - amount);
     const dropped = before - this.heroMana;
     if (dropped > 0) {
-      this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT_INTENT_DEBUFF);
+      this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT.INTENT_DEBUFF);
       // Fire-and-forget visuals — don't block the move-resolution flow.
       if (this.heroSprite) {
         void this.sparkles(this.heroSprite.x, this.heroSprite.y, 0x4488ff, 6, 600);
@@ -982,7 +938,7 @@ export class BattleScene extends Phaser.Scene {
       const cost = GameState.getMove(moveId)?.manaCost ?? 0;
       const canAfford = this.heroMana >= cost;
       btn.bg.setAlpha(canAfford ? 1 : 0.45);
-      btn.costTxt.setColor(canAfford ? TXT_MANA : TXT_MANA_LOW);
+      btn.costTxt.setColor(canAfford ? TXT.MANA : TXT.MANA_LOW);
     });
   }
 
@@ -1063,7 +1019,7 @@ export class BattleScene extends Phaser.Scene {
 
   private updateMonsterIntent(moveId: string | null) {
     if (!moveId) {
-      this.monsterIntentText.setText("Thinking...").setColor(TXT_MUTED);
+      this.monsterIntentText.setText("Thinking...").setColor(TXT.MUTED);
       return;
     }
     const move = GameState.runConfig!.moves[moveId];
@@ -1083,20 +1039,20 @@ export class BattleScene extends Phaser.Scene {
         ? Math.max(1, Math.floor((move.baseValue + effStat) * 0.75 - effDef * 0.5))
         : Math.max(1, Math.floor(move.baseValue + effStat * 1.1));
       const label = isPhysical ? "Physical" : "Magic";
-      const color = isPhysical ? TXT_INTENT_ATTACK : TXT_LOG_MAGIC;
+      const color = isPhysical ? TXT.INTENT_ATTACK : TXT.LOG_MAGIC;
       this.monsterIntentText.setText(`${label}  ~${dmg} dmg`).setColor(color);
     } else if (hasDrain) {
-      this.monsterIntentText.setText("Draining life").setColor(TXT_INTENT_HEAL);
+      this.monsterIntentText.setText("Draining life").setColor(TXT.INTENT_HEAL);
     } else if (hasHeal) {
-      this.monsterIntentText.setText("Healing").setColor(TXT_INTENT_HEAL);
+      this.monsterIntentText.setText("Healing").setColor(TXT.INTENT_HEAL);
     } else if (hasDebuff) {
       const stat = move.effects.find((e) => e.type === "debuff")?.stat ?? "stat";
-      this.monsterIntentText.setText(`Weakening your ${stat}`).setColor(TXT_INTENT_DEBUFF);
+      this.monsterIntentText.setText(`Weakening your ${stat}`).setColor(TXT.INTENT_DEBUFF);
     } else if (hasBuff) {
       const stat = move.effects.find((e) => e.type === "buff")?.stat ?? "stat";
-      this.monsterIntentText.setText(`Buffing own ${stat}`).setColor(TXT_INTENT_BUFF);
+      this.monsterIntentText.setText(`Buffing own ${stat}`).setColor(TXT.INTENT_BUFF);
     } else {
-      this.monsterIntentText.setText(move.name).setColor(TXT_MUTED);
+      this.monsterIntentText.setText(move.name).setColor(TXT.MUTED);
     }
   }
 
@@ -1135,7 +1091,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateMonsterIntent(resp.moveId);
     } catch {
       if (this.turnNumber !== capturedTurn) return;
-      this.monsterIntentText.setText("Unknown").setColor(TXT_MUTED);
+      this.monsterIntentText.setText("Unknown").setColor(TXT.MUTED);
     }
   }
 
@@ -1153,27 +1109,27 @@ export class BattleScene extends Phaser.Scene {
   private previewMana(cost: number) {
     if (cost <= 0) return;
     const futureMana = Math.max(0, this.heroMana - cost);
-    const futureRegen = Math.min(MANA_MAX, futureMana + MANA_REGEN);
-    this.heroManaFill.setScale(futureMana / MANA_MAX, 1);
+    const futureRegen = Math.min(MANA.MAX, futureMana + MANA.REGEN);
+    this.heroManaFill.setScale(futureMana / MANA.MAX, 1);
     this.heroManaText
-      .setText(`MP  ${futureMana} / ${MANA_MAX}  (+${futureRegen - futureMana} next turn)`)
-      .setColor(TXT_MANA_LOW);
+      .setText(`MP  ${futureMana} / ${MANA.MAX}  (+${futureRegen - futureMana} next turn)`)
+      .setColor(TXT.MANA_LOW);
   }
 
   // Skip when the potion would no-op so the ghost bar doesn't lie.
   private previewHpPotion(): void {
     if (!this.canUseHpPotion()) return;
-    this.previewHeroHp(0, HP_POTION_HEAL, 0);
+    this.previewHeroHp(0, POTIONS.HP_HEAL, 0);
   }
 
   // Mirror of previewHpPotion for the mana bar.
   private previewManaPotion(): void {
     if (!this.canUseManaPotion()) return;
-    const futureMana = Math.min(MANA_MAX, this.heroMana + MP_POTION_RESTORE);
-    this.heroManaFill.setScale(futureMana / MANA_MAX, 1);
+    const futureMana = Math.min(MANA.MAX, this.heroMana + POTIONS.MP_RESTORE);
+    this.heroManaFill.setScale(futureMana / MANA.MAX, 1);
     this.heroManaText
-      .setText(`MP  ${futureMana} / ${MANA_MAX}`)
-      .setColor(TXT_INTENT_HEAL);
+      .setText(`MP  ${futureMana} / ${MANA.MAX}`)
+      .setColor(TXT.INTENT_HEAL);
   }
 
   private previewHeroBuffs(move: MoveConfig): number {
@@ -1223,7 +1179,7 @@ export class BattleScene extends Phaser.Scene {
       this.monsterHpGhost.setSize(BAR_W * (playerDmg / this.monster.maxHp), 14);
       this.monsterHpText
         .setText(`HP  ${futureHp} / ${this.monster.maxHp}`)
-        .setColor(TXT_INTENT_ATTACK);
+        .setColor(TXT.INTENT_ATTACK);
     }
 
     return { playerDmg, playerHeal };
@@ -1238,8 +1194,8 @@ export class BattleScene extends Phaser.Scene {
       );
       this.heroHpGhost
         .setSize(BAR_W * ((futureHp - this.hero.hp) / this.hero.maxHp), 14)
-        .setFillStyle(BAR_HP_HIGH, 0.7);
-      this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT_INTENT_HEAL);
+        .setFillStyle(BAR.HP_HIGH, 0.7);
+      this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT.INTENT_HEAL);
       return;
     }
 
@@ -1266,8 +1222,8 @@ export class BattleScene extends Phaser.Scene {
         );
         this.heroHpGhost
           .setSize(BAR_W * (monsterDmg / this.hero.maxHp), 14)
-          .setFillStyle(HP_GHOST_HERO, 0.75);
-        this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT_INTENT_ATTACK);
+          .setFillStyle(HP_GHOST.HERO, 0.75);
+        this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT.INTENT_ATTACK);
       }
     }
   }
@@ -1277,10 +1233,10 @@ export class BattleScene extends Phaser.Scene {
     this.heroHpGhost.setSize(0, 14);
     this.monsterHpText
       .setText(`HP  ${Math.max(0, this.monster.hp)} / ${this.monster.maxHp}`)
-      .setColor(TXT_GOLD_LIGHT);
+      .setColor(TXT.GOLD_LIGHT);
     this.heroHpText
       .setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`)
-      .setColor(TXT_GOLD_LIGHT);
+      .setColor(TXT.GOLD_LIGHT);
     this.updateHeroStats();
     this.updateHeroMana();
   }
@@ -1370,7 +1326,7 @@ export class BattleScene extends Phaser.Scene {
       const fallbackId = this.monster.moves[Math.floor(Math.random() * this.monster.moves.length)];
       const fallbackMove = GameState.getMove(fallbackId);
       if (!fallbackMove) {
-        this.pushLog(`${this.monster.name} hesitates.`, TXT_MUTED);
+        this.pushLog(`${this.monster.name} hesitates.`, TXT.MUTED);
       } else {
         const result = applyMove(fallbackMove, this.monster, this.hero);
         this.applyMonsterManaDrain(result.mpDrain);
@@ -1389,16 +1345,16 @@ export class BattleScene extends Phaser.Scene {
     // DOTs tick after both sides have acted. applyMove stored turns+1 so a
     // DOT applied this turn fires its first damage before expiry.
     const heroDotDmg = tickDots(this.hero);
-    if (heroDotDmg > 0) this.pushLog(`Decay tick: -${heroDotDmg} HP`, TXT_INTENT_DEBUFF);
+    if (heroDotDmg > 0) this.pushLog(`Decay tick: -${heroDotDmg} HP`, TXT.INTENT_DEBUFF);
     const monsterDotDmg = tickDots(this.monster);
     if (monsterDotDmg > 0)
-      this.pushLog(`${this.monster.name} loses ${monsterDotDmg} to decay`, TXT_INTENT_HEAL);
+      this.pushLog(`${this.monster.name} loses ${monsterDotDmg} to decay`, TXT.INTENT_HEAL);
 
     // Sequential so the player can read which side took damage.
     if (heroDotDmg > 0) await this.animateDotTick("hero", heroDotDmg);
     if (monsterDotDmg > 0) await this.animateDotTick("monster", monsterDotDmg);
 
-    this.heroMana = Math.min(MANA_MAX, this.heroMana + MANA_REGEN);
+    this.heroMana = Math.min(MANA.MAX, this.heroMana + MANA.REGEN);
     this.turnNumber++;
 
     this.updateHeroHp();

@@ -2,23 +2,8 @@ import Phaser from "phaser";
 import type { GearItem, HeroState, MoveConfig } from "../types/game";
 import { GameState, getGearBonuses } from "../state/gameState";
 import { heroFrameFor } from "../sprites/spriteFrames";
-import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../constants";
-import {
-  BG_PANEL,
-  BG_ROW,
-  BG_ROW_MID,
-  BG_BTN,
-  BG_BTN_HOVER,
-  BORDER_GOLD,
-  BORDER_ROW,
-  BORDER_STAT_AVAIL,
-  TXT_GOLD,
-  TXT_GOLD_LIGHT,
-  TXT_GOLD_MID,
-  BAR_XP_FILL,
-  TXT_SKILL_POINTS,
-  TXT_MANA,
-} from "../constants";
+import { FONT } from "../constants";
+import { BG, BORDER, TXT, BAR } from "../constants";
 
 export interface HeroPanelOptions {
   x: number;
@@ -49,21 +34,21 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
   const effMag = hero.magic + (gear.magic ?? 0);
   const effMaxHp = hero.maxHp + (gear.maxHp ?? 0);
 
-  add(scene.add.rectangle(panelX, panelY, w, h, BG_PANEL, 0.88).setOrigin(0).setStrokeStyle(2, BORDER_GOLD));
+  add(scene.add.rectangle(panelX, panelY, w, h, BG.PANEL, 0.88).setOrigin(0).setStrokeStyle(2, BORDER.GOLD));
 
   add(scene.add.text(cx, panelY + 26, `Knight  Lv.${hero.level}`, {
-    fontSize: FONT_LG, fontFamily: "EnchantedLand", color: TXT_GOLD,
+    fontSize: FONT.LG, fontFamily: "EnchantedLand", color: TXT.GOLD,
   }).setOrigin(0.5));
 
   const heroFrame = heroFrameFor(GameState.selectedClass);
   add(scene.add.image(cx, panelY + 96, heroFrame.key, heroFrame.frame).setScale(3.2).setOrigin(0.5));
 
   const stats = [
-    { key: "stat_hp",  val: `${hero.currentHp ?? hero.maxHp}/${effMaxHp}`, color: TXT_GOLD_LIGHT },
-    { key: "stat_atk", val: `${effAtk}`,  color: TXT_GOLD_LIGHT },
-    { key: "stat_def", val: `${effDef}`,  color: TXT_GOLD_LIGHT },
-    { key: "stat_mag", val: `${effMag}`,  color: TXT_GOLD_LIGHT },
-    { key: "stat_mp",  val: "60",         color: TXT_MANA },
+    { key: "stat_hp",  val: `${hero.currentHp ?? hero.maxHp}/${effMaxHp}`, color: TXT.GOLD_LIGHT },
+    { key: "stat_atk", val: `${effAtk}`,  color: TXT.GOLD_LIGHT },
+    { key: "stat_def", val: `${effDef}`,  color: TXT.GOLD_LIGHT },
+    { key: "stat_mag", val: `${effMag}`,  color: TXT.GOLD_LIGHT },
+    { key: "stat_mp",  val: "60",         color: TXT.MANA },
   ];
   const col1X = cx - 72;
   const col2X = cx + 36;
@@ -72,69 +57,69 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
       const sx = i % 2 === 0 ? col1X : col2X;
       const sy = panelY + 158 + Math.floor(i / 2) * 34;
       add(scene.add.image(sx, sy, s.key).setScale(0.68).setOrigin(0.5));
-      add(scene.add.text(sx + 18, sy, s.val, { fontSize: FONT_BODY, color: s.color }).setOrigin(0, 0.5));
+      add(scene.add.text(sx + 18, sy, s.val, { fontSize: FONT.BODY, color: s.color }).setOrigin(0, 0.5));
     } else {
       const sy = panelY + 226;
       add(scene.add.image(col1X, sy, s.key).setScale(0.68).setOrigin(0.5));
-      add(scene.add.text(col1X + 18, sy, `${s.val} MP`, { fontSize: FONT_BODY, color: s.color }).setOrigin(0, 0.5));
+      add(scene.add.text(col1X + 18, sy, `${s.val} MP`, { fontSize: FONT.BODY, color: s.color }).setOrigin(0, 0.5));
     }
   });
 
   add(scene.add.text(cx, panelY + 252, `Gold: ${hero.gold ?? 0}`, {
-    fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD,
+    fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD,
   }).setOrigin(0.5));
   add(scene.add.text(cx, panelY + 270, `HP × ${hero.hpPotions ?? 0}   MP × ${hero.manaPotions ?? 0}`, {
-    fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_GOLD_MID,
+    fontSize: FONT.SM, fontFamily: "EnchantedLand", color: TXT.GOLD_MID,
   }).setOrigin(0.5));
 
   const xpPct = Math.min(1, hero.xp / xpToNextLevel);
   add(scene.add.text(cx, panelY + 290, `XP  ${hero.xp} / ${xpToNextLevel}`, {
-    fontSize: FONT_SM, color: TXT_GOLD_MID,
+    fontSize: FONT.SM, color: TXT.GOLD_MID,
   }).setOrigin(0.5));
-  add(scene.add.rectangle(panelX + 10, panelY + 306, barW, 11, BG_ROW_MID).setOrigin(0));
-  add(scene.add.rectangle(panelX + 10, panelY + 306, barW * xpPct, 11, BAR_XP_FILL).setOrigin(0));
+  add(scene.add.rectangle(panelX + 10, panelY + 306, barW, 11, BG.ROW_MID).setOrigin(0));
+  add(scene.add.rectangle(panelX + 10, panelY + 306, barW * xpPct, 11, BAR.XP_FILL).setOrigin(0));
 
-  add(scene.add.rectangle(cx, panelY + 330, barW, 1, BORDER_GOLD, 0.6).setOrigin(0.5));
+  add(scene.add.rectangle(cx, panelY + 330, barW, 1, BORDER.GOLD, 0.6).setOrigin(0.5));
 
   add(scene.add.text(cx, panelY + 346, "Equipped Moves", {
-    fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD,
+    fontSize: FONT.MD, fontFamily: "EnchantedLand", color: TXT.GOLD,
   }).setOrigin(0.5));
 
   hero.equippedMoves.forEach((moveId, i) => {
     const move = moves[moveId];
     if (!move) return;
     const rowY = panelY + 366 + i * 50;
-    add(scene.add.rectangle(cx, rowY + 18, w - 16, 40, BG_ROW, 0.85).setOrigin(0.5).setStrokeStyle(1, BORDER_ROW));
-    add(scene.add.text(pad, rowY + 18, move.name, { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_LIGHT }).setOrigin(0, 0.5));
+    add(scene.add.rectangle(cx, rowY + 18, w - 16, 40, BG.ROW, 0.85).setOrigin(0.5).setStrokeStyle(1, BORDER.ROW));
+    add(scene.add.text(pad, rowY + 18, move.name, { fontSize: FONT.BODY, fontFamily: "EnchantedLand", color: TXT.GOLD_LIGHT }).setOrigin(0, 0.5));
   });
 
   if (onShop) {
     const shopBtnY = panelY + h - 114;
-    const shopBg = add(scene.add.rectangle(cx, shopBtnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, BORDER_GOLD).setInteractive({ useHandCursor: true }));
-    const shopTxt = add(scene.add.text(cx, shopBtnY, "Shop", { fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD_MID }).setOrigin(0.5));
-    shopBg.on("pointerover", () => { shopBg.setFillStyle(BG_BTN_HOVER); shopTxt.setColor(TXT_GOLD); });
-    shopBg.on("pointerout", () => { shopBg.setFillStyle(BG_BTN); shopTxt.setColor(TXT_GOLD_MID); });
+    const shopBg = add(scene.add.rectangle(cx, shopBtnY, w - 20, 38, BG.BTN, 0.9).setStrokeStyle(1, BORDER.GOLD).setInteractive({ useHandCursor: true }));
+    const shopTxt = add(scene.add.text(cx, shopBtnY, "Shop", { fontSize: FONT.MD, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5));
+    shopBg.on("pointerover", () => { shopBg.setFillStyle(BG.BTN_HOVER); shopTxt.setColor(TXT.GOLD); });
+    shopBg.on("pointerout", () => { shopBg.setFillStyle(BG.BTN); shopTxt.setColor(TXT.GOLD_MID); });
     shopBg.on("pointerdown", onShop);
   }
 
   if (onManageEquipment) {
     const eqBtnY = panelY + h - 68;
-    const eqBg = add(scene.add.rectangle(cx, eqBtnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, BORDER_GOLD).setInteractive({ useHandCursor: true }));
-    const eqTxt = add(scene.add.text(cx, eqBtnY, "Equipment", { fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD_MID }).setOrigin(0.5));
-    eqBg.on("pointerover", () => { eqBg.setFillStyle(BG_BTN_HOVER); eqTxt.setColor(TXT_GOLD); });
-    eqBg.on("pointerout", () => { eqBg.setFillStyle(BG_BTN); eqTxt.setColor(TXT_GOLD_MID); });
+    const eqBg = add(scene.add.rectangle(cx, eqBtnY, w - 20, 38, BG.BTN, 0.9).setStrokeStyle(1, BORDER.GOLD).setInteractive({ useHandCursor: true }));
+    const eqTxt = add(scene.add.text(cx, eqBtnY, "Equipment", { fontSize: FONT.MD, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5));
+    eqBg.on("pointerover", () => { eqBg.setFillStyle(BG.BTN_HOVER); eqTxt.setColor(TXT.GOLD); });
+    eqBg.on("pointerout", () => { eqBg.setFillStyle(BG.BTN); eqTxt.setColor(TXT.GOLD_MID); });
     eqBg.on("pointerdown", onManageEquipment);
   }
 
   const btnY = panelY + h - 22;
   const hasPoints = (hero.skillPoints ?? 0) > 0;
-  const btnBg = add(scene.add.rectangle(cx, btnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, hasPoints ? BORDER_STAT_AVAIL : BORDER_GOLD).setInteractive({ useHandCursor: true }));
+  const btnBg = add(scene.add.rectangle(cx, btnY, w - 20, 38, BG.BTN, 0.9).setStrokeStyle(1, hasPoints ? BORDER.STAT_AVAIL : BORDER.GOLD).setInteractive({ useHandCursor: true }));
   const btnLabel = hasPoints ? `Manage Moves  ✦ ${hero.skillPoints}` : "Manage Moves";
   const btnTxt = add(scene.add.text(cx, btnY, btnLabel, {
-    fontSize: FONT_MD, fontFamily: "EnchantedLand", color: hasPoints ? TXT_SKILL_POINTS : TXT_GOLD_MID,
+    fontSize: FONT.MD, fontFamily: "EnchantedLand", color: hasPoints ? TXT.SKILL_POINTS : TXT.GOLD_MID,
   }).setOrigin(0.5));
-  btnBg.on("pointerover", () => { btnBg.setFillStyle(BG_BTN_HOVER); btnTxt.setColor(TXT_GOLD); });
-  btnBg.on("pointerout", () => { btnBg.setFillStyle(BG_BTN); btnTxt.setColor(hasPoints ? TXT_SKILL_POINTS : TXT_GOLD_MID); });
+  btnBg.on("pointerover", () => { btnBg.setFillStyle(BG.BTN_HOVER); btnTxt.setColor(TXT.GOLD); });
+  btnBg.on("pointerout", () => { btnBg.setFillStyle(BG.BTN); btnTxt.setColor(hasPoints ? TXT.SKILL_POINTS : TXT.GOLD_MID); });
   btnBg.on("pointerdown", onManageMoves);
 
   return container;
