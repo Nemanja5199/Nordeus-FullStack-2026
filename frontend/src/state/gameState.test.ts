@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GameState, getGearBonuses } from "./gameState";
 import { MetaProgress } from "./metaProgress";
-import { TestMode } from "./testMode";
 import { Cloud } from "./cloudSync";
-import type { GearItem, MoveConfig, RunConfig } from "../types/game";
+import type { GearItem, RunConfig } from "../types/game";
 
 // ── Minimal RunConfig stub ────────────────────────────────────────────────────
 
@@ -61,9 +60,6 @@ function makeLocalStorage() {
 beforeEach(() => {
   vi.stubGlobal("localStorage", makeLocalStorage());
   MetaProgress.resetAll();
-  // Reset TestMode against the freshly stubbed storage so its cache doesn't
-  // leak buffed stats into unrelated tests.
-  TestMode.set(false);
   GameState.runConfig = MOCK_CONFIG;
   GameState.resetHero(MOCK_CONFIG);
   GameState.clearRun();
@@ -633,68 +629,6 @@ describe("hero save versioning", () => {
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("migrating"));
     warn.mockRestore();
     expect(SAVE_VERSION).toBeGreaterThanOrEqual(1);
-  });
-});
-
-describe("TestMode buffs in defaultHero", () => {
-  const slash: MoveConfig = {
-    id: "slash", name: "Slash", moveType: "physical", baseValue: 20,
-    effects: [], dropChance: 1.0, manaCost: 0, description: "",
-  };
-  const dropMove: MoveConfig = {
-    id: "engulf", name: "Engulf", moveType: "physical", baseValue: 14,
-    effects: [], dropChance: 0.4, manaCost: 10, description: "",
-  };
-  const monsterOnlyMove: MoveConfig = {
-    id: "body_slam", name: "Body Slam", moveType: "physical", baseValue: 28,
-    effects: [], dropChance: 0.0, manaCost: 0, description: "",
-  };
-  const item: GearItem = {
-    id: "iron_sword", name: "Iron Sword", slot: "weapon", rarity: "common",
-    tier: 1, cost: 30, statBonuses: { attack: 4 }, description: "",
-  };
-  const richConfig: RunConfig = {
-    ...MOCK_CONFIG,
-    moves: { slash, engulf: dropMove, body_slam: monsterOnlyMove },
-    items: { iron_sword: item },
-    heroClasses: {
-      ...MOCK_CONFIG.heroClasses,
-      knight: { ...MOCK_CONFIG.heroClasses.knight, defaultMoves: ["slash"] },
-    },
-  };
-
-  it("normal mode keeps base stats", () => {
-    GameState.resetHero(richConfig);
-    expect(GameState.hero.attack).toBe(15); // MOCK base
-    expect(GameState.hero.gold).toBe(0);
-    expect(GameState.hero.inventory).toEqual([]);
-  });
-
-  it("flips god stats on when TestMode is on", () => {
-    TestMode.set(true);
-    GameState.resetHero(richConfig);
-    expect(GameState.hero.maxHp).toBe(9999);
-    expect(GameState.hero.currentHp).toBe(9999);
-    expect(GameState.hero.attack).toBe(999);
-    expect(GameState.hero.defense).toBe(999);
-    expect(GameState.hero.magic).toBe(999);
-    expect(GameState.hero.gold).toBe(9999);
-    expect(GameState.hero.hpPotions).toBe(20);
-    expect(GameState.hero.manaPotions).toBe(20);
-  });
-
-  it("pre-fills inventory with every item from the config", () => {
-    TestMode.set(true);
-    GameState.resetHero(richConfig);
-    expect(GameState.hero.inventory).toEqual(["iron_sword"]);
-  });
-
-  it("learns every droppable move but not monster-only ones", () => {
-    TestMode.set(true);
-    GameState.resetHero(richConfig);
-    expect(GameState.hero.learnedMoves).toContain("slash");
-    expect(GameState.hero.learnedMoves).toContain("engulf");
-    expect(GameState.hero.learnedMoves).not.toContain("body_slam");
   });
 });
 

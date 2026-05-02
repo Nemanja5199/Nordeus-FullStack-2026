@@ -3,7 +3,7 @@ import { Scene, type SceneKey, FONT } from "../constants";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat";
 import { POTIONS, MANA, MONSTER_LEVEL_SCALING } from "../constants";
-import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../state";
+import { GameState, getGearBonuses, Settings, MetaProgress } from "../state";
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
 import { heroNameFor } from "../sprites";
@@ -246,9 +246,6 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updateHeroMana() {
-    // Test mode: top mana off every refresh so the player can spam any move.
-    // Cheaper than threading TestMode through every cost check.
-    if (TestMode.isOn()) this.heroMana = MANA.MAX;
     this.heroPanel.setMana(this.heroMana, MANA.MAX);
     this.moveRow.setMana(this.heroMana);
   }

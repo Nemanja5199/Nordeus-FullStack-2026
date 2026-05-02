@@ -1,7 +1,6 @@
 import type { GearItem, GearSlot, GearStatBonuses, HeroClass, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
 import { XP_CURVE_FACTOR } from "../constants";
 import { MetaProgress } from "./metaProgress";
-import { TestMode } from "./testMode";
 import { Cloud } from "./cloudSync";
 
 export function getGearBonuses(
@@ -60,24 +59,7 @@ function defaultHero(config: RunConfig, cls: HeroClass): HeroState {
     hpPotions: 0,
     manaPotions: 0,
   };
-  if (TestMode.isOn()) applyTestBuffs(hero, config);
   return hero;
-}
-
-function applyTestBuffs(hero: HeroState, config: RunConfig): void {
-  hero.maxHp = 9999;
-  hero.currentHp = 9999;
-  hero.attack = 999;
-  hero.defense = 999;
-  hero.magic = 999;
-  hero.gold = 9999;
-  hero.hpPotions = 20;
-  hero.manaPotions = 20;
-  hero.inventory = Object.keys(config.items);
-  const droppable = Object.values(config.moves)
-    .filter((m: MoveConfig) => m.dropChance > 0)
-    .map((m: MoveConfig) => m.id);
-  hero.learnedMoves = Array.from(new Set([...hero.learnedMoves, ...droppable]));
 }
 
 class GameStateManager {

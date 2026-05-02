@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import { Scene, FONT } from "../constants";
-import { createButton, BTN_LG, spawnDustMotes, TestModeToggle } from "../ui";
+import { createButton, BTN_LG, spawnDustMotes } from "../ui";
 import { api } from "../services/api";
-import { GameState, TestMode } from "../state";
+import { GameState } from "../state";
 import { Audio, TrackGroup } from "../audio";
 import { BG, TXT } from "../constants";
 
@@ -71,16 +71,6 @@ export class MainMenuScene extends Phaser.Scene {
       onClick: () => this.scene.start(Scene.Options, { returnScene: Scene.MainMenu }),
     });
 
-    new TestModeToggle(this, {
-      read: () => TestMode.isOn(),
-      onToggle: () => {
-        // Dev toggle: drops persisted hero on flip so the next NEW GAME
-        // picks up the test-mode defaults without a manual reset.
-        const on = TestMode.toggle();
-        localStorage.removeItem("rpg_hero");
-        return on;
-      },
-    });
   }
 
   private async startNewGame() {
