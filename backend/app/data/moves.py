@@ -256,9 +256,9 @@ MOVES: dict[str, dict[str, Any]] = {
     "focus": {
         # Big single-turn MAG spike — rewards tight timing.
         "id": "focus", "name": "Focus", "moveType": "none", "baseValue": 0,
-        "effects": [{"type": "buff", "target": "self", "stat": "magic", "multiplier": 1.8, "turns": 1}],
+        "effects": [{"type": "buff", "target": "self", "stat": "magic", "multiplier": 1.6, "turns": 1}],
         "repeatPenalty": 0.6, "dropChance": 1.0, "manaCost": 15,
-        "description": "Sharpens arcane focus. +80% Magic for 1 turn.",
+        "description": "Sharpens arcane focus. +60% Magic for 1 turn.",
     },
     "mend": {
         # Smaller / cheaper than second_wind — heal more often, less per cast.
