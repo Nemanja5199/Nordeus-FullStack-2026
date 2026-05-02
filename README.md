@@ -23,11 +23,19 @@ monsters, manage gear and a moveset, and beat the dragon at the top.
 One command spins up everything: a real Postgres database, the FastAPI
 backend, and the Vite dev server.
 
+**macOS / Linux / WSL:**
+
 ```sh
 ./dev.sh
 ```
 
-Prerequisites: **Docker**, **Python 3.10+**, **Node 20+**.
+**Windows (CMD or PowerShell):**
+
+```cmd
+dev.bat
+```
+
+Prerequisites: **Docker Desktop**, **Python 3.10+**, **Node 20+**.
 
 The script:
 
