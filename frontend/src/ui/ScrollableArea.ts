@@ -10,28 +10,16 @@ export interface ScrollableAreaOptions {
 }
 
 export interface ScrollableArea {
-  /**
-   * Add children to this container. Their x/y is treated as relative to
-   * (opts.x, opts.y) — i.e. y=0 corresponds to the top of the visible viewport.
-   */
+  // Children's y is relative to the viewport top (y=0 = top edge).
   container: Phaser.GameObjects.Container;
   setContentHeight(h: number): void;
-  /** Re-evaluate which children are inside the viewport (call after adding/removing children). */
+  // Call after adding/removing children to re-test what's inside the viewport.
   refreshInputState(): void;
   destroy(): void;
 }
 
-/**
- * Vertically scrollable, mouse-wheel driven viewport.
- *
- * Children are clipped to a width×height window starting at (x, y).
- * Add children with positions relative to that origin (a child at y=0
- * sits at the top of the viewport). Scrolling moves the inner container,
- * clamped so you can't scroll past either edge.
- *
- * Wheel events are registered on the scene; cleanup runs on scene shutdown
- * or when destroy() is called.
- */
+// Vertically scrollable, mouse-wheel driven viewport. Wheel listener cleans
+// up on scene shutdown or destroy().
 export function createScrollableArea(
   scene: Phaser.Scene,
   opts: ScrollableAreaOptions,
@@ -41,8 +29,8 @@ export function createScrollableArea(
 
   const container = scene.add.container(x, y);
 
-  // Geometry mask covering the viewport — children outside it are clipped.
-  // Add to display list (not just make.graphics) so children.removeAll(true) cleans it up too.
+  // Add to display list (not just make.graphics) so children.removeAll
+  // cleans the mask up too.
   const maskGfx = scene.add.graphics();
   maskGfx.fillStyle(0xffffff);
   maskGfx.fillRect(x, y, width, height);
@@ -51,9 +39,8 @@ export function createScrollableArea(
 
   let maxOffset = Math.max(0, (opts.contentHeight ?? 0) - height);
 
-  // Geometry masks clip rendering but NOT input. Without this, off-viewport
-  // children still receive clicks. Toggle interactivity (on each child and any
-  // nested children) based on whether the child's bounding box overlaps the viewport.
+  // Geometry masks clip rendering, not input — toggle interactivity based on
+  // whether each child's bounds overlap the viewport.
   const setEnabledRecursive = (
     obj: Phaser.GameObjects.GameObject & { input?: Phaser.Types.Input.InteractiveObject | null; list?: Phaser.GameObjects.GameObject[] },
     enabled: boolean,

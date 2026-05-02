@@ -91,18 +91,14 @@ export interface HeroDefaults {
   xpPerLevel: number;
 }
 
-// Class id literal type. New classes go here AND in HERO_CLASSES on the
-// backend; the type union is what the rest of the code switches on.
+// New classes go here AND in HERO_CLASSES on the backend.
 export type HeroClass = "knight" | "mage";
 
 export interface RunConfig {
   monsters: MonsterConfig[];
   moves: Record<string, MoveConfig>;
   items: Record<string, GearItem>;
-  // Kept for back-compat; equivalent to heroClasses.knight.
-  heroDefaults: HeroDefaults;
-  // Per-class starting data. defaultHero() looks up the entry matching
-  // GameState.selectedClass.
+  heroDefaults: HeroDefaults; // back-compat; mirrors heroClasses.knight
   heroClasses: Record<HeroClass, HeroDefaults>;
   mapTree: import("../utils/mockMapTree").MapTree;
   seed: number;
@@ -141,8 +137,8 @@ export interface MoveResult {
   damage: number;
   heal: number;
   hpCost: number;
-  // Mana burned off the *defender* (mp_drain effect). Lives outside
-  // CombatCharacter because mana is owned by BattleScene, not the simulator.
+  // Mana burned off the defender. Lives here because mana is owned by
+  // BattleScene, not by CombatCharacter.
   mpDrain?: number;
   logMessage: string;
 }

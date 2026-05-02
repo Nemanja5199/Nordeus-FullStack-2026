@@ -29,10 +29,9 @@ export interface BattleStatePayload {
   lastMonsterMoves: string[];
 }
 
+// Sections optional — backend only updates the columns we send.
 export interface SavePayload {
   sessionId: string;
-  // All sections optional — backend only updates columns that are sent so
-  // partial pushes (e.g. settings-only) don't clobber hero progress.
   hero?: Record<string, unknown> | null;
   meta?: Record<string, unknown> | null;
   settings?: Record<string, unknown> | null;
@@ -70,25 +69,21 @@ export interface RunStart {
 
 let cachedMeta: GameMeta | null = null;
 
-// Exported for tests; production callers should use api.getMeta().
 export function _resetMetaCacheForTests(): void {
   cachedMeta = null;
 }
 
 export const api = {
-  // Static config — fetched once per page session, then served from memory.
-  // The payload is ~15 KB, so caching saves it on every retry/restart.
+  // Static ~15 KB payload; cached for the page session.
   getMeta: async (): Promise<GameMeta> => {
     if (!cachedMeta) cachedMeta = await request<GameMeta>("/api/run/meta");
     return cachedMeta;
   },
 
-  // Run-specific data (~1.5 KB). Pass an existing seed to regenerate the same
-  // map (used by Continue); omit to generate a fresh seed (used by New Game).
+  // Pass a seed to regenerate the same map (Continue); omit for fresh seed.
   startRun: (seed?: number) =>
     request<RunStart>(`/api/run/start${seed !== undefined ? `?seed=${seed}` : ""}`),
 
-  // Convenience: meta + run combined into the legacy RunConfig shape.
   getRunConfig: async (seed?: number): Promise<RunConfig> => {
     const [meta, run] = await Promise.all([api.getMeta(), api.startRun(seed)]);
     return { ...meta, ...run };

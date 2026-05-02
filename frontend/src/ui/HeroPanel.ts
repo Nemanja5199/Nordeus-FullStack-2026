@@ -49,19 +49,15 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
   const effMag = hero.magic + (gear.magic ?? 0);
   const effMaxHp = hero.maxHp + (gear.maxHp ?? 0);
 
-  // Background
   add(scene.add.rectangle(panelX, panelY, w, h, BG_PANEL, 0.88).setOrigin(0).setStrokeStyle(2, BORDER_GOLD));
 
-  // Title
   add(scene.add.text(cx, panelY + 26, `Knight  Lv.${hero.level}`, {
     fontSize: FONT_LG, fontFamily: "EnchantedLand", color: TXT_GOLD,
   }).setOrigin(0.5));
 
-  // Hero sprite
   const heroFrame = heroFrameFor(GameState.selectedClass);
   add(scene.add.image(cx, panelY + 96, heroFrame.key, heroFrame.frame).setScale(3.2).setOrigin(0.5));
 
-  // Stats 2×2 grid + MP row
   const stats = [
     { key: "stat_hp",  val: `${hero.currentHp ?? hero.maxHp}/${effMaxHp}`, color: TXT_GOLD_LIGHT },
     { key: "stat_atk", val: `${effAtk}`,  color: TXT_GOLD_LIGHT },
@@ -78,14 +74,12 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
       add(scene.add.image(sx, sy, s.key).setScale(0.68).setOrigin(0.5));
       add(scene.add.text(sx + 18, sy, s.val, { fontSize: FONT_BODY, color: s.color }).setOrigin(0, 0.5));
     } else {
-      // MP centered on its own row
       const sy = panelY + 226;
       add(scene.add.image(col1X, sy, s.key).setScale(0.68).setOrigin(0.5));
       add(scene.add.text(col1X + 18, sy, `${s.val} MP`, { fontSize: FONT_BODY, color: s.color }).setOrigin(0, 0.5));
     }
   });
 
-  // Gold + potions
   add(scene.add.text(cx, panelY + 252, `Gold: ${hero.gold ?? 0}`, {
     fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD,
   }).setOrigin(0.5));
@@ -93,7 +87,6 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_GOLD_MID,
   }).setOrigin(0.5));
 
-  // XP bar
   const xpPct = Math.min(1, hero.xp / xpToNextLevel);
   add(scene.add.text(cx, panelY + 290, `XP  ${hero.xp} / ${xpToNextLevel}`, {
     fontSize: FONT_SM, color: TXT_GOLD_MID,
@@ -101,10 +94,8 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
   add(scene.add.rectangle(panelX + 10, panelY + 306, barW, 11, BG_ROW_MID).setOrigin(0));
   add(scene.add.rectangle(panelX + 10, panelY + 306, barW * xpPct, 11, BAR_XP_FILL).setOrigin(0));
 
-  // Divider
   add(scene.add.rectangle(cx, panelY + 330, barW, 1, BORDER_GOLD, 0.6).setOrigin(0.5));
 
-  // Equipped moves header
   add(scene.add.text(cx, panelY + 346, "Equipped Moves", {
     fontSize: FONT_MD, fontFamily: "EnchantedLand", color: TXT_GOLD,
   }).setOrigin(0.5));
@@ -117,7 +108,6 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     add(scene.add.text(pad, rowY + 18, move.name, { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_GOLD_LIGHT }).setOrigin(0, 0.5));
   });
 
-  // Shop button (top of stack)
   if (onShop) {
     const shopBtnY = panelY + h - 114;
     const shopBg = add(scene.add.rectangle(cx, shopBtnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, BORDER_GOLD).setInteractive({ useHandCursor: true }));
@@ -127,7 +117,6 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     shopBg.on("pointerdown", onShop);
   }
 
-  // Equipment button
   if (onManageEquipment) {
     const eqBtnY = panelY + h - 68;
     const eqBg = add(scene.add.rectangle(cx, eqBtnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, BORDER_GOLD).setInteractive({ useHandCursor: true }));
@@ -137,7 +126,6 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     eqBg.on("pointerdown", onManageEquipment);
   }
 
-  // Manage Moves button
   const btnY = panelY + h - 22;
   const hasPoints = (hero.skillPoints ?? 0) > 0;
   const btnBg = add(scene.add.rectangle(cx, btnY, w - 20, 38, BG_BTN, 0.9).setStrokeStyle(1, hasPoints ? BORDER_STAT_AVAIL : BORDER_GOLD).setInteractive({ useHandCursor: true }));

@@ -50,7 +50,6 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
     node.on("pointerdown", onFight);
   }
 
-  // Name
   const nameColor = isDefeated ? TXT_DEFEATED : isNext ? TXT_GOLD : TXT_LOCKED_NAME;
   scene.add
     .text(x, y - h * 0.42, m.name, {
@@ -60,7 +59,6 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
     })
     .setOrigin(0.5);
 
-  // Monster sprite
   const mFrame = MONSTER_FRAMES[m.id];
   if (mFrame) {
     scene.add
@@ -70,7 +68,7 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
       .setAlpha(isDefeated ? 0.4 : isLocked ? 0.3 : 1);
   }
 
-  // HP bar (decorative — shows monster has HP, not current value)
+  // Decorative HP bar — always full, doesn't reflect current HP.
   const hpBarW = w - 20;
   scene.add.rectangle(x, y + h * 0.28, hpBarW, 8, BG_ROW_MID, 0.9).setOrigin(0.5);
   scene.add
@@ -79,7 +77,6 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
     .setAlpha(isLocked ? 0.3 : 0.9);
   scene.add.rectangle(x - hpBarW / 2, y + h * 0.28, hpBarW, 8, BAR_HP_FILL).setOrigin(0, 0.5);
 
-  // Stats
   scene.add
     .text(x, y + h * 0.37, `ATK ${m.stats.attack}   DEF ${m.stats.defense}`, {
       fontSize: FONT_SM,
@@ -88,7 +85,6 @@ export function createMonsterNode(scene: Phaser.Scene, opts: MonsterNodeOptions)
     })
     .setOrigin(0.5);
 
-  // Status label
   const statusLabel = isDefeated ? "Defeated" : isNext ? "Fight!" : "Locked";
   const statusColor = isDefeated ? TXT_DEFEATED : isNext ? TXT_GOLD : TXT_LOCKED;
   scene.add
