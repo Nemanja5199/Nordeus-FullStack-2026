@@ -136,10 +136,9 @@ export function applyMove(
         break;
       }
       case "dot": {
-        // DOTs differ from buffs on storage: store `turns` directly. A 4-turn
-        // DOT should fire exactly 4 end-of-turn damage ticks (cast-turn tick
-        // counts). Buffs use turns + 1 because they're queried *between* ticks
-        // and the cast turn's stats were computed before apply.
+        // DOTs store `turns` directly (cast turn counts as a tick). Buffs
+        // use turns+1 because they're queried *between* ticks and the cast
+        // turn's stats were already snapshotted before apply.
         const tgt = fx.target === "self" ? attacker : defender;
         tgt.activeDots.push({
           damagePerTurn: fx.value!,
@@ -149,11 +148,7 @@ export function applyMove(
         break;
       }
       case "mp_drain": {
-        // Mana lives in BattleScene, not on CombatCharacter — applyMove is a
-        // pure simulator that knows only HP/buffs/DOTs. The live scene reads
-        // `result.mpDrain` after each call and adjusts the hero's mana bar
-        // (or the AI ignores it in sim, which is fine — mp_drain is meant to
-        // pressure the *player*, not factor into monster planning).
+        // Mana lives in BattleScene; applyMove just records the amount.
         result.mpDrain = (result.mpDrain ?? 0) + (fx.value ?? 0);
         logs.push(`${defender.name}'s mana drained (-${fx.value} MP)`);
         break;
@@ -191,9 +186,7 @@ export function tickBuffs(char: CombatCharacter): void {
     .filter((b) => b.turnsRemaining > 0);
 }
 
-// Apply DOT damage and decrement durations. Returns total damage dealt this
-// tick so the caller can log it. Mirrors tickBuffs: end-of-turn, after both
-// sides have acted.
+// Returns total damage dealt this tick. End-of-turn, after both sides act.
 export function tickDots(char: CombatCharacter): number {
   if (!char.activeDots || char.activeDots.length === 0) return 0;
   let total = 0;

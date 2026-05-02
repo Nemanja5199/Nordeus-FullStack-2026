@@ -1,6 +1,4 @@
-// Persistent dev toggle. When on, defaultHero() in gameState replaces the
-// freshly-built hero with god stats + all items + all droppable moves so we
-// can iterate on later-game content without grinding through earlier tiers.
+// Dev toggle. When on, defaultHero() builds a god-stats hero with full kit.
 const KEY = "rpg_test_mode";
 
 class TestModeManager {

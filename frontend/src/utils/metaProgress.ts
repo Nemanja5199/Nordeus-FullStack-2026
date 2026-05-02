@@ -67,11 +67,12 @@ class MetaProgressManager {
     return true;
   }
 
+  // Scholar's skillPoints bonus applies per level-up via getLevelUpSkillBonus,
+  // not at run start, so it's filtered out here.
   getStartingBonuses(): StartingBonuses {
     const b: StartingBonuses = { maxHp: 0, attack: 0, defense: 0, magic: 0, skillPoints: 0, gold: 0 };
     for (const id of this.purchased) {
       const def = UPGRADE_DEFS.find((u) => u.id === id);
-      // skillPoints bonuses (Scholar) apply per level-up, not at run start.
       if (def && def.category !== "skillPoints") b[def.category] += def.bonus;
     }
     return b;

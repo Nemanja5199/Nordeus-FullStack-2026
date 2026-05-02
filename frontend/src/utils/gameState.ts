@@ -13,8 +13,6 @@ export function getGearBonuses(
     if (!itemId) continue;
     const item = items[itemId];
     if (!item) {
-      // Stale equipment id (e.g. item removed from config since save). Surface
-      // it instead of silently dropping the gear bonus.
       console.warn(`[GameState] equipped item not in runConfig: ${itemId}`);
       continue;
     }
@@ -32,9 +30,7 @@ const RUN_KEY = "rpg_run";
 const TREE_KEY = "rpg_tree_state";
 const CLASS_KEY = "rpg_selected_class";
 
-// Bump when the persisted hero shape changes in a non-additive way (e.g. a
-// field's type changes, or default differs from `??`-style fallbacks below).
-// Add a case to `migrateHero` for each new version.
+// Bump on non-additive hero shape changes; add a migrateHero case per version.
 export const SAVE_VERSION = 1;
 
 type PersistedHero = HeroState & { saveVersion?: number };
@@ -43,9 +39,6 @@ export const HP_POTION_PRICE = 18;
 export const MANA_POTION_PRICE = 21;
 
 function defaultHero(config: RunConfig, cls: HeroClass): HeroState {
-  // Pick class-specific stats & moves; fall back to heroDefaults (= Knight)
-  // if the chosen class isn't in the runConfig (older payloads, hand-crafted
-  // mocks).
   const defaults = config.heroClasses?.[cls] ?? config.heroDefaults;
   const meta = MetaProgress.getStartingBonuses();
   const hero: HeroState = {
@@ -69,8 +62,6 @@ function defaultHero(config: RunConfig, cls: HeroClass): HeroState {
   return hero;
 }
 
-// Replaces the hero with god-tier stats + a full kit. Toggle lives on the
-// title screen so we can iterate on later-game content without grinding.
 function applyTestBuffs(hero: HeroState, config: RunConfig): void {
   hero.maxHp = 9999;
   hero.currentHp = 9999;
@@ -92,15 +83,10 @@ class GameStateManager {
   runConfig: RunConfig | null = null;
   runSave: RunSave | null = null;
 
-  // Tree-run progress
   completedNodes: string[] = [];
   currentNode: string | null = null;
   runSeed: number | null = null;
 
-  // Class chosen on the character-select screen. Drives starting stats and
-  // moveset (via heroClasses[cls]) and the in-battle hero sprite.
-  // Defaults to "knight" — matches all save files made before the Mage
-  // class shipped.
   selectedClass: HeroClass = "knight";
 
   getSessionId(): string {
@@ -114,8 +100,7 @@ class GameStateManager {
 
   loadSelectedClass(): void {
     const raw = localStorage.getItem(CLASS_KEY);
-    if (raw === "knight" || raw === "mage") this.selectedClass = raw;
-    else this.selectedClass = "knight";
+    this.selectedClass = (raw === "knight" || raw === "mage") ? raw : "knight";
   }
 
   setSelectedClass(cls: HeroClass): void {
@@ -129,17 +114,12 @@ class GameStateManager {
       this.hero = defaultHero(config, this.selectedClass);
       return;
     }
-    const persisted: PersistedHero = JSON.parse(raw);
-    this.hero = this.migrateHero(persisted);
+    this.hero = this.migrateHero(JSON.parse(raw));
   }
 
-  // Bring a persisted hero up to the current schema. Branch on saveVersion when
-  // a future change can't be backfilled by `??` defaults alone.
   private migrateHero(saved: PersistedHero): HeroState {
     if (saved.saveVersion !== undefined && saved.saveVersion !== SAVE_VERSION) {
-      console.warn(
-        `[GameState] migrating hero save from v${saved.saveVersion} to v${SAVE_VERSION}`,
-      );
+      console.warn(`[GameState] migrating hero save from v${saved.saveVersion} to v${SAVE_VERSION}`);
     }
     return {
       level: saved.level,
@@ -182,25 +162,21 @@ class GameStateManager {
     this.clearTreeState();
   }
 
-  // After defeat: wipe the in-fight save but keep a fresh tree state saved
-  // so the player can CONTINUE from the main menu on the same map.
+  // Defeat path: keeps the same map (runSeed) so CONTINUE resumes here.
   resetRunProgress(): void {
     this.runSave = null;
     localStorage.removeItem(RUN_KEY);
     this.completedNodes = [];
     this.currentNode = null;
-    this.saveTreeState(); // runSeed stays set — same map, fresh progress
+    this.saveTreeState();
   }
 
   saveTreeState(): void {
-    localStorage.setItem(
-      TREE_KEY,
-      JSON.stringify({
-        completedNodes: this.completedNodes,
-        currentNode: this.currentNode,
-        runSeed: this.runSeed,
-      }),
-    );
+    localStorage.setItem(TREE_KEY, JSON.stringify({
+      completedNodes: this.completedNodes,
+      currentNode: this.currentNode,
+      runSeed: this.runSeed,
+    }));
   }
 
   loadTreeState(): void {
@@ -224,9 +200,9 @@ class GameStateManager {
     localStorage.removeItem(TREE_KEY);
   }
 
+  // Replay must not advance the frontier — currentNode gates which next-tier
+  // nodes are unlocked, so overwriting it on replay would lock them.
   completeNode(nodeId: string): void {
-    // Replays don't advance the frontier — currentNode drives which nodes are
-    // unlocked next, so overwriting it on replay would lock higher-tier nodes.
     if (!this.completedNodes.includes(nodeId)) {
       this.completedNodes.push(nodeId);
       this.currentNode = nodeId;
@@ -256,10 +232,7 @@ class GameStateManager {
   spendSkillPoint(stat: "attack" | "defense" | "magic" | "maxHp"): boolean {
     if ((this.hero.skillPoints ?? 0) <= 0) return false;
     const gains = this.runConfig?.heroDefaults.levelUpStats ?? {
-      maxHp: 8,
-      attack: 2,
-      defense: 2,
-      magic: 3,
+      maxHp: 8, attack: 2, defense: 2, magic: 3,
     };
     if (stat === "maxHp") {
       this.hero.maxHp += gains.maxHp;
@@ -333,9 +306,7 @@ class GameStateManager {
     return true;
   }
 
-  // ── Shop ──────────────────────────────────────────────────────────────
-  // Tier unlock: lv 1 → tier 1, lv 3 → tier 2, lv 6 → tier 3.
-
+  // Shop tier gating: lv 1 → tier 1, lv 3 → tier 2, lv 6 → tier 3.
   unlockedTier(): 1 | 2 | 3 {
     const lv = this.hero.level;
     if (lv >= 6) return 3;
@@ -386,25 +357,20 @@ class GameStateManager {
     this.saveHero();
   }
 
-  // Wipe the current run + tree state, install a freshly generated config,
-  // and reset the hero with meta bonuses applied. Used by the post-death
-  // "Fight Again" flow where we want a NEW seed/map but want MetaProgress
-  // (shards, purchased upgrades) preserved.
+  // Post-defeat "Fight Again": fresh map seed + reset hero, but
+  // MetaProgress (shards, upgrades) is in a separate store and survives.
+  // saveTreeState here is required so MainMenu sees a save on refresh —
+  // TreeMapScene's lazy save only fires when runSeed was null on entry.
   startFreshRun(config: RunConfig): void {
     this.clearRun();
     this.runConfig = config;
     this.runSeed = config.seed;
-    // Persist the seed immediately so MainMenuScene's localStorage check
-    // for "rpg_tree_state" sees a save and shows CONTINUE on refresh. Without
-    // this, TreeMapScene only saves when runSeed was null on entry — and we
-    // just set it above, so its save guard would skip.
     this.saveTreeState();
     this.resetHero(config);
   }
 
-  // Safe lookups for runConfig-backed data. Returns undefined and logs a warning
-  // on missing ids — caller is expected to handle null. Lets a stale moveId or
-  // itemId in localStorage degrade gracefully instead of crashing on `.name`.
+  // Returns undefined + warns on missing ids, so a stale moveId/itemId in
+  // localStorage degrades gracefully instead of crashing on `.name`.
   getMove(moveId: string): MoveConfig | undefined {
     const move = this.runConfig?.moves[moveId];
     if (!move) console.warn(`[GameState] unknown move id: ${moveId}`);

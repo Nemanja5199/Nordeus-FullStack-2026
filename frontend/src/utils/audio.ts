@@ -1,17 +1,9 @@
 import type Phaser from "phaser";
 import { Settings } from "./settings";
 
-// Background music orchestrator. Lives at game scope so tracks persist across
-// scene transitions when the *group* doesn't change (e.g. map → equipment →
-// map should not restart the map track).
-//
-// Per group we keep a list of variant asset keys and pick one randomly each
-// time we (re)start that group. Battle additionally seeks to a random
-// offset so back-to-back fights don't always open the same way.
+// Background-music orchestrator. Tracks persist across scene transitions
+// when the *group* doesn't change (map → equipment → map = no restart).
 
-// Phaser asset cache keys for every music file we load in PreloadScene.
-// Imported by PreloadScene to register the load and by audio.ts to wire
-// each key into a track group — keeping both in sync via a single source.
 export const MusicAsset = {
   Menu1: "music_menu_1",
   Menu2: "music_menu_2",
@@ -24,8 +16,6 @@ export const MusicAsset = {
 } as const;
 export type MusicAssetKey = typeof MusicAsset[keyof typeof MusicAsset];
 
-// Looping-music groups. Callers pass one of these to Audio.play() instead
-// of a magic string — gives autocomplete and "find usages" across scenes.
 export const TrackGroup = {
   Menu: "menu",
   Map: "map",
@@ -38,64 +28,33 @@ interface TrackGroupConfig {
   variants: MusicAssetKey[];
   volume: number;
   randomOffset?: boolean;
-  // Random offset is picked uniformly in [min, max] × duration.
-  // Min skips past long quiet intros so scene entry doesn't feel dead;
-  // max keeps us from cutting in near the end and looping immediately.
+  // Uniform [min, max] × duration. min skips dead intros; max keeps us
+  // from cutting in near the end and looping immediately.
   offsetMinRatio?: number;
   offsetMaxRatio?: number;
 }
 
 const GROUPS: Record<TrackGroupKey, TrackGroupConfig> = {
-  [TrackGroup.Menu]: {
-    variants: [MusicAsset.Menu1, MusicAsset.Menu2],
-    volume: 0.42,
-    randomOffset: true,
-    offsetMinRatio: 0.05,
-    offsetMaxRatio: 0.25,
-  },
-  [TrackGroup.Map]: {
-    variants: [MusicAsset.Map1, MusicAsset.Map2],
-    volume: 0.38,
-    randomOffset: true,
-    offsetMinRatio: 0.05,
-    offsetMaxRatio: 0.25,
-  },
-  [TrackGroup.Battle]: {
-    variants: [MusicAsset.Battle1, MusicAsset.Battle2],
-    volume: 0.5,
-    randomOffset: true,
-    offsetMinRatio: 0.05,
-    offsetMaxRatio: 0.5,
-  },
-  [TrackGroup.Death]: {
-    // No variant pool / no offset — the somber atmosphere works better
-    // played from the start of the track each time the player dies.
-    variants: [MusicAsset.Death],
-    volume: 0.42,
-  },
+  [TrackGroup.Menu]:   { variants: [MusicAsset.Menu1, MusicAsset.Menu2],     volume: 0.42, randomOffset: true, offsetMinRatio: 0.05, offsetMaxRatio: 0.25 },
+  [TrackGroup.Map]:    { variants: [MusicAsset.Map1, MusicAsset.Map2],       volume: 0.38, randomOffset: true, offsetMinRatio: 0.05, offsetMaxRatio: 0.25 },
+  [TrackGroup.Battle]: { variants: [MusicAsset.Battle1, MusicAsset.Battle2], volume: 0.5,  randomOffset: true, offsetMinRatio: 0.05, offsetMaxRatio: 0.5 },
+  [TrackGroup.Death]:  { variants: [MusicAsset.Death],                       volume: 0.42 },
 };
 
 class AudioManager {
   private current: Phaser.Sound.BaseSound | null = null;
   private currentGroup: TrackGroupKey | null = null;
-  // Latest one-shot stinger so it can be cut short on the next scene
-  // transition. Otherwise the victory stinger leaks audibly into the map
-  // track when the player clicks Continue mid-fanfare.
   private stinger: Phaser.Sound.BaseSound | null = null;
 
-  // Begin (or keep playing) the given group's music in this scene's context.
-  // No-op when the group is already the active one and audibly playing — this
-  // is what lets the map track keep going while opening Equipment/Shop.
+  // No-op when the group is already audibly playing — keeps map music alive
+  // while opening Equipment/Shop.
   play(scene: Phaser.Scene, groupKey: TrackGroupKey): void {
     if (this.currentGroup === groupKey && this.current?.isPlaying) return;
 
     const group = GROUPS[groupKey];
     if (!group) return;
 
-    // Stop the previous track (hard cut for v1; crossfade can come later).
     this.stop();
-    // Kill any lingering victory/defeat stinger so it doesn't bleed into
-    // the freshly-started bg track.
     this.stopStinger();
 
     const variantKey = group.variants[Math.floor(Math.random() * group.variants.length)];
@@ -107,9 +66,8 @@ class AudioManager {
     });
 
     const start = () => {
-      // Guard against the queue-then-swap race: if the user clicked through
-      // MainMenu fast enough that we replaced this sound before the audio
-      // context unlocked, don't play a destroyed track.
+      // Queue-then-swap guard: if play() was called again before the audio
+      // context unlocked, don't start a sound that's already been replaced.
       if (this.current !== sound) return;
       let seek = 0;
       if (group.randomOffset) {
@@ -121,30 +79,20 @@ class AudioManager {
       sound.play({ seek });
     };
 
-    // Set as current before invoking start so the guard inside start sees
-    // a match. (For deferred starts via the unlocked listener this also
-    // means a later play() that swaps tracks will trip the guard.)
+    // Set current before scheduling start so the guard above can match it.
     this.current = sound;
     this.currentGroup = groupKey;
 
-    // Browsers block autoplay until the first user gesture. If the audio
-    // context is locked here we just wait for Phaser's UNLOCKED event,
-    // which fires on the first click anywhere in the game.
-    if (scene.sound.locked) {
-      scene.sound.once("unlocked", start);
-    } else {
-      start();
-    }
+    // Browsers block autoplay until first user gesture; Phaser fires
+    // "unlocked" on first click anywhere.
+    if (scene.sound.locked) scene.sound.once("unlocked", start);
+    else start();
   }
 
-  // Fire-and-forget one-shot. Used for the victory stinger on PostBattleScene
-  // (and any other "play once, no loop" cue we wire up later). Doesn't touch
-  // the looping-music state machine — currentGroup keeps pointing at whatever
-  // background track was last set.
+  // Fire-and-forget one-shot (e.g. victory stinger). Doesn't change the
+  // looping-music state machine.
   playStinger(scene: Phaser.Scene, key: MusicAssetKey, volume = 0.6): void {
     if (!scene.cache.audio.exists(key)) return;
-    // Only one stinger at a time — if a new one starts before the previous
-    // finished, drop the old one so they don't pile up.
     this.stopStinger();
     const sound = scene.sound.add(key, {
       loop: false,
@@ -155,11 +103,8 @@ class AudioManager {
       sound.destroy();
     });
     this.stinger = sound;
-    if (scene.sound.locked) {
-      scene.sound.once("unlocked", () => sound.play());
-    } else {
-      sound.play();
-    }
+    if (scene.sound.locked) scene.sound.once("unlocked", () => sound.play());
+    else sound.play();
   }
 
   private stopStinger(): void {
@@ -170,13 +115,10 @@ class AudioManager {
     }
   }
 
-  // Recompute the live track volume from current group's base × Settings master.
-  // Called by the Options slider on every drag tick so volume changes feel
-  // instant instead of only kicking in on the next track change.
+  // Called by the Options slider every drag tick so volume changes feel live.
   applyMasterVolume(): void {
     if (!this.current || !this.currentGroup) return;
-    const base = GROUPS[this.currentGroup].volume;
-    const live = base * Settings.musicVolume();
+    const live = GROUPS[this.currentGroup].volume * Settings.musicVolume();
     (this.current as Phaser.Sound.BaseSound & { setVolume: (v: number) => void }).setVolume(live);
   }
 
@@ -190,7 +132,6 @@ class AudioManager {
     this.stopStinger();
   }
 
-  // Test seam — drops cached refs without poking Phaser internals.
   resetForTests(): void {
     this.current = null;
     this.currentGroup = null;
