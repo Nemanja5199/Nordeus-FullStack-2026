@@ -6,3 +6,7 @@ export * from "./ScrollableArea";
 export * from "./MonsterNode";
 export * from "./BattleLog";
 export * from "./StatusBar";
+export * from "./PotionRow";
+export * from "./MoveButtonRow";
+export * from "./BattleHeroPanel";
+export * from "./BattleMonsterPanel";

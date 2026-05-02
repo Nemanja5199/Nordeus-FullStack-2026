@@ -1,14 +1,13 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey, FONT, BATTLE } from "../constants";
+import { Scene, type SceneKey, FONT } from "../constants";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat";
-import { HP_BAR, POTIONS, MANA, MONSTER_LEVEL_SCALING } from "../constants";
+import { POTIONS, MANA, MONSTER_LEVEL_SCALING } from "../constants";
 import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../state";
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
-import { heroFrameFor, MONSTER_FRAMES } from "../sprites";
-import { BattleLog, StatusBar } from "../ui";
-import { BG, BORDER, TXT, BAR, HP_GHOST } from "../constants";
+import { BattleLog, StatusBar, PotionRow, MoveButtonRow, BattleHeroPanel, BattleMonsterPanel } from "../ui";
+import { BG, TXT } from "../constants";
 
 interface BattleData {
   monster: MonsterConfig;
@@ -18,8 +17,6 @@ interface BattleData {
   nodeId?: string;
   levelBand?: { min: number; max: number };
 }
-
-const BAR_W = BATTLE.PANEL_W - 24;
 
 export class BattleScene extends Phaser.Scene {
   private hero!: CombatCharacter;
@@ -34,50 +31,17 @@ export class BattleScene extends Phaser.Scene {
   private busy = false;
 
   private heroMana: number = MANA.MAX;
-  private heroManaBarLeft!: number;
   private usedPotionThisTurn = false;
-  private potionButtons: Array<{
-    container: Phaser.GameObjects.Container;
-    bg: Phaser.GameObjects.Rectangle;
-    txt: Phaser.GameObjects.Text;
-  }> = [];
 
-  // UI
-  private heroHpFill!: Phaser.GameObjects.Rectangle;
-  private heroManaFill!: Phaser.GameObjects.Rectangle;
-  private heroManaText!: Phaser.GameObjects.Text;
-  private monsterHpFill!: Phaser.GameObjects.Rectangle;
-  private heroHpText!: Phaser.GameObjects.Text;
-  private monsterHpText!: Phaser.GameObjects.Text;
-  private heroStatsText!: Phaser.GameObjects.Text;
-  private heroBuffText!: Phaser.GameObjects.Text;
-  private monsterBuffText!: Phaser.GameObjects.Text;
-  private monsterIntentText!: Phaser.GameObjects.Text;
+  private heroPanel!: BattleHeroPanel;
+  private monsterPanel!: BattleMonsterPanel;
   private statusBar!: StatusBar;
   private log!: BattleLog;
-  private moveButtons: Array<{
-    container: Phaser.GameObjects.Container;
-    bg: Phaser.GameObjects.Rectangle;
-    nameTxt: Phaser.GameObjects.Text;
-    typeTxt: Phaser.GameObjects.Text;
-    costTxt: Phaser.GameObjects.Text;
-  }> = [];
+  private potions!: PotionRow;
+  private moveRow!: MoveButtonRow;
+
   private monsterIntentMoveId: string | null = null;
   private monsterMoveHistory: string[] = [];
-
-  // HP preview ghosts
-  private heroHpGhost!: Phaser.GameObjects.Rectangle;
-  private monsterHpGhost!: Phaser.GameObjects.Rectangle;
-  private heroBarLeft!: number;
-  private heroBarY!: number;
-  private monsterBarLeft!: number;
-  private monsterBarY!: number;
-
-  // Sprite refs captured for hit/lunge tweens. The lunge helper grabs
-  // sprite.x at the start of each animation, so a stale reference can't
-  // strand the sprite off-position.
-  private heroSprite!: Phaser.GameObjects.Image;
-  private monsterSprite!: Phaser.GameObjects.Image;
 
   constructor() {
     super(Scene.Battle);
@@ -89,8 +53,6 @@ export class BattleScene extends Phaser.Scene {
     this.busy = false;
     this.turnNumber = 0;
     this.heroMana = MANA.MAX;
-    this.moveButtons = [];
-    this.potionButtons = [];
     this.usedPotionThisTurn = false;
     this.monsterIntentMoveId = null;
 
@@ -142,327 +104,49 @@ export class BattleScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, BG.DARKEST).setOrigin(0);
 
-    this.buildHeroPanel(width, height);
-    this.buildMonsterPanel(width, height);
+    this.heroPanel = new BattleHeroPanel(this, width, height, GameState.hero.level, GameState.selectedClass);
+    this.monsterPanel = new BattleMonsterPanel(this, width, height, this.monsterCfg, this.monster.baseStats);
     this.statusBar = new StatusBar(this, width, height);
-    this.buildPotionButtons(width, height);
-    this.buildMoveButtons(width, height);
+    this.potions = new PotionRow(this, width, height, {
+      onUseHp: () => this.useHpPotion(),
+      onUseMana: () => this.useManaPotion(),
+      onHoverHp: () => this.previewHpPotion(),
+      onHoverMana: () => this.previewManaPotion(),
+      onHoverEnd: () => this.hideMovePreview(),
+    });
+    const moveCfgs = this.hero.moves
+      .map((id) => {
+        const config = GameState.runConfig!.moves[id];
+        return config ? { id, config } : null;
+      })
+      .filter((m): m is { id: string; config: MoveConfig } => m !== null);
+    this.moveRow = new MoveButtonRow(this, width, height, moveCfgs, {
+      onClick: (moveId) => void this.handlePlayerMove(moveId),
+      onHover: (moveId) => {
+        const move = GameState.runConfig!.moves[moveId];
+        this.statusBar.setDescription(this.buildMoveTooltip(moveId) || move.description);
+        this.showMovePreview(moveId);
+      },
+      onHoverEnd: () => {
+        this.statusBar.setDescription("");
+        this.hideMovePreview();
+      },
+    });
     this.log = new BattleLog(this, width, height);
 
+    this.updateHeroHp();
+    this.updateMonsterHp();
+    this.updatePotionButtons();
     this.setStatus("Your turn — choose a move!");
     void this.prefetchMonsterIntent();
   }
-
-  // ── Hero panel ───────────────────────────────────────────────────────────
-
-  private buildHeroPanel(width: number, height: number) {
-    const panelH = height * 0.58;
-    const panelTop = height * 0.04;
-    const cx = width * 0.2;
-
-    this.add
-      .rectangle(cx, panelTop + panelH / 2, BATTLE.PANEL_W, panelH, BG.HERO_BATTLE, 0.88)
-      .setStrokeStyle(2, BORDER.HERO_BATTLE);
-
-    this.add
-      .text(cx, panelTop + 20, `Knight  Lv.${GameState.hero.level}`, {
-        fontSize: FONT.LG,
-        fontFamily: "EnchantedLand",
-        color: TXT.HERO,
-      })
-      .setOrigin(0.5);
-
-    const heroFrame = heroFrameFor(GameState.selectedClass);
-    this.heroSprite = this.add
-      .image(cx, panelTop + panelH * 0.42, heroFrame.key, heroFrame.frame)
-      .setScale(5)
-      .setOrigin(0.5);
-
-    // Live effective stats (updated each turn)
-    this.heroStatsText = this.add
-      .text(cx, panelTop + panelH * 0.62, "", {
-        fontSize: FONT.BODY,
-        color: TXT.GOLD_LIGHT,
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    // HP bar
-    const barY = panelTop + panelH * 0.70;
-    this.heroBarLeft = cx - BAR_W / 2;
-    this.heroBarY = barY;
-    this.add.rectangle(cx, barY, BAR_W, 14, BG.BAR_TRACK).setOrigin(0.5);
-    this.heroHpFill = this.add
-      .rectangle(this.heroBarLeft, barY, BAR_W, 14, BAR.HERO_HP)
-      .setOrigin(0, 0.5);
-    this.heroHpGhost = this.add
-      .rectangle(this.heroBarLeft, barY, 0, 14, HP_GHOST.HERO, 0.75)
-      .setOrigin(0, 0.5);
-    this.heroHpText = this.add
-      .text(cx, barY + 16, "", {
-        fontSize: FONT.BODY,
-        color: TXT.GOLD_LIGHT,
-      })
-      .setOrigin(0.5);
-
-    // Mana bar
-    const manaBarY = panelTop + panelH * 0.81;
-    this.heroManaBarLeft = cx - BAR_W / 2;
-    this.add.rectangle(cx, manaBarY, BAR_W, 10, BG.BAR_TRACK).setOrigin(0.5);
-    this.heroManaFill = this.add
-      .rectangle(this.heroManaBarLeft, manaBarY, BAR_W, 10, BAR.MANA_FILL)
-      .setOrigin(0, 0.5);
-    this.heroManaText = this.add
-      .text(cx, manaBarY + 14, "", {
-        fontSize: FONT.BODY,
-        color: TXT.GOLD_LIGHT,
-      })
-      .setOrigin(0.5);
-
-    this.heroBuffText = this.add
-      .text(cx, panelTop + panelH * 0.93, "", {
-        fontSize: FONT.SM,
-        color: TXT.GOLD_MID,
-        wordWrap: { width: BATTLE.PANEL_W - 16 },
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    this.updateHeroHp();
-  }
-
-  // ── Monster panel ────────────────────────────────────────────────────────
-
-  private buildMonsterPanel(width: number, height: number) {
-    const panelH = height * 0.58;
-    const panelTop = height * 0.04;
-    const cx = width * 0.8;
-
-    this.add
-      .rectangle(cx, panelTop + panelH / 2, BATTLE.PANEL_W, panelH, BG.MONSTER_BATTLE, 0.88)
-      .setStrokeStyle(2, BORDER.MON_BATTLE);
-
-    this.add
-      .text(cx, panelTop + 20, this.monsterCfg.name, {
-        fontSize: FONT.LG,
-        fontFamily: "EnchantedLand",
-        color: TXT.MONSTER,
-      })
-      .setOrigin(0.5);
-
-    const monsterFrame = MONSTER_FRAMES[this.monsterCfg.id];
-    if (monsterFrame) {
-      this.monsterSprite = this.add
-        .image(cx, panelTop + panelH * 0.42, monsterFrame.key, monsterFrame.frame)
-        .setScale(-5, 5)
-        .setOrigin(0.5);
-    }
-
-    // Monster stats scaled to hero level
-    this.add
-      .text(
-        cx,
-        panelTop + panelH * 0.62,
-        `ATK ${this.monster.baseStats.attack}   DEF ${this.monster.baseStats.defense}   MAG ${this.monster.baseStats.magic}`,
-        {
-          fontSize: FONT.BODY,
-          color: TXT.GOLD_LIGHT,
-          align: "center",
-        },
-      )
-      .setOrigin(0.5);
-
-    // HP bar
-    const barY = panelTop + panelH * 0.72;
-    this.monsterBarLeft = cx - BAR_W / 2;
-    this.monsterBarY = barY;
-    this.add.rectangle(cx, barY, BAR_W, 14, BG.BAR_TRACK).setOrigin(0.5);
-    this.monsterHpFill = this.add
-      .rectangle(this.monsterBarLeft, barY, BAR_W, 14, BAR.HP_FILL)
-      .setOrigin(0, 0.5);
-    this.monsterHpGhost = this.add
-      .rectangle(this.monsterBarLeft, barY, 0, 14, HP_GHOST.MONSTER, 0.85)
-      .setOrigin(0, 0.5);
-    this.monsterHpText = this.add
-      .text(cx, barY + 18, "", {
-        fontSize: FONT.BODY,
-        color: TXT.GOLD_LIGHT,
-      })
-      .setOrigin(0.5);
-
-    // Intent row — what the monster plans to do this turn
-    this.monsterIntentText = this.add
-      .text(cx, panelTop + panelH * 0.86, "", {
-        fontSize: FONT.MD,
-        fontFamily: "EnchantedLand",
-        color: TXT.MUTED,
-        wordWrap: { width: BATTLE.PANEL_W - 16 },
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    // Active buffs/debuffs
-    this.monsterBuffText = this.add
-      .text(cx, panelTop + panelH * 0.94, "", {
-        fontSize: FONT.SM,
-        color: TXT.DUST_MOTE,
-        wordWrap: { width: BATTLE.PANEL_W - 16 },
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    this.updateMonsterHp();
-  }
-
-  // ── Status bar ───────────────────────────────────────────────────────────
 
   private setStatus(msg: string) {
     this.statusBar.setStatus(msg);
   }
 
-  // ── Move buttons ─────────────────────────────────────────────────────────
-
-  private buildMoveButtons(width: number, height: number) {
-    const moves = this.hero.moves;
-    const btnW = 240;
-    const btnH = 54;
-    const btnGap = 14;
-    const totalW = moves.length * btnW + (moves.length - 1) * btnGap;
-    const startX = (width - totalW) / 2 + btnW / 2;
-    const btnY = height * 0.77;
-
-    moves.forEach((moveId, i) => {
-      const move = GameState.runConfig!.moves[moveId];
-      if (!move) return;
-
-      const x = startX + i * (btnW + btnGap);
-      const container = this.add.container(x, btnY);
-      const cost = move.manaCost ?? 0;
-
-      const bg = this.add
-        .rectangle(0, 0, btnW, btnH, BG.MOVE_CARD, 0.92)
-        .setStrokeStyle(1, BORDER.LOCKED);
-      const nameTxt = this.add
-        .text(0, -12, move.name, {
-          fontSize: FONT.MD,
-          fontFamily: "EnchantedLand",
-          color: TXT.GOLD_LIGHT,
-        })
-        .setOrigin(0.5);
-      const typeTxt = this.add
-        .text(cost > 0 ? -20 : 0, 10, `[${move.moveType}]`, {
-          fontSize: FONT.SM,
-          color: TXT.GOLD_MID,
-        })
-        .setOrigin(0.5);
-      const costTxt = this.add
-        .text(cost > 0 ? 32 : 0, 10, cost > 0 ? `${cost} MP` : "", {
-          fontSize: FONT.SM,
-          color: TXT.MANA,
-        })
-        .setOrigin(0.5);
-
-      bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerover", () => {
-        if (this.busy) return;
-        const canAfford = this.heroMana >= cost;
-        if (!canAfford) return;
-        bg.setFillStyle(BG.BTN_HOVER);
-        bg.setStrokeStyle(1, BORDER.GOLD_BRIGHT);
-        nameTxt.setColor(TXT.GOLD);
-        this.statusBar.setDescription(this.buildMoveTooltip(moveId) || move.description);
-        this.showMovePreview(moveId);
-      });
-      bg.on("pointerout", () => {
-        bg.setFillStyle(BG.MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER.LOCKED);
-        nameTxt.setColor(TXT.GOLD_LIGHT);
-        this.statusBar.setDescription("");
-        this.hideMovePreview();
-      });
-      bg.on("pointerdown", () => {
-        if (this.heroMana < cost) return;
-        this.handlePlayerMove(moveId);
-      });
-
-      container.add([bg, nameTxt, typeTxt, costTxt]);
-      this.moveButtons.push({ container, bg, nameTxt, typeTxt, costTxt });
-    });
-  }
-
   private setButtonsEnabled(enabled: boolean) {
-    this.moveButtons.forEach(({ bg, nameTxt }) => {
-      bg.setAlpha(enabled ? 1 : 0.4);
-      if (!enabled) {
-        bg.setFillStyle(BG.MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER.LOCKED);
-        nameTxt.setColor(TXT.GOLD_LIGHT);
-        bg.disableInteractive();
-      } else {
-        bg.setInteractive({ useHandCursor: true });
-      }
-    });
-    this.updatePotionButtons();
-  }
-
-  // ── Potion buttons ───────────────────────────────────────────────────────
-
-  private buildPotionButtons(width: number, height: number) {
-    const btnW = 130;
-    const btnH = 40;
-    const gap = 18;
-    const totalW = btnW * 2 + gap;
-    const startX = (width - totalW) / 2 + btnW / 2;
-    const y = height * 0.85;
-
-    const make = (
-      i: number,
-      iconKey: string,
-      count: number,
-      onUse: () => void,
-      onHoverPreview: () => void,
-    ) => {
-      const x = startX + i * (btnW + gap);
-      const container = this.add.container(x, y);
-      const bg = this.add
-        .rectangle(0, 0, btnW, btnH, BG.MOVE_CARD, 0.92)
-        .setStrokeStyle(1, BORDER.LOCKED);
-      const icon = this.add.image(-btnW / 2 + 22, 0, iconKey).setScale(0.85).setOrigin(0.5);
-      const txt = this.add
-        .text(8, 0, `× ${count}`, {
-          fontSize: FONT.BODY,
-          fontFamily: "EnchantedLand",
-          color: TXT.GOLD_LIGHT,
-        })
-        .setOrigin(0, 0.5);
-      bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerover", () => {
-        bg.setFillStyle(BG.BTN_HOVER);
-        bg.setStrokeStyle(1, BORDER.GOLD_BRIGHT);
-        txt.setColor(TXT.GOLD);
-        onHoverPreview();
-      });
-      bg.on("pointerout", () => {
-        bg.setFillStyle(BG.MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER.LOCKED);
-        txt.setColor(TXT.GOLD_LIGHT);
-        this.hideMovePreview();
-      });
-      bg.on("pointerdown", onUse);
-      container.add([bg, icon, txt]);
-      this.potionButtons.push({ container, bg, txt });
-    };
-
-    make(
-      0, "potion_hp", GameState.hero.hpPotions ?? 0,
-      () => this.useHpPotion(),
-      () => this.previewHpPotion(),
-    );
-    make(
-      1, "potion_mp", GameState.hero.manaPotions ?? 0,
-      () => this.useManaPotion(),
-      () => this.previewManaPotion(),
-    );
+    this.moveRow.setEnabled(enabled);
     this.updatePotionButtons();
   }
 
@@ -508,20 +192,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updatePotionButtons() {
-    const counts = [GameState.hero.hpPotions ?? 0, GameState.hero.manaPotions ?? 0];
-    const enabled = [this.canUseHpPotion(), this.canUseManaPotion()];
-    this.potionButtons.forEach(({ bg, txt }, i) => {
-      txt.setText(`× ${counts[i]}`);
-      bg.setAlpha(enabled[i] ? 1 : 0.4);
-      if (enabled[i]) {
-        bg.setInteractive({ useHandCursor: true });
-      } else {
-        bg.disableInteractive();
-        bg.setFillStyle(BG.MOVE_CARD);
-        bg.setStrokeStyle(1, BORDER.LOCKED);
-        txt.setColor(TXT.GOLD_LIGHT);
-      }
-    });
+    this.potions.update(
+      GameState.hero.hpPotions ?? 0,
+      GameState.hero.manaPotions ?? 0,
+      this.canUseHpPotion(),
+      this.canUseManaPotion(),
+    );
   }
 
   // ── Battle log ───────────────────────────────────────────────────────────
@@ -547,20 +223,8 @@ export class BattleScene extends Phaser.Scene {
   // ── HP + live stats ──────────────────────────────────────────────────────
 
   private updateHeroHp() {
-    const pct = Math.max(0, this.hero.hp) / this.hero.maxHp;
-    const color =
-      pct > HP_BAR.HIGH_THRESHOLD ? BAR.HP_HIGH : pct > HP_BAR.MID_THRESHOLD ? BAR.HP_MID : BAR.HP_LOW;
-    // Tween the bar so HP changes drain visibly instead of snapping.
-    this.heroHpFill.setFillStyle(color);
-    this.tweens.killTweensOf(this.heroHpFill);
-    this.tweens.add({
-      targets: this.heroHpFill,
-      scaleX: pct,
-      duration: this.ms(this.HP_TWEEN_MS),
-      ease: "Quad.easeOut",
-    });
-    this.heroHpText.setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`);
-    this.heroBuffText.setText(this.formatBuffs(this.hero));
+    this.heroPanel.setHp(this.hero.hp, this.hero.maxHp, this.ms(this.HP_TWEEN_MS));
+    this.heroPanel.setBuffs(this.formatBuffs(this.hero));
     this.updateHeroStats();
     this.updateHeroMana();
   }
@@ -569,10 +233,8 @@ export class BattleScene extends Phaser.Scene {
     // Test mode: top mana off every refresh so the player can spam any move.
     // Cheaper than threading TestMode through every cost check.
     if (TestMode.isOn()) this.heroMana = MANA.MAX;
-    const pct = this.heroMana / MANA.MAX;
-    this.heroManaFill.setScale(pct, 1);
-    this.heroManaText.setText(`MP  ${this.heroMana} / ${MANA.MAX}`).setColor(TXT.GOLD_LIGHT);
-    this.updateButtonManaState();
+    this.heroPanel.setMana(this.heroMana, MANA.MAX);
+    this.moveRow.setMana(this.heroMana);
   }
 
   // ── Battle animations ────────────────────────────────────────────────────
@@ -752,8 +414,8 @@ export class BattleScene extends Phaser.Scene {
     damage: number,
     heal: number,
   ): Promise<void> {
-    const attackerSprite = attackerSide === "hero" ? this.heroSprite : this.monsterSprite;
-    const defenderSprite = attackerSide === "hero" ? this.monsterSprite : this.heroSprite;
+    const attackerSprite = attackerSide === "hero" ? this.heroPanel.sprite : this.monsterPanel.sprite;
+    const defenderSprite = attackerSide === "hero" ? this.monsterPanel.sprite : this.heroPanel.sprite;
     const lungeDx = attackerSide === "hero" ? this.LUNGE_PX : -this.LUNGE_PX;
     const defenderMaxHp = attackerSide === "hero" ? this.monster.maxHp : this.hero.maxHp;
 
@@ -841,7 +503,7 @@ export class BattleScene extends Phaser.Scene {
 
   private async animateDotTick(target: "hero" | "monster", damage: number): Promise<void> {
     if (damage <= 0) return;
-    const sprite = target === "hero" ? this.heroSprite : this.monsterSprite;
+    const sprite = target === "hero" ? this.heroPanel.sprite : this.monsterPanel.sprite;
     if (!sprite) return;
     SfxPlayer.play(this, Sfx.DotTick);
     await Promise.all([
@@ -861,47 +523,23 @@ export class BattleScene extends Phaser.Scene {
     if (dropped > 0) {
       this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT.INTENT_DEBUFF);
       // Fire-and-forget visuals — don't block the move-resolution flow.
-      if (this.heroSprite) {
-        void this.sparkles(this.heroSprite.x, this.heroSprite.y, 0x4488ff, 6, 600);
-        void this.floatNumber(
-          this.heroSprite.x,
-          this.heroSprite.y - 50,
-          `-${dropped} MP`,
-          "#5599ff",
-        );
-      }
+      const heroSprite = this.heroPanel.sprite;
+      void this.sparkles(heroSprite.x, heroSprite.y, 0x4488ff, 6, 600);
+      void this.floatNumber(heroSprite.x, heroSprite.y - 50, `-${dropped} MP`, "#5599ff");
     }
   }
 
-  private updateButtonManaState() {
-    this.hero.moves.forEach((moveId, i) => {
-      const btn = this.moveButtons[i];
-      if (!btn) return;
-      const cost = GameState.getMove(moveId)?.manaCost ?? 0;
-      const canAfford = this.heroMana >= cost;
-      btn.bg.setAlpha(canAfford ? 1 : 0.45);
-      btn.costTxt.setColor(canAfford ? TXT.MANA : TXT.MANA_LOW);
-    });
-  }
-
   private updateHeroStats() {
-    const effAtk = getEffectiveStat(this.hero, "attack");
-    const effDef = getEffectiveStat(this.hero, "defense");
-    const effMag = getEffectiveStat(this.hero, "magic");
-    this.heroStatsText.setText(`ATK ${effAtk}   DEF ${effDef}   MAG ${effMag}`);
+    this.heroPanel.setStats(
+      getEffectiveStat(this.hero, "attack"),
+      getEffectiveStat(this.hero, "defense"),
+      getEffectiveStat(this.hero, "magic"),
+    );
   }
 
   private updateMonsterHp() {
-    const pct = Math.max(0, this.monster.hp) / this.monster.maxHp;
-    this.tweens.killTweensOf(this.monsterHpFill);
-    this.tweens.add({
-      targets: this.monsterHpFill,
-      scaleX: pct,
-      duration: this.ms(this.HP_TWEEN_MS),
-      ease: "Quad.easeOut",
-    });
-    this.monsterHpText.setText(`HP  ${Math.max(0, this.monster.hp)} / ${this.monster.maxHp}`);
-    this.monsterBuffText.setText(this.formatBuffs(this.monster));
+    this.monsterPanel.setHp(this.monster.hp, this.monster.maxHp, this.ms(this.HP_TWEEN_MS));
+    this.monsterPanel.setBuffs(this.formatBuffs(this.monster));
   }
 
   private formatBuffs(char: CombatCharacter): string {
@@ -961,7 +599,7 @@ export class BattleScene extends Phaser.Scene {
 
   private updateMonsterIntent(moveId: string | null) {
     if (!moveId) {
-      this.monsterIntentText.setText("Thinking...").setColor(TXT.MUTED);
+      this.monsterPanel.setIntent("Thinking...", TXT.MUTED);
       return;
     }
     const move = GameState.runConfig!.moves[moveId];
@@ -982,19 +620,19 @@ export class BattleScene extends Phaser.Scene {
         : Math.max(1, Math.floor(move.baseValue + effStat * 1.1));
       const label = isPhysical ? "Physical" : "Magic";
       const color = isPhysical ? TXT.INTENT_ATTACK : TXT.LOG_MAGIC;
-      this.monsterIntentText.setText(`${label}  ~${dmg} dmg`).setColor(color);
+      this.monsterPanel.setIntent(`${label}  ~${dmg} dmg`, color);
     } else if (hasDrain) {
-      this.monsterIntentText.setText("Draining life").setColor(TXT.INTENT_HEAL);
+      this.monsterPanel.setIntent("Draining life", TXT.INTENT_HEAL);
     } else if (hasHeal) {
-      this.monsterIntentText.setText("Healing").setColor(TXT.INTENT_HEAL);
+      this.monsterPanel.setIntent("Healing", TXT.INTENT_HEAL);
     } else if (hasDebuff) {
       const stat = move.effects.find((e) => e.type === "debuff")?.stat ?? "stat";
-      this.monsterIntentText.setText(`Weakening your ${stat}`).setColor(TXT.INTENT_DEBUFF);
+      this.monsterPanel.setIntent(`Weakening your ${stat}`, TXT.INTENT_DEBUFF);
     } else if (hasBuff) {
       const stat = move.effects.find((e) => e.type === "buff")?.stat ?? "stat";
-      this.monsterIntentText.setText(`Buffing own ${stat}`).setColor(TXT.INTENT_BUFF);
+      this.monsterPanel.setIntent(`Buffing own ${stat}`, TXT.INTENT_BUFF);
     } else {
-      this.monsterIntentText.setText(move.name).setColor(TXT.MUTED);
+      this.monsterPanel.setIntent(move.name, TXT.MUTED);
     }
   }
 
@@ -1033,7 +671,7 @@ export class BattleScene extends Phaser.Scene {
       this.updateMonsterIntent(resp.moveId);
     } catch {
       if (this.turnNumber !== capturedTurn) return;
-      this.monsterIntentText.setText("Unknown").setColor(TXT.MUTED);
+      this.monsterPanel.setIntent("Unknown", TXT.MUTED);
     }
   }
 
@@ -1052,10 +690,7 @@ export class BattleScene extends Phaser.Scene {
     if (cost <= 0) return;
     const futureMana = Math.max(0, this.heroMana - cost);
     const futureRegen = Math.min(MANA.MAX, futureMana + MANA.REGEN);
-    this.heroManaFill.setScale(futureMana / MANA.MAX, 1);
-    this.heroManaText
-      .setText(`MP  ${futureMana} / ${MANA.MAX}  (+${futureRegen - futureMana} next turn)`)
-      .setColor(TXT.MANA_LOW);
+    this.heroPanel.previewManaCost(futureMana, MANA.MAX, futureRegen - futureMana);
   }
 
   // Skip when the potion would no-op so the ghost bar doesn't lie.
@@ -1068,10 +703,7 @@ export class BattleScene extends Phaser.Scene {
   private previewManaPotion(): void {
     if (!this.canUseManaPotion()) return;
     const futureMana = Math.min(MANA.MAX, this.heroMana + POTIONS.MP_RESTORE);
-    this.heroManaFill.setScale(futureMana / MANA.MAX, 1);
-    this.heroManaText
-      .setText(`MP  ${futureMana} / ${MANA.MAX}`)
-      .setColor(TXT.INTENT_HEAL);
+    this.heroPanel.previewManaHeal(futureMana, MANA.MAX);
   }
 
   private previewHeroBuffs(move: MoveConfig): number {
@@ -1090,7 +722,7 @@ export class BattleScene extends Phaser.Scene {
       futureDef !== getEffectiveStat(this.hero, "defense") ||
       futureMag !== getEffectiveStat(this.hero, "magic");
     if (statsChanged) {
-      this.heroStatsText.setText(`ATK ${futureAtk}   DEF ${futureDef}   MAG ${futureMag}`);
+      this.heroPanel.setStats(futureAtk, futureDef, futureMag);
     }
     return futureDef;
   }
@@ -1113,15 +745,7 @@ export class BattleScene extends Phaser.Scene {
     if (move.effects.some((e) => e.type === "drain")) playerHeal = playerDmg;
 
     if (playerDmg > 0) {
-      const futureHp = Math.max(0, this.monster.hp - playerDmg);
-      this.monsterHpGhost.setPosition(
-        this.monsterBarLeft + BAR_W * (futureHp / this.monster.maxHp),
-        this.monsterBarY,
-      );
-      this.monsterHpGhost.setSize(BAR_W * (playerDmg / this.monster.maxHp), 14);
-      this.monsterHpText
-        .setText(`HP  ${futureHp} / ${this.monster.maxHp}`)
-        .setColor(TXT.INTENT_ATTACK);
+      this.monsterPanel.previewHpDamage(this.monster.hp, playerDmg, this.monster.maxHp);
     }
 
     return { playerDmg, playerHeal };
@@ -1129,15 +753,7 @@ export class BattleScene extends Phaser.Scene {
 
   private previewHeroHp(playerDmg: number, playerHeal: number, futureDef: number): void {
     if (playerHeal > 0) {
-      const futureHp = Math.min(this.hero.maxHp, this.hero.hp + playerHeal);
-      this.heroHpGhost.setPosition(
-        this.heroBarLeft + BAR_W * (this.hero.hp / this.hero.maxHp),
-        this.heroBarY,
-      );
-      this.heroHpGhost
-        .setSize(BAR_W * ((futureHp - this.hero.hp) / this.hero.maxHp), 14)
-        .setFillStyle(BAR.HP_HIGH, 0.7);
-      this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT.INTENT_HEAL);
+      this.heroPanel.previewHpHeal(this.hero.hp, playerHeal, this.hero.maxHp);
       return;
     }
 
@@ -1157,28 +773,14 @@ export class BattleScene extends Phaser.Scene {
         monsterDmg = Math.max(1, Math.floor(intentMove.baseValue + monsterEffMag * 1.1));
 
       if (monsterDmg > 0) {
-        const futureHp = Math.max(0, this.hero.hp - monsterDmg);
-        this.heroHpGhost.setPosition(
-          this.heroBarLeft + BAR_W * (futureHp / this.hero.maxHp),
-          this.heroBarY,
-        );
-        this.heroHpGhost
-          .setSize(BAR_W * (monsterDmg / this.hero.maxHp), 14)
-          .setFillStyle(HP_GHOST.HERO, 0.75);
-        this.heroHpText.setText(`HP  ${futureHp} / ${this.hero.maxHp}`).setColor(TXT.INTENT_ATTACK);
+        this.heroPanel.previewHpDamage(this.hero.hp, monsterDmg, this.hero.maxHp);
       }
     }
   }
 
   private hideMovePreview() {
-    this.monsterHpGhost.setSize(0, 14);
-    this.heroHpGhost.setSize(0, 14);
-    this.monsterHpText
-      .setText(`HP  ${Math.max(0, this.monster.hp)} / ${this.monster.maxHp}`)
-      .setColor(TXT.GOLD_LIGHT);
-    this.heroHpText
-      .setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`)
-      .setColor(TXT.GOLD_LIGHT);
+    this.monsterPanel.clearHpPreview(this.monster.hp, this.monster.maxHp);
+    this.heroPanel.clearHpPreview(this.hero.hp, this.hero.maxHp);
     this.updateHeroStats();
     this.updateHeroMana();
   }
