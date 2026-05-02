@@ -77,7 +77,21 @@
       "Bash(kill %1)",
       "Bash(pkill -f \"_pick_move\")",
       "Bash(awk -F: '{print $2}')",
-      "Bash(grep -iB 1 \"claude\\\\|anthropic\\\\|opus\\\\|sonnet\")"
+      "Bash(grep -iB 1 \"claude\\\\|anthropic\\\\|opus\\\\|sonnet\")",
+      "Bash(grep *)",
+      "Bash(kill 8818)",
+      "Bash(mkdir -p \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/music\")",
+      "Bash(mv \"Moonlit Castle Menu.mp3\" ../../music/menu_1.mp3)",
+      "Bash(mv \"Moonlit Castle Menu 2.mp3\" ../../music/menu_2.mp3)",
+      "Bash(mv \"Map of Alderbrook.mp3\" ../../music/map_1.mp3)",
+      "Bash(mv \"Map of Alderbrook 2.mp3\" ../../music/map_2.mp3)",
+      "Bash(mkdir -p \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Custom\")",
+      "Bash(cp \"Wizard hat blue.png\"                          \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Custom/wizard_hat_blue.png\")",
+      "Bash(cp \"Metal looking glove.png\"                      \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Custom/metal_glove.png\")",
+      "Bash(cp \"Neclesk .png\"                                 \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Custom/blue_glove.png\")",
+      "Bash(cp \"Golden glove.png\"                             \"/mnt/e/Projects/Nordeus-FullStack-2026/frontend/public/assets/Items Assets/Custom/golden_glove.png\")",
+      "Bash(awk '/^[[:space:]]*\\\\/\\\\//{c++; if\\(prev\\) {print NR\": \"$0; cnt++} else {start=NR; cnt=1}; prev=1; next} {if\\(cnt>=3\\) print \"BLOCK at line \"start\" \\(\"cnt\" lines\\)\"; prev=0; cnt=0}' /mnt/e/Projects/Nordeus-FullStack-2026/frontend/src/scenes/BattleScene.ts)",
+      "Bash(awk 'FNR==1{file=FILENAME} /from \"[^\"]*audio\"/ || /from \"[^\"]*state\"/ || /from \"[^\"]*ui\"/ {print file\":\"FNR\": \"$0}' src/scenes/BattleScene.ts)"
     ]
   }
 }

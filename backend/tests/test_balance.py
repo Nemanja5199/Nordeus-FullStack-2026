@@ -18,7 +18,7 @@ from collections import Counter
 import pytest
 
 import app.routers.battle as battle_module
-from app.game_config import HERO_DEFAULTS, MOVES, MONSTERS
+from app.game_config import HERO_CLASSES, MOVES, MONSTERS
 from app.models import CharacterState, MonsterMoveRequest
 from app.routers.battle import (
     _apply_move_sim,
@@ -49,9 +49,9 @@ def _by_id():
 
 
 def hero_at_level(level: int, moves: list[str]) -> CharacterState:
-    """Build a hero at the given level using HERO_DEFAULTS + level-up gains.
+    """Build a hero at the given level using Knight defaults + level-up gains.
     Mirrors the frontend's level-up math."""
-    base = HERO_DEFAULTS
+    base = HERO_CLASSES["knight"]
     gains = base["levelUpStats"]
     n = max(0, level - 1)
     return CharacterState(
@@ -199,7 +199,7 @@ class TestAIMoveDistribution:
         # Pick a representative monster level from the band
         band_levels = [v for k, v in MONSTER_LEVEL_BANDS.items() if k[0] == monster_id]
         m_level = band_levels[0]["min"] if band_levels else 5
-        hero_moves = HERO_DEFAULTS["defaultMoves"]
+        hero_moves = HERO_CLASSES["knight"]["defaultMoves"]
         counts: Counter = Counter()
         for _ in range(self.N_TRIALS):
             req = MonsterMoveRequest(
@@ -273,7 +273,7 @@ class TestBalanceSimulation:
     ):
         b = _by_id()
         monster = b[monster_id]
-        hero_moves = HERO_DEFAULTS["defaultMoves"]
+        hero_moves = HERO_CLASSES["knight"]["defaultMoves"]
         rng = random.Random(42)  # reproducible
         wins = 0
         timeouts = 0

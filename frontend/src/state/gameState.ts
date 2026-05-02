@@ -41,7 +41,7 @@ export const POTION_PRICE = {
 } as const;
 
 function defaultHero(config: RunConfig, cls: HeroClass): HeroState {
-  const defaults = config.heroClasses?.[cls] ?? config.heroDefaults;
+  const defaults = config.heroClasses[cls];
   const meta = MetaProgress.getStartingBonuses();
   const hero: HeroState = {
     level: 1,
@@ -233,7 +233,7 @@ class GameStateManager {
 
   spendSkillPoint(stat: "attack" | "defense" | "magic" | "maxHp"): boolean {
     if ((this.hero.skillPoints ?? 0) <= 0) return false;
-    const gains = this.runConfig?.heroDefaults.levelUpStats ?? {
+    const gains = this.runConfig?.heroClasses[this.selectedClass].levelUpStats ?? {
       maxHp: 8, attack: 2, defense: 2, magic: 3,
     };
     if (stat === "maxHp") {

@@ -1,6 +1,6 @@
 """Sanity checks on game_config — ensures data integrity before any game logic runs."""
 import pytest
-from app.game_config import MOVES, MONSTERS, HERO_DEFAULTS, ITEMS, POTION_PRICES
+from app.game_config import MOVES, MONSTERS, HERO_CLASSES, ITEMS, POTION_PRICES
 
 REQUIRED_MOVE_KEYS = {"id", "name", "moveType", "baseValue", "effects", "description"}
 VALID_MOVE_TYPES = {"physical", "magic", "heal", "none"}
@@ -276,21 +276,26 @@ class TestDeathKnight:
         assert dk["attack"] > lich["attack"], "DK should out-hit lv-2 lich physically"
 
 
-class TestHeroDefaults:
-    def test_required_fields_present(self):
+class TestHeroClasses:
+    @pytest.mark.parametrize("cls_id", list(HERO_CLASSES.keys()))
+    def test_required_fields_present(self, cls_id):
+        cls = HERO_CLASSES[cls_id]
         for field in ("maxHp", "attack", "defense", "magic", "defaultMoves", "levelUpStats", "xpPerLevel"):
-            assert field in HERO_DEFAULTS, f"HERO_DEFAULTS missing '{field}'"
+            assert field in cls, f"HERO_CLASSES['{cls_id}'] missing '{field}'"
 
-    def test_four_default_moves(self):
-        assert len(HERO_DEFAULTS["defaultMoves"]) == 4
+    @pytest.mark.parametrize("cls_id", list(HERO_CLASSES.keys()))
+    def test_four_default_moves(self, cls_id):
+        assert len(HERO_CLASSES[cls_id]["defaultMoves"]) == 4
 
-    def test_default_moves_exist(self):
-        for move_id in HERO_DEFAULTS["defaultMoves"]:
-            assert move_id in MOVES, f"Hero default move '{move_id}' not in MOVES"
+    @pytest.mark.parametrize("cls_id", list(HERO_CLASSES.keys()))
+    def test_default_moves_exist(self, cls_id):
+        for move_id in HERO_CLASSES[cls_id]["defaultMoves"]:
+            assert move_id in MOVES, f"{cls_id} default move '{move_id}' not in MOVES"
 
-    def test_level_up_stats_all_positive(self):
-        for stat, gain in HERO_DEFAULTS["levelUpStats"].items():
-            assert gain > 0, f"levelUpStats['{stat}'] should be positive"
+    @pytest.mark.parametrize("cls_id", list(HERO_CLASSES.keys()))
+    def test_level_up_stats_all_positive(self, cls_id):
+        for stat, gain in HERO_CLASSES[cls_id]["levelUpStats"].items():
+            assert gain > 0, f"{cls_id} levelUpStats['{stat}'] should be positive"
 
 
 class TestShopItems:

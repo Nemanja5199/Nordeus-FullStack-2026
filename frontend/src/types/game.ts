@@ -98,7 +98,6 @@ export interface RunConfig {
   monsters: MonsterConfig[];
   moves: Record<string, MoveConfig>;
   items: Record<string, GearItem>;
-  heroDefaults: HeroDefaults; // back-compat; mirrors heroClasses.knight
   heroClasses: Record<HeroClass, HeroDefaults>;
   upgrades: MetaUpgrade[];
   mapTree: import("../map").MapTree;

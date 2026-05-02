@@ -63,7 +63,6 @@ class GameMetaResponse(BaseModel):
     monsters: list[dict[str, Any]]
     moves: dict[str, dict[str, Any]]
     items: dict[str, dict[str, Any]]
-    heroDefaults: dict[str, Any]  # Knight defaults; kept for back-compat
     heroClasses: dict[str, dict[str, Any]]
     upgrades: list[dict[str, Any]]
 

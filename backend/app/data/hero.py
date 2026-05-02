@@ -23,6 +23,3 @@ HERO_CLASSES: dict[str, dict[str, Any]] = {
         "xpPerLevel": 100,
     },
 }
-
-# Back-compat alias — pre-Mage callers expect the Knight entry.
-HERO_DEFAULTS: dict[str, Any] = HERO_CLASSES["knight"]

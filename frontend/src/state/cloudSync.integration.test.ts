@@ -46,7 +46,6 @@ const MOCK_CONFIG: RunConfig = {
   items: {},
   seed: 1,
   mapTree: { nodes: {}, roots: [] },
-  heroDefaults: KNIGHT_DEFAULTS,
   heroClasses: { knight: KNIGHT_DEFAULTS, mage: MAGE_DEFAULTS },
   upgrades: MOCK_UPGRADES as unknown as RunConfig["upgrades"],
 };

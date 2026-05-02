@@ -58,7 +58,6 @@ export interface GameMeta {
   monsters: MonsterConfig[];
   moves: Record<string, MoveConfig>;
   items: Record<string, GearItem>;
-  heroDefaults: HeroDefaults;
   heroClasses: Record<HeroClass, HeroDefaults>;
   upgrades: MetaUpgrade[];
 }

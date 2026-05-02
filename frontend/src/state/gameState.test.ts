@@ -42,7 +42,6 @@ const MOCK_CONFIG: RunConfig = {
   items: {},
   seed: 1,
   mapTree: { nodes: {}, roots: [] },
-  heroDefaults: KNIGHT_DEFAULTS,
   heroClasses: { knight: KNIGHT_DEFAULTS, mage: MAGE_DEFAULTS },
   upgrades: MOCK_UPGRADES as unknown as RunConfig["upgrades"],
 };
@@ -658,7 +657,10 @@ describe("TestMode buffs in defaultHero", () => {
     ...MOCK_CONFIG,
     moves: { slash, engulf: dropMove, body_slam: monsterOnlyMove },
     items: { iron_sword: item },
-    heroDefaults: { ...MOCK_CONFIG.heroDefaults, defaultMoves: ["slash"] },
+    heroClasses: {
+      ...MOCK_CONFIG.heroClasses,
+      knight: { ...MOCK_CONFIG.heroClasses.knight, defaultMoves: ["slash"] },
+    },
   };
 
   it("normal mode keeps base stats", () => {
@@ -750,8 +752,8 @@ describe("GameState.startFreshRun", () => {
     MetaProgress.buy("vitality_1"); // +15 maxHp
     MetaProgress.buy("strength_1"); // +2 attack
     GameState.startFreshRun({ ...MOCK_CONFIG, seed: 1 });
-    expect(GameState.hero.maxHp).toBe(MOCK_CONFIG.heroDefaults.maxHp + 15);
-    expect(GameState.hero.attack).toBe(MOCK_CONFIG.heroDefaults.attack + 2);
+    expect(GameState.hero.maxHp).toBe(MOCK_CONFIG.heroClasses.knight.maxHp + 15);
+    expect(GameState.hero.attack).toBe(MOCK_CONFIG.heroClasses.knight.attack + 2);
   });
 
   it("clears prior tree state so old node ids don't bleed in", () => {
