@@ -9,6 +9,7 @@ import { TreeMapScene } from "./scenes/TreeMapScene";
 import { EquipmentScene } from "./scenes/EquipmentScene";
 import { ShopScene } from "./scenes/ShopScene";
 import { UpgradesScene } from "./scenes/UpgradesScene";
+import { OptionsScene } from "./scenes/OptionsScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -24,6 +25,7 @@ const config: Phaser.Types.Core.GameConfig = {
     EquipmentScene,
     ShopScene,
     UpgradesScene,
+    OptionsScene,
   ],
   scale: {
     mode: Phaser.Scale.RESIZE,

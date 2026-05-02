@@ -2,6 +2,7 @@ import type { GearItem, GearSlot, GearStatBonuses, HeroState, MoveConfig, RunCon
 import { XP_CURVE_FACTOR } from "./gameConstants";
 import { MetaProgress } from "./metaProgress";
 import { TestMode } from "./testMode";
+import { Cloud } from "./cloudSync";
 
 export function getGearBonuses(
   equipment: Partial<Record<GearSlot, string>>,
@@ -141,6 +142,7 @@ class GameStateManager {
   saveHero(): void {
     const persisted: PersistedHero = { ...this.hero, saveVersion: SAVE_VERSION };
     localStorage.setItem(HERO_KEY, JSON.stringify(persisted));
+    Cloud.pushDebounced();
   }
 
   saveRun(run: RunSave): void {

@@ -3,6 +3,7 @@ import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../ui/typograph
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
 import { TestMode } from "../utils/testMode";
+import { Audio, TrackGroup } from "../utils/audio";
 import { createButton, BTN_LG } from "../ui/Button";
 import {
   BG_BLACK,
@@ -24,6 +25,8 @@ export class MainMenuScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    Audio.play(this, TrackGroup.Menu);
 
     this.add.tileSprite(0, 0, width, height, "bg_brick").setOrigin(0);
     this.add.rectangle(0, 0, width, height, BG_BLACK, 0.62).setOrigin(0);
@@ -58,26 +61,33 @@ export class MainMenuScene extends Phaser.Scene {
     const hasSave = !!localStorage.getItem("rpg_tree_state");
     const btnY = height * 0.5;
     const btnGap = 72;
-    createButton(this, width / 2, btnY, {
+    let row = 0;
+    createButton(this, width / 2, btnY + btnGap * row++, {
       ...BTN_LG,
       label: "NEW GAME",
       color: BG_BTN_SUCCESS,
       onClick: () => this.startNewGame(),
     });
     if (hasSave) {
-      createButton(this, width / 2, btnY + btnGap, {
+      createButton(this, width / 2, btnY + btnGap * row++, {
         ...BTN_LG,
         label: "CONTINUE",
         color: BG_BTN_NEUTRAL,
         onClick: () => this.continueGame(),
       });
-      createButton(this, width / 2, btnY + btnGap * 2, {
+      createButton(this, width / 2, btnY + btnGap * row++, {
         ...BTN_LG,
         label: "RESET PROGRESS",
         color: BG_BTN_DANGER,
         onClick: () => this.resetProgress(),
       });
     }
+    createButton(this, width / 2, btnY + btnGap * row++, {
+      ...BTN_LG,
+      label: "OPTIONS",
+      color: BG_BTN_NEUTRAL,
+      onClick: () => this.scene.start("OptionsScene", { returnScene: "MainMenuScene" }),
+    });
 
     this.createTestModeToggle();
   }

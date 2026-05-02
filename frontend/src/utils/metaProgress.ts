@@ -1,4 +1,5 @@
 import type { MetaUpgrade, MetaUpgradeCategory } from "../types/game";
+import { Cloud } from "./cloudSync";
 
 const SHARDS_KEY   = "rpg_meta_shards";
 const UPGRADES_KEY = "rpg_meta_upgrades";
@@ -41,6 +42,7 @@ class MetaProgressManager {
   save(): void {
     localStorage.setItem(SHARDS_KEY, String(this.shards));
     localStorage.setItem(UPGRADES_KEY, JSON.stringify([...this.purchased]));
+    Cloud.pushDebounced();
   }
 
   addShards(amount: number): void {
@@ -89,6 +91,7 @@ class MetaProgressManager {
     this.purchased = new Set();
     localStorage.removeItem(SHARDS_KEY);
     localStorage.removeItem(UPGRADES_KEY);
+    Cloud.pushDebounced();
   }
 }
 

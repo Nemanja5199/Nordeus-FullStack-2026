@@ -31,8 +31,19 @@ export interface BattleStatePayload {
 
 export interface SavePayload {
   sessionId: string;
-  hero: Record<string, unknown>;
+  // All sections optional — backend only updates columns that are sent so
+  // partial pushes (e.g. settings-only) don't clobber hero progress.
+  hero?: Record<string, unknown> | null;
+  meta?: Record<string, unknown> | null;
+  settings?: Record<string, unknown> | null;
   run?: Record<string, unknown> | null;
+}
+
+export interface LoadGameResponse {
+  hero: Record<string, unknown> | null;
+  meta: Record<string, unknown> | null;
+  settings: Record<string, unknown> | null;
+  run: Record<string, unknown> | null;
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -95,7 +106,5 @@ export const api = {
     }),
 
   loadGame: (sessionId: string) =>
-    request<{ hero: Record<string, unknown> | null; run: Record<string, unknown> | null }>(
-      `/api/game/load/${sessionId}`,
-    ),
+    request<LoadGameResponse>(`/api/game/load/${sessionId}`),
 };

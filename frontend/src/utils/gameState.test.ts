@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GameState, getGearBonuses } from "./gameState";
 import { MetaProgress } from "./metaProgress";
 import { TestMode } from "./testMode";
+import { Cloud } from "./cloudSync";
 import type { GearItem, MoveConfig, RunConfig } from "../types/game";
 
 // ── Minimal RunConfig stub ────────────────────────────────────────────────────
@@ -690,5 +691,33 @@ describe("getGearBonuses", () => {
     expect(b.attack).toBe(0);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("stale_id"));
     warn.mockRestore();
+  });
+});
+
+describe("GameState cloud sync wiring", () => {
+  beforeEach(() => {
+    GameState.runConfig = MOCK_CONFIG;
+    GameState.initHero(MOCK_CONFIG);
+  });
+
+  it("saveHero triggers Cloud.pushDebounced", () => {
+    const spy = vi.spyOn(Cloud, "pushDebounced").mockImplementation(() => {});
+    GameState.saveHero();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("addXp triggers Cloud.pushDebounced via saveHero", () => {
+    const spy = vi.spyOn(Cloud, "pushDebounced").mockImplementation(() => {});
+    GameState.addXp(10);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("learnMove triggers Cloud.pushDebounced", () => {
+    const spy = vi.spyOn(Cloud, "pushDebounced").mockImplementation(() => {});
+    GameState.learnMove("new_move");
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

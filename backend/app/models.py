@@ -40,7 +40,13 @@ class MonsterMoveResponse(BaseModel):
 
 class SaveStateRequest(BaseModel):
     sessionId: str
-    hero: dict[str, Any]
+    # All sections optional so we can push a partial — e.g. settings-only
+    # when the user changes a slider before any run has started. PostgREST
+    # upsert only updates the columns we send, so unsent sections are
+    # preserved.
+    hero: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
+    settings: dict[str, Any] | None = None
     run: dict[str, Any] | None = None
 
 
@@ -49,8 +55,10 @@ class SaveStateResponse(BaseModel):
 
 
 class LoadGameResponse(BaseModel):
-    hero: dict[str, Any] | None
-    run: dict[str, Any] | None
+    hero: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
+    settings: dict[str, Any] | None = None
+    run: dict[str, Any] | None = None
 
 
 class GameMetaResponse(BaseModel):

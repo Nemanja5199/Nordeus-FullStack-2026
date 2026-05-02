@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { TXT_GOLD, TXT_GOLD_LIGHT } from "./colors";
 import { FONT_LG, FONT_MD } from "./typography";
+import { SfxPlayer, Sfx } from "../utils/sfx";
 
 export interface ButtonOptions {
   label: string;
@@ -49,7 +50,10 @@ export function createButton(
     bg.setAlpha(0.9);
     txt.setColor(TXT_GOLD_LIGHT);
   });
-  bg.on("pointerdown", opts.onClick);
+  bg.on("pointerdown", () => {
+    SfxPlayer.play(scene, Sfx.ButtonClick);
+    opts.onClick();
+  });
 
   const container = scene.add.container(x, y, [bg, txt]);
   return container;

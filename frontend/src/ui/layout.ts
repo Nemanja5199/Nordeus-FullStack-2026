@@ -8,9 +8,9 @@ export const MOVE_CARD_GAP    = 12;
 export const MOVE_CARD_START_Y = 200;
 
 // ── Upgrade cards (UpgradesScene grid) ────────────────────────────────────
-export const UPGRADE_CARD_W   = 170;
-export const UPGRADE_CARD_H   = 110;
-export const UPGRADE_CARD_GAP =  14;
+export const UPGRADE_CARD_W   = 220;
+export const UPGRADE_CARD_H   = 150;
+export const UPGRADE_CARD_GAP =  16;
 
 // ── Equipment slot cards (left column) ────────────────────────────────────
 export const EQ_CARD_W      = 260;

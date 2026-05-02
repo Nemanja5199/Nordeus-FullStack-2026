@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { FONT_MD, FONT_SM, FONT_MAP_TITLE } from "../ui/typography";
 import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
 import { GameState } from "../utils/gameState";
+import { Audio, TrackGroup } from "../utils/audio";
 import { XP_CURVE_FACTOR } from "../utils/gameConstants";
 import { createHeroPanel } from "../ui/HeroPanel";
 import { createButton, BTN_SM } from "../ui/Button";
@@ -93,6 +94,7 @@ export class TreeMapScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    Audio.play(this, TrackGroup.Map);
     GameState.loadTreeState();
     if (GameState.runConfig?.seed && !GameState.runSeed) {
       GameState.runSeed = GameState.runConfig.seed;

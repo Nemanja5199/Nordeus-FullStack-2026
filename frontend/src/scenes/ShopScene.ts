@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../utils/gameState";
+import { SfxPlayer, Sfx } from "../utils/sfx";
 import type { GearItem } from "../types/game";
 import { createModalFooter } from "../ui/ModalFooter";
 import { TooltipManager } from "../ui/TooltipManager";
@@ -188,11 +189,19 @@ export class ShopScene extends Phaser.Scene {
     if (buyable) {
       bg.on("pointerdown", () => {
         if (GameState.buyItem(item.id)) {
+          SfxPlayer.play(this, Sfx.GoldPickup);
           this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
           this.children.removeAll(true);
           this.create({ returnScene: this.returnScene });
+        } else {
+          SfxPlayer.play(this, Sfx.Denied);
         }
       });
+    } else if (!owned) {
+      // Card is shown but un-buyable (insufficient gold or locked tier).
+      // Don't be silent — give a denied tick so the click registers as
+      // intentional rather than a dead area.
+      bg.on("pointerdown", () => SfxPlayer.play(this, Sfx.Denied));
     }
 
     if (owned || lockedByLv) bg.setAlpha(0.55);
@@ -308,13 +317,17 @@ export class ShopScene extends Phaser.Scene {
     if (canAfford) {
       bg.on("pointerdown", () => {
         if (onBuy()) {
+          SfxPlayer.play(this, Sfx.GoldPickup);
           this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
           this.children.removeAll(true);
           this.create({ returnScene: this.returnScene });
+        } else {
+          SfxPlayer.play(this, Sfx.Denied);
         }
       });
     } else {
       bg.setAlpha(0.8);
+      bg.on("pointerdown", () => SfxPlayer.play(this, Sfx.Denied));
     }
   }
 }

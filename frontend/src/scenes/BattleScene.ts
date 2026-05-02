@@ -14,6 +14,9 @@ import {
 } from "../utils/gameConstants";
 import { GameState, getGearBonuses } from "../utils/gameState";
 import { TestMode } from "../utils/testMode";
+import { Settings } from "../utils/settings";
+import { Audio, TrackGroup } from "../utils/audio";
+import { SfxPlayer, Sfx } from "../utils/sfx";
 import { MetaProgress } from "../utils/metaProgress";
 import { api } from "../services/api";
 import { HERO_FRAME, MONSTER_FRAMES } from "../utils/spriteFrames";
@@ -120,11 +123,19 @@ export class BattleScene extends Phaser.Scene {
   private monsterBarLeft!: number;
   private monsterBarY!: number;
 
+  // Sprite refs captured for hit/lunge tweens. The lunge helper grabs
+  // sprite.x at the start of each animation, so a stale reference can't
+  // strand the sprite off-position.
+  private heroSprite!: Phaser.GameObjects.Image;
+  private monsterSprite!: Phaser.GameObjects.Image;
+
   constructor() {
     super("BattleScene");
   }
 
   create(data: BattleData) {
+    this.animSpeed = Settings.animSpeedMultiplier();
+    Audio.play(this, TrackGroup.Battle);
     this.busy = false;
     this.turnNumber = 0;
     this.heroMana = MANA_MAX;
@@ -213,7 +224,7 @@ export class BattleScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
+    this.heroSprite = this.add
       .image(cx, panelTop + panelH * 0.42, HERO_FRAME.key, HERO_FRAME.frame)
       .setScale(5)
       .setOrigin(0.5);
@@ -292,7 +303,7 @@ export class BattleScene extends Phaser.Scene {
 
     const monsterFrame = MONSTER_FRAMES[this.monsterCfg.id];
     if (monsterFrame) {
-      this.add
+      this.monsterSprite = this.add
         .image(cx, panelTop + panelH * 0.42, monsterFrame.key, monsterFrame.frame)
         .setScale(-5, 5)
         .setOrigin(0.5);
@@ -555,6 +566,7 @@ export class BattleScene extends Phaser.Scene {
     this.pushLog(`You drink an HP potion (+${HP_POTION_HEAL} HP).`);
     this.updateHeroHp();
     this.updatePotionButtons();
+    SfxPlayer.play(this, Sfx.Heal);
   }
 
   private useManaPotion() {
@@ -565,6 +577,7 @@ export class BattleScene extends Phaser.Scene {
     this.pushLog(`You drink a mana potion (+${MP_POTION_RESTORE} MP).`);
     this.updateHeroMana();
     this.updatePotionButtons();
+    SfxPlayer.play(this, Sfx.ManaDrink);
   }
 
   private updatePotionButtons() {
@@ -641,10 +654,17 @@ export class BattleScene extends Phaser.Scene {
 
   private updateHeroHp() {
     const pct = Math.max(0, this.hero.hp) / this.hero.maxHp;
-    this.heroHpFill.setScale(pct, 1);
-    this.heroHpFill.setFillStyle(
-      pct > HP_BAR_HIGH_THRESHOLD ? BAR_HP_HIGH : pct > HP_BAR_MID_THRESHOLD ? BAR_HP_MID : BAR_HP_LOW,
-    );
+    const color =
+      pct > HP_BAR_HIGH_THRESHOLD ? BAR_HP_HIGH : pct > HP_BAR_MID_THRESHOLD ? BAR_HP_MID : BAR_HP_LOW;
+    // Tween the bar so HP changes drain visibly instead of snapping.
+    this.heroHpFill.setFillStyle(color);
+    this.tweens.killTweensOf(this.heroHpFill);
+    this.tweens.add({
+      targets: this.heroHpFill,
+      scaleX: pct,
+      duration: this.ms(this.HP_TWEEN_MS),
+      ease: "Quad.easeOut",
+    });
     this.heroHpText.setText(`HP  ${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`);
     this.heroBuffText.setText(this.formatBuffs(this.hero));
     this.updateHeroStats();
@@ -661,6 +681,297 @@ export class BattleScene extends Phaser.Scene {
     this.updateButtonManaState();
   }
 
+  // ── Battle animations ────────────────────────────────────────────────────
+  // All visual feel for resolving a move lives here. Each helper returns a
+  // Promise so handlePlayerMove / doMonsterTurn can await a coordinated
+  // sequence (lunge -> hit flash + damage number -> bar drain) instead of
+  // racing animations against the next turn.
+
+  // Multiplier on every animation duration. Read once from Settings in
+  // create() so toggling fast-animations from the options screen takes
+  // effect on the next battle entry.
+  private animSpeed = 1;
+
+  // Helper: scale a base duration by animSpeed. All duration constants below
+  // are wall-clock at normal speed; multiply through this to get the actual
+  // tween duration / delay.
+  private ms(base: number): number {
+    return Math.max(1, Math.round(base * this.animSpeed));
+  }
+
+  private LUNGE_PX = 50;       // attack dash distance
+  private LUNGE_MS = 220;      // total dash time (yoyo split half/half)
+  private FLASH_MS = 150;      // hit-tint duration
+  private DAMAGE_FLOAT_MS = 750; // damage number rise + fade
+  private HP_TWEEN_MS = 380;   // HP bar drain duration
+  // Heavy hit thresholds: any damage >= 25% of target's max HP triggers
+  // an "impact" feel — brief hit-stop, screen shake, and an oversized red
+  // damage number. Self-balancing across hero and monster scaling.
+  private HEAVY_DMG_RATIO = 0.25;
+  private HIT_STOP_MS = 80;
+  private SHAKE_MS = 220;
+  private SHAKE_INTENSITY = 0.009;
+
+  private lunge(sprite: Phaser.GameObjects.Image, dx: number): Promise<void> {
+    if (!sprite) return Promise.resolve();
+    return new Promise((resolve) => {
+      const restingX = sprite.x;
+      this.tweens.killTweensOf(sprite);
+      this.tweens.add({
+        targets: sprite,
+        x: restingX + dx,
+        duration: this.ms(this.LUNGE_MS / 2),
+        yoyo: true,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          sprite.x = restingX; // safety: snap back exactly
+          resolve();
+        },
+      });
+    });
+  }
+
+  private flashSprite(
+    sprite: Phaser.GameObjects.Image | undefined,
+    color: number,
+  ): Promise<void> {
+    if (!sprite) return Promise.resolve();
+    return new Promise((resolve) => {
+      sprite.setTint(color);
+      this.time.delayedCall(this.ms(this.FLASH_MS), () => {
+        sprite.clearTint();
+        resolve();
+      });
+    });
+  }
+
+  private floatNumber(
+    x: number,
+    y: number,
+    text: string,
+    color: string,
+    heavy = false,
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      const txt = this.add
+        .text(x, y, text, {
+          fontSize: heavy ? "44px" : FONT_LG,
+          fontFamily: "EnchantedLand",
+          color,
+          stroke: "#000000",
+          strokeThickness: heavy ? 7 : 5,
+        })
+        .setOrigin(0.5)
+        .setDepth(100);
+      if (heavy) {
+        txt.setScale(0.5);
+        this.tweens.add({
+          targets: txt,
+          scale: 1,
+          duration: this.ms(130),
+          ease: "Back.easeOut",
+        });
+      }
+      this.tweens.add({
+        targets: txt,
+        y: y - 70,
+        alpha: 0,
+        duration: this.ms(this.DAMAGE_FLOAT_MS),
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          txt.destroy();
+          resolve();
+        },
+      });
+    });
+  }
+
+  // Brief y-bob in place for non-damage moves so pure buffs/debuffs still
+  // have spatial feedback (otherwise nothing visibly happens beyond text).
+  private windup(sprite: Phaser.GameObjects.Image | undefined): Promise<void> {
+    if (!sprite) return Promise.resolve();
+    return new Promise((resolve) => {
+      const restingY = sprite.y;
+      this.tweens.killTweensOf(sprite);
+      this.tweens.add({
+        targets: sprite,
+        y: restingY - 8,
+        duration: this.ms(110),
+        yoyo: true,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          sprite.y = restingY;
+          resolve();
+        },
+      });
+    });
+  }
+
+  // Particle burst — small drifting circles. Used for heal sparkles, buff
+  // glints, mp_drain wisps, and DOT embers.
+  private sparkles(
+    x: number,
+    y: number,
+    color: number,
+    count = 6,
+    durationMs = 600,
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      if (count <= 0) {
+        resolve();
+        return;
+      }
+      let remaining = count;
+      for (let i = 0; i < count; i++) {
+        const ox = Phaser.Math.Between(-22, 22);
+        const oy = Phaser.Math.Between(-12, 12);
+        const dot = this.add.circle(x + ox, y + oy, 3, color, 0.9).setDepth(99);
+        this.tweens.add({
+          targets: dot,
+          x: x + ox + Phaser.Math.Between(-22, 22),
+          y: y + oy - Phaser.Math.Between(28, 56),
+          alpha: 0,
+          duration: this.ms(durationMs),
+          ease: "Quad.easeOut",
+          onComplete: () => {
+            dot.destroy();
+            remaining -= 1;
+            if (remaining === 0) resolve();
+          },
+        });
+      }
+    });
+  }
+
+  // Tinted hold (longer than flashSprite, lighter color) — used to mark a
+  // character "got buffed" or "got debuffed". Distinct from the hit flash so
+  // both can play on the same target without one overwriting the other.
+  private auraPulse(
+    sprite: Phaser.GameObjects.Image | undefined,
+    color: number,
+    ms = 280,
+  ): Promise<void> {
+    if (!sprite) return Promise.resolve();
+    return new Promise((resolve) => {
+      sprite.setTint(color);
+      this.time.delayedCall(this.ms(ms), () => {
+        sprite.clearTint();
+        resolve();
+      });
+    });
+  }
+
+  // Orchestrates the full hit feel: lunge (or windup) → flash + damage number
+  // + buff/debuff aura → bar drain. attackerSide tells us which way to lunge
+  // ('hero' lunges right, 'monster' lunges left).
+  private async animateMove(
+    attackerSide: "hero" | "monster",
+    move: MoveConfig,
+    damage: number,
+    heal: number,
+  ): Promise<void> {
+    const attackerSprite = attackerSide === "hero" ? this.heroSprite : this.monsterSprite;
+    const defenderSprite = attackerSide === "hero" ? this.monsterSprite : this.heroSprite;
+    const lungeDx = attackerSide === "hero" ? this.LUNGE_PX : -this.LUNGE_PX;
+    const defenderMaxHp = attackerSide === "hero" ? this.monster.maxHp : this.hero.maxHp;
+
+    const isAttack = damage > 0;
+    const isHeal = heal > 0 && move.moveType === "heal";
+    const isHeavy = isAttack && damage >= defenderMaxHp * this.HEAVY_DMG_RATIO;
+
+    let hasSelfBuff = false;
+    let hasOpponentDebuff = false;
+    let hasSelfHpCost = false;
+    for (const fx of move.effects ?? []) {
+      if (fx.type === "buff" && fx.target === "self") hasSelfBuff = true;
+      else if (fx.type === "debuff" && fx.target === "opponent") hasOpponentDebuff = true;
+      else if (fx.type === "hp_cost") hasSelfHpCost = true;
+    }
+
+    if (isAttack || isHeal) {
+      await this.lunge(attackerSprite, lungeDx);
+    } else if (hasSelfBuff || hasOpponentDebuff || hasSelfHpCost) {
+      await this.windup(attackerSprite);
+    }
+
+    // Hit-stop: brief freeze before the impact lands so heavy hits feel weighty.
+    if (isHeavy) {
+      await new Promise<void>((resolve) =>
+        this.time.delayedCall(this.ms(this.HIT_STOP_MS), resolve),
+      );
+      if (Settings.screenShake()) {
+        this.cameras.main.shake(this.ms(this.SHAKE_MS), this.SHAKE_INTENSITY);
+      }
+      // Heavy impact thump layered over the per-attack hit/cast cue.
+      SfxPlayer.play(this, Sfx.HeavyImpact);
+    }
+
+    const tasks: Promise<void>[] = [];
+
+    if (isAttack) {
+      const flashColor = move.moveType === "magic" ? 0x66aaff : 0xff4444;
+      tasks.push(this.flashSprite(defenderSprite, flashColor));
+      const numColor = isHeavy
+        ? "#ff2a2a"
+        : move.moveType === "magic"
+          ? "#a8ccff"
+          : "#ff7070";
+      tasks.push(
+        this.floatNumber(
+          defenderSprite.x,
+          defenderSprite.y - 50,
+          `-${damage}`,
+          numColor,
+          isHeavy,
+        ),
+      );
+      // Hit / cast cue. Pitch jitter is applied inside SfxPlayer so 3 sword
+      // variants × jitter feels different every swing.
+      SfxPlayer.play(this, move.moveType === "magic" ? Sfx.MagicCast : Sfx.PhysicalHit);
+    } else if (isHeal) {
+      tasks.push(this.flashSprite(attackerSprite, 0x66ff88));
+      tasks.push(
+        this.floatNumber(attackerSprite.x, attackerSprite.y - 50, `+${heal}`, "#88ff99"),
+      );
+      tasks.push(this.sparkles(attackerSprite.x, attackerSprite.y, 0x66ff88, 8));
+      SfxPlayer.play(this, Sfx.Heal);
+    }
+
+    if (hasSelfBuff) {
+      // gold tint + glints on the buffed character
+      tasks.push(this.auraPulse(attackerSprite, 0xffdf66));
+      tasks.push(this.sparkles(attackerSprite.x, attackerSprite.y, 0xffdf66, 5, 500));
+      SfxPlayer.play(this, Sfx.BuffApply);
+    }
+    if (hasOpponentDebuff) {
+      // purple tint + glints on the cursed character
+      tasks.push(this.auraPulse(defenderSprite, 0xaa66ff));
+      tasks.push(this.sparkles(defenderSprite.x, defenderSprite.y, 0xaa66ff, 5, 500));
+      SfxPlayer.play(this, Sfx.DebuffApply);
+    }
+    if (hasSelfHpCost) {
+      // dim red flash on the caster — they paid HP
+      tasks.push(this.flashSprite(attackerSprite, 0xff6655));
+    }
+
+    if (tasks.length) await Promise.all(tasks);
+  }
+
+  // Plays when a DOT tick chunks a character's HP at end of turn. Read the
+  // amount and target separately because tickDots returns a number and the
+  // caller knows which sprite belongs to whom.
+  private async animateDotTick(target: "hero" | "monster", damage: number): Promise<void> {
+    if (damage <= 0) return;
+    const sprite = target === "hero" ? this.heroSprite : this.monsterSprite;
+    if (!sprite) return;
+    SfxPlayer.play(this, Sfx.DotTick);
+    await Promise.all([
+      this.flashSprite(sprite, 0xff4400),
+      this.sparkles(sprite.x, sprite.y, 0xff5500, 4, 500),
+      this.floatNumber(sprite.x, sprite.y - 50, `-${damage}`, "#ff7733"),
+    ]);
+  }
+
   // mp_drain side-effect from monster moves (currently only Mind Freeze).
   // Mana lives on this scene, not on CombatCharacter, so applyMove can't touch
   // it directly — it surfaces the drain via result.mpDrain instead.
@@ -669,7 +980,21 @@ export class BattleScene extends Phaser.Scene {
     const before = this.heroMana;
     this.heroMana = Math.max(0, this.heroMana - amount);
     const dropped = before - this.heroMana;
-    if (dropped > 0) this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT_INTENT_DEBUFF);
+    if (dropped > 0) {
+      this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT_INTENT_DEBUFF);
+      // Fire-and-forget visuals — applyMonsterManaDrain is sync and we don't
+      // want to block the move-resolution flow on these. Blue wisps + a
+      // floating MP number sell the magical disruption.
+      if (this.heroSprite) {
+        void this.sparkles(this.heroSprite.x, this.heroSprite.y, 0x4488ff, 6, 600);
+        void this.floatNumber(
+          this.heroSprite.x,
+          this.heroSprite.y - 50,
+          `-${dropped} MP`,
+          "#5599ff",
+        );
+      }
+    }
   }
 
   private updateButtonManaState() {
@@ -692,7 +1017,13 @@ export class BattleScene extends Phaser.Scene {
 
   private updateMonsterHp() {
     const pct = Math.max(0, this.monster.hp) / this.monster.maxHp;
-    this.monsterHpFill.setScale(pct, 1);
+    this.tweens.killTweensOf(this.monsterHpFill);
+    this.tweens.add({
+      targets: this.monsterHpFill,
+      scaleX: pct,
+      duration: this.ms(this.HP_TWEEN_MS),
+      ease: "Quad.easeOut",
+    });
     this.monsterHpText.setText(`HP  ${Math.max(0, this.monster.hp)} / ${this.monster.maxHp}`);
     this.monsterBuffText.setText(this.formatBuffs(this.monster));
   }
@@ -980,7 +1311,7 @@ export class BattleScene extends Phaser.Scene {
 
   // ── Turn logic ───────────────────────────────────────────────────────────
 
-  private handlePlayerMove(moveId: string) {
+  private async handlePlayerMove(moveId: string) {
     if (this.busy) return;
     this.busy = true;
     this.hideMovePreview();
@@ -995,6 +1326,12 @@ export class BattleScene extends Phaser.Scene {
     this.heroMana = Math.max(0, this.heroMana - (move.manaCost ?? 0));
     const result = applyMove(move, this.hero, this.monster);
     this.pushLog(`You → ${move.name}: ${result.logMessage}`, this.moveLogColor(move));
+
+    // Lunge + flash + damage number, then drain bars in sync. The HP bars
+    // are also tweens, so updateHeroHp/updateMonsterHp can run in parallel
+    // with the lunge — the bar drain is timed to land just as the hit
+    // resolves visually.
+    await this.animateMove("hero", move, result.damage, result.heal);
     this.updateHeroHp();
     this.updateMonsterHp();
 
@@ -1004,7 +1341,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.setStatus("Monster is deciding...");
-    this.time.delayedCall(900, () => void this.doMonsterTurn());
+    this.time.delayedCall(300, () => void this.doMonsterTurn());
   }
 
   private async doMonsterTurn() {
@@ -1052,6 +1389,7 @@ export class BattleScene extends Phaser.Scene {
         this.moveLogColor(monsterMove),
       );
       this.monsterMoveHistory = [moveId, ...this.monsterMoveHistory].slice(0, 3);
+      await this.animateMove("monster", monsterMove, result.damage, result.heal);
     } catch {
       const fallbackId = this.monster.moves[Math.floor(Math.random() * this.monster.moves.length)];
       const fallbackMove = GameState.getMove(fallbackId);
@@ -1060,6 +1398,7 @@ export class BattleScene extends Phaser.Scene {
       } else {
         const result = applyMove(fallbackMove, this.monster, this.hero);
         this.applyMonsterManaDrain(result.mpDrain);
+        await this.animateMove("monster", fallbackMove, result.damage, result.heal);
         this.pushLog(
           `${this.monster.name} → ${fallbackMove.name}: ${result.logMessage}`,
           this.moveLogColor(fallbackMove),
@@ -1079,6 +1418,10 @@ export class BattleScene extends Phaser.Scene {
     const monsterDotDmg = tickDots(this.monster);
     if (monsterDotDmg > 0)
       this.pushLog(`${this.monster.name} loses ${monsterDotDmg} to decay`, TXT_INTENT_HEAL);
+
+    // Sequential DOT visuals (so the player reads which side took damage).
+    if (heroDotDmg > 0) await this.animateDotTick("hero", heroDotDmg);
+    if (monsterDotDmg > 0) await this.animateDotTick("monster", monsterDotDmg);
 
     this.heroMana = Math.min(MANA_MAX, this.heroMana + MANA_REGEN);
     this.turnNumber++;
@@ -1106,6 +1449,7 @@ export class BattleScene extends Phaser.Scene {
   // ── Battle end ───────────────────────────────────────────────────────────
 
   private handleVictory() {
+    SfxPlayer.play(this, Sfx.EnemyDeath);
     GameState.hero.currentHp = this.hero.hp;
     const xpGain = Math.floor(this.monsterCfg.xpReward * this.monsterLevel);
     const leveled = GameState.addXp(xpGain);
