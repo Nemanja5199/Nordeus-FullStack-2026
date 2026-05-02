@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene } from "./sceneKeys";
 import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
 import { FONT_LOAD } from "../ui/typography";
 import { MetaProgress } from "../utils/metaProgress";
@@ -8,7 +9,7 @@ import { SFX_FILES } from "../utils/sfx";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
-    super("PreloadScene");
+    super(Scene.Preload);
   }
 
   preload() {
@@ -109,6 +110,6 @@ export class PreloadScene extends Phaser.Scene {
     // soft — if the network is down we fall through to the local cache.
     await Cloud.loadFromCloud();
     MetaProgress.load();
-    this.scene.start("MainMenuScene");
+    this.scene.start(Scene.MainMenu);
   }
 }

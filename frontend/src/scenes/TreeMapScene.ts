@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene } from "./sceneKeys";
 import { FONT_MD, FONT_SM, FONT_MAP_TITLE } from "../ui/typography";
 import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
 import { GameState } from "../utils/gameState";
@@ -89,7 +90,7 @@ export class TreeMapScene extends Phaser.Scene {
   private heroPanelContainer!: Phaser.GameObjects.Container;
 
   constructor() {
-    super("TreeMapScene");
+    super(Scene.TreeMap);
   }
 
   create() {
@@ -122,10 +123,10 @@ export class TreeMapScene extends Phaser.Scene {
       label: "SAVE & EXIT",
       color: BG_BTN_CLOSE,
       onClick: () => {
-        this.scene.stop("MoveManagementScene");
+        this.scene.stop(Scene.MoveManagement);
         GameState.saveHero();
         GameState.saveTreeState();
-        this.scene.start("MainMenuScene");
+        this.scene.start(Scene.MainMenu);
       },
     });
 
@@ -147,19 +148,19 @@ export class TreeMapScene extends Phaser.Scene {
       moves: GameState.runConfig?.moves ?? {},
       items: GameState.runConfig?.items ?? {},
       onManageMoves: () => {
-        this.scene.stop("MoveManagementScene");
-        this.scene.launch("MoveManagementScene", { returnScene: "TreeMapScene" });
-        this.scene.bringToTop("MoveManagementScene");
+        this.scene.stop(Scene.MoveManagement);
+        this.scene.launch(Scene.MoveManagement, { returnScene: Scene.TreeMap });
+        this.scene.bringToTop(Scene.MoveManagement);
       },
       onManageEquipment: () => {
-        this.scene.stop("EquipmentScene");
-        this.scene.launch("EquipmentScene", { returnScene: "TreeMapScene" });
-        this.scene.bringToTop("EquipmentScene");
+        this.scene.stop(Scene.Equipment);
+        this.scene.launch(Scene.Equipment, { returnScene: Scene.TreeMap });
+        this.scene.bringToTop(Scene.Equipment);
       },
       onShop: () => {
-        this.scene.stop("ShopScene");
-        this.scene.launch("ShopScene", { returnScene: "TreeMapScene" });
-        this.scene.bringToTop("ShopScene");
+        this.scene.stop(Scene.Shop);
+        this.scene.launch(Scene.Shop, { returnScene: Scene.TreeMap });
+        this.scene.bringToTop(Scene.Shop);
       },
     });
   }
@@ -436,12 +437,12 @@ export class TreeMapScene extends Phaser.Scene {
         const monster = GameState.runConfig!.monsters.find((m) => m.id === node.monsterId);
         if (!monster) return;
         const monsterIndex = GameState.runConfig!.monsters.indexOf(monster);
-        this.scene.stop("MoveManagementScene");
-        this.scene.start("BattleScene", {
+        this.scene.stop(Scene.MoveManagement);
+        this.scene.start(Scene.Battle, {
           monster,
           monsterIndex,
           defeatedIds: GameState.completedNodes,
-          sourceScene: "TreeMapScene",
+          sourceScene: Scene.TreeMap,
           nodeId: node.id,
           levelBand: node.levelBand,
         });

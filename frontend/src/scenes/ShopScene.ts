@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../utils/gameState";
 import { SfxPlayer, Sfx } from "../utils/sfx";
@@ -24,7 +25,7 @@ import {
 } from "../ui/colors";
 
 interface ShopData {
-  returnScene: string;
+  returnScene: SceneKey;
 }
 
 const ROW_H = 56;
@@ -33,17 +34,17 @@ const POTION_ROW_W = 500;
 const TIER_UNLOCK_LEVEL: Record<1 | 2 | 3, number> = { 1: 1, 2: 3, 3: 6 };
 
 export class ShopScene extends Phaser.Scene {
-  private returnScene!: string;
+  private returnScene!: SceneKey;
   private hintText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
   private gearScroll?: ScrollableArea;
 
   constructor() {
-    super("ShopScene");
+    super(Scene.Shop);
   }
 
   create(data: ShopData) {
-    this.returnScene = data.returnScene ?? "TreeMapScene";
+    this.returnScene = data.returnScene ?? Scene.TreeMap;
     // children.removeAll(true) doesn't tear down our wheel listener — destroy explicitly before re-creating.
     this.gearScroll?.destroy();
     this.gearScroll = undefined;

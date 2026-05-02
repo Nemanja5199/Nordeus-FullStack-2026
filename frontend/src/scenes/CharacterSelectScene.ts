@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene } from "./sceneKeys";
 import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
@@ -92,7 +93,7 @@ export class CharacterSelectScene extends Phaser.Scene {
   private statInfoBg!: Phaser.GameObjects.Rectangle;
 
   constructor() {
-    super("CharacterSelectScene");
+    super(Scene.CharacterSelect);
   }
 
   create(data: CharacterSelectData) {
@@ -162,7 +163,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       ...BTN_MD,
       label: "BACK",
       color: BG_BTN_NEUTRAL,
-      onClick: () => this.scene.start("MainMenuScene"),
+      onClick: () => this.scene.start(Scene.MainMenu),
     });
   }
 
@@ -325,6 +326,6 @@ export class CharacterSelectScene extends Phaser.Scene {
     GameState.clearRun();
 
     GameState.clearTreeState();
-    this.scene.start("TreeMapScene");
+    this.scene.start(Scene.TreeMap);
   }
 }

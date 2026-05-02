@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui/typography";
 import { MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../ui/layout";
 import { GameState } from "../utils/gameState";
@@ -30,7 +31,7 @@ import {
 } from "../ui/colors";
 
 interface MoveManagementData {
-  returnScene: string;
+  returnScene: SceneKey;
 }
 
 export class MoveManagementScene extends Phaser.Scene {
@@ -40,15 +41,15 @@ export class MoveManagementScene extends Phaser.Scene {
   private equippedButtons: Phaser.GameObjects.Container[] = [];
   private infoText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
-  private returnScene!: string;
+  private returnScene!: SceneKey;
   private learnedScroll?: ScrollableArea;
 
   constructor() {
-    super("MoveManagementScene");
+    super(Scene.MoveManagement);
   }
 
   create(data: MoveManagementData) {
-    this.returnScene = data.returnScene ?? "TreeMapScene";
+    this.returnScene = data.returnScene ?? Scene.TreeMap;
     this.selectedLearnedIndex = -1;
     this.selectedEquippedSlot = -1;
     this.learnedButtons = [];

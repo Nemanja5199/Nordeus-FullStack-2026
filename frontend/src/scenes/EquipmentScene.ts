@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from "../ui/layout";
 import { GameState, getGearBonuses } from "../utils/gameState";
@@ -36,21 +37,21 @@ const SLOT_LABELS: Record<GearSlot, string> = {
 };
 
 interface EquipmentData {
-  returnScene: string;
+  returnScene: SceneKey;
 }
 
 export class EquipmentScene extends Phaser.Scene {
-  private returnScene!: string;
+  private returnScene!: SceneKey;
   private hintText!: Phaser.GameObjects.Text;
   private tooltip!: TooltipManager;
   private inventoryScroll?: ScrollableArea;
 
   constructor() {
-    super("EquipmentScene");
+    super(Scene.Equipment);
   }
 
   create(data: EquipmentData) {
-    this.returnScene = data.returnScene ?? "TreeMapScene";
+    this.returnScene = data.returnScene ?? Scene.TreeMap;
     this.inventoryScroll?.destroy();
     this.inventoryScroll = undefined;
 

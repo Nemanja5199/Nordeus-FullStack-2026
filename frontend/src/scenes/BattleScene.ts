@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
@@ -61,7 +62,7 @@ interface BattleData {
   monster: MonsterConfig;
   monsterIndex: number;
   defeatedIds: string[];
-  sourceScene?: string;
+  sourceScene?: SceneKey;
   nodeId?: string;
   levelBand?: { min: number; max: number };
 }
@@ -74,7 +75,7 @@ export class BattleScene extends Phaser.Scene {
   private monsterCfg!: MonsterConfig;
   private monsterIndex!: number;
   private defeatedIds!: string[];
-  private sourceScene!: string;
+  private sourceScene!: SceneKey;
   private nodeId!: string | undefined;
   private monsterLevel = 1;
   private turnNumber = 0;
@@ -130,7 +131,7 @@ export class BattleScene extends Phaser.Scene {
   private monsterSprite!: Phaser.GameObjects.Image;
 
   constructor() {
-    super("BattleScene");
+    super(Scene.Battle);
   }
 
   create(data: BattleData) {
@@ -149,7 +150,7 @@ export class BattleScene extends Phaser.Scene {
     this.monsterCfg = data.monster;
     this.monsterIndex = data.monsterIndex;
     this.defeatedIds = data.defeatedIds ?? [];
-    this.sourceScene = data.sourceScene ?? "TreeMapScene";
+    this.sourceScene = data.sourceScene ?? Scene.TreeMap;
     this.nodeId = data.nodeId;
 
     const hs = GameState.hero;
@@ -1478,7 +1479,7 @@ export class BattleScene extends Phaser.Scene {
     const newDefeated = [...this.defeatedIds, this.monsterCfg.id];
     if (this.nodeId) GameState.completeNode(this.nodeId);
 
-    this.scene.start("PostBattleScene", {
+    this.scene.start(Scene.PostBattle, {
       won: true,
       learnedMoveId: learnedMove,
       xpGained: xpGain,
@@ -1497,7 +1498,7 @@ export class BattleScene extends Phaser.Scene {
     if (GameState.runConfig) GameState.resetHero(GameState.runConfig);
     GameState.resetRunProgress(); // saves fresh tree state so CONTINUE works from main menu
 
-    this.scene.start("PostBattleScene", {
+    this.scene.start(Scene.PostBattle, {
       won: false,
       learnedMoveId: null,
       xpGained: 0,

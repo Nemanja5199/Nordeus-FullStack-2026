@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene } from "./sceneKeys";
 import { MetaProgress, UPGRADE_DEFS } from "../utils/metaProgress";
 import type { MetaUpgrade } from "../types/game";
 import { GameState } from "../utils/gameState";
@@ -48,7 +49,7 @@ export class UpgradesScene extends Phaser.Scene {
   private fightAgainPending = false;
 
   constructor() {
-    super("UpgradesScene");
+    super(Scene.Upgrades);
   }
 
   create() {
@@ -133,7 +134,7 @@ export class UpgradesScene extends Phaser.Scene {
       ...BTN_MD,
       label: "MAIN MENU",
       color: BG_BTN_NEUTRAL,
-      onClick: () => this.scene.start("MainMenuScene"),
+      onClick: () => this.scene.start(Scene.MainMenu),
     });
   }
 
@@ -146,7 +147,7 @@ export class UpgradesScene extends Phaser.Scene {
       // only the post-death "try again" button.
       const newConfig = await api.getRunConfig();
       GameState.startFreshRun(newConfig);
-      this.scene.start("TreeMapScene");
+      this.scene.start(Scene.TreeMap);
     } catch (err) {
       console.warn("[UpgradesScene] fightAgain failed:", err);
       this.fightAgainPending = false;

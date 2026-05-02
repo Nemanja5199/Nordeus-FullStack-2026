@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_TITLE, FONT_LG, FONT_BODY } from "../ui/typography";
 import { Settings } from "../utils/settings";
 import { Audio } from "../utils/audio";
@@ -15,7 +16,7 @@ import {
 } from "../ui/colors";
 
 interface OptionsData {
-  returnScene?: string;
+  returnScene?: SceneKey;
 }
 
 interface ToggleRow {
@@ -25,14 +26,14 @@ interface ToggleRow {
 }
 
 export class OptionsScene extends Phaser.Scene {
-  private returnScene = "MainMenuScene";
+  private returnScene: SceneKey = Scene.MainMenu;
 
   constructor() {
-    super("OptionsScene");
+    super(Scene.Options);
   }
 
   create(data: OptionsData = {}) {
-    this.returnScene = data.returnScene ?? "MainMenuScene";
+    this.returnScene = data.returnScene ?? Scene.MainMenu;
     const { width, height } = this.scale;
 
     this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();

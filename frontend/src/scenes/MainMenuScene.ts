@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene } from "./sceneKeys";
 import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../ui/typography";
 import { api } from "../services/api";
 import { GameState } from "../utils/gameState";
@@ -20,7 +21,7 @@ import {
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
-    super("MainMenuScene");
+    super(Scene.MainMenu);
   }
 
   create() {
@@ -86,7 +87,7 @@ export class MainMenuScene extends Phaser.Scene {
       ...BTN_LG,
       label: "OPTIONS",
       color: BG_BTN_NEUTRAL,
-      onClick: () => this.scene.start("OptionsScene", { returnScene: "MainMenuScene" }),
+      onClick: () => this.scene.start(Scene.Options, { returnScene: Scene.MainMenu }),
     });
 
     this.createTestModeToggle();
@@ -147,7 +148,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     try {
       const config = await api.getRunConfig();
-      this.scene.start("CharacterSelectScene", { runConfig: config });
+      this.scene.start(Scene.CharacterSelect, { runConfig: config });
     } catch {
       loading.setText("Failed to connect to server. Is it running?").setColor(TXT_BOSS);
     }
@@ -167,7 +168,7 @@ export class MainMenuScene extends Phaser.Scene {
       GameState.runConfig = config;
       GameState.initHero(config);
       if (localStorage.getItem("rpg_tree_state")) {
-        this.scene.start("TreeMapScene");
+        this.scene.start(Scene.TreeMap);
       } else {
         loading.setText("No save found — starting new game.").setColor(TXT_GOLD);
         this.time.delayedCall(1500, () => this.startNewGame());

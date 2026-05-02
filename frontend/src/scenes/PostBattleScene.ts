@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_SCENE_TITLE, FONT_CONQUEST } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
@@ -32,7 +33,7 @@ interface PostBattleData {
   leveledUp: boolean;
   monsterIndex: number;
   defeatedIds: string[];
-  sourceScene?: string;
+  sourceScene?: SceneKey;
   nodeId?: string;
 }
 
@@ -42,7 +43,7 @@ export class PostBattleScene extends Phaser.Scene {
   private freshRunPending = false;
 
   constructor() {
-    super("PostBattleScene");
+    super(Scene.PostBattle);
   }
 
   // Defeat-screen "Fight Again": fetch a fresh map seed, install it, and
@@ -55,7 +56,7 @@ export class PostBattleScene extends Phaser.Scene {
     try {
       const newConfig = await api.getRunConfig();
       GameState.startFreshRun(newConfig);
-      this.scene.start("TreeMapScene");
+      this.scene.start(Scene.TreeMap);
     } catch (err) {
       console.warn("[PostBattleScene] fight again failed:", err);
       this.freshRunPending = false;
@@ -236,7 +237,7 @@ export class PostBattleScene extends Phaser.Scene {
         ...BTN_MD,
         label: "BACK TO MAP",
         color: BG_BTN_SUCCESS,
-        onClick: () => this.scene.start("TreeMapScene"),
+        onClick: () => this.scene.start(Scene.TreeMap),
       });
       y += 60;
 
@@ -246,7 +247,7 @@ export class PostBattleScene extends Phaser.Scene {
         color: BG_BTN_NEUTRAL,
         onClick: () => {
           const monster = GameState.runConfig!.monsters[data.monsterIndex];
-          this.scene.start("BattleScene", {
+          this.scene.start(Scene.Battle, {
             monster,
             monsterIndex: data.monsterIndex,
             defeatedIds: data.defeatedIds,
@@ -268,7 +269,7 @@ export class PostBattleScene extends Phaser.Scene {
         ...BTN_MD,
         label: "UPGRADES",
         color: BG_BTN_NEUTRAL,
-        onClick: () => this.scene.start("UpgradesScene"),
+        onClick: () => this.scene.start(Scene.Upgrades),
       });
       y += 60;
 
@@ -276,7 +277,7 @@ export class PostBattleScene extends Phaser.Scene {
         ...BTN_MD,
         label: "MAIN MENU",
         color: BG_BTN_DANGER,
-        onClick: () => this.scene.start("MainMenuScene"),
+        onClick: () => this.scene.start(Scene.MainMenu),
       });
     }
   }
@@ -331,12 +332,12 @@ export class PostBattleScene extends Phaser.Scene {
       width: 360,
       height: 52,
       fontSize: FONT_LG,
-      label: "SPEND YOUR SHARDS",
+      label: "Main Menu",
       color: BG_BTN_SUCCESS,
       onClick: () => {
         GameState.resetHero(GameState.runConfig!);
         GameState.clearRun();
-        this.scene.start("UpgradesScene");
+        this.scene.start("MainMEnu");
       },
     });
   }
