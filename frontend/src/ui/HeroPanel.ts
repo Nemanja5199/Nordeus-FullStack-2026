@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { GearItem, HeroState, MoveConfig } from "../types/game";
 import { GameState, getGearBonuses } from "../state/gameState";
 import { heroFrameFor, heroNameFor } from "../sprites/spriteFrames";
+import { SfxPlayer, Sfx } from "../audio/sfx";
 import { FONT } from "../constants";
 import { BG, BORDER, TXT, BAR } from "../constants";
 
@@ -99,7 +100,10 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     const shopTxt = add(scene.add.text(cx, shopBtnY, "Shop", { fontSize: FONT.MD, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5));
     shopBg.on("pointerover", () => { shopBg.setFillStyle(BG.BTN_HOVER); shopTxt.setColor(TXT.GOLD); });
     shopBg.on("pointerout", () => { shopBg.setFillStyle(BG.BTN); shopTxt.setColor(TXT.GOLD_MID); });
-    shopBg.on("pointerdown", onShop);
+    shopBg.on("pointerdown", () => {
+      SfxPlayer.play(scene, Sfx.ButtonClick);
+      onShop();
+    });
   }
 
   if (onManageEquipment) {
@@ -108,7 +112,10 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
     const eqTxt = add(scene.add.text(cx, eqBtnY, "Equipment", { fontSize: FONT.MD, fontFamily: "EnchantedLand", color: TXT.GOLD_MID }).setOrigin(0.5));
     eqBg.on("pointerover", () => { eqBg.setFillStyle(BG.BTN_HOVER); eqTxt.setColor(TXT.GOLD); });
     eqBg.on("pointerout", () => { eqBg.setFillStyle(BG.BTN); eqTxt.setColor(TXT.GOLD_MID); });
-    eqBg.on("pointerdown", onManageEquipment);
+    eqBg.on("pointerdown", () => {
+      SfxPlayer.play(scene, Sfx.ButtonClick);
+      onManageEquipment();
+    });
   }
 
   const btnY = panelY + h - 22;
@@ -120,7 +127,10 @@ export function createHeroPanel(scene: Phaser.Scene, opts: HeroPanelOptions): Ph
   }).setOrigin(0.5));
   btnBg.on("pointerover", () => { btnBg.setFillStyle(BG.BTN_HOVER); btnTxt.setColor(TXT.GOLD); });
   btnBg.on("pointerout", () => { btnBg.setFillStyle(BG.BTN); btnTxt.setColor(hasPoints ? TXT.SKILL_POINTS : TXT.GOLD_MID); });
-  btnBg.on("pointerdown", onManageMoves);
+  btnBg.on("pointerdown", () => {
+    SfxPlayer.play(scene, Sfx.ButtonClick);
+    onManageMoves();
+  });
 
   return container;
 }
