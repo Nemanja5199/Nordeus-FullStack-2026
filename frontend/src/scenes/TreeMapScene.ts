@@ -115,9 +115,13 @@ export class TreeMapScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    createButton(this, width - 70, 28, {
+    // The label is 11 chars at 4px letter-spacing (~154px), so the prior
+    // 120px box squeezed it. Bump to 170px and shift the center left a
+    // touch so the button sits comfortably in the corner instead of
+    // hugging the edge.
+    createButton(this, width - 100, 28, {
       ...BTN_SM,
-      width: 120,
+      width: 170,
       height: 45,
       fontSize: FONT_MD,
       label: "SAVE & EXIT",
