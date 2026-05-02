@@ -1,5 +1,6 @@
 """Sanity checks on game_config — ensures data integrity before any game logic runs."""
 import pytest
+from app.data.monsters import MonsterId
 from app.game_config import MOVES, MONSTERS, HERO_CLASSES, ITEMS, POTION_PRICES
 
 REQUIRED_MOVE_KEYS = {"id", "name", "moveType", "baseValue", "effects", "description"}
@@ -149,9 +150,9 @@ class TestMonsters:
 
     def test_xp_reward_increases_across_tiers(self):
         # Tier 1 (base + elite) should give less XP than tier 2, which gives less than the boss
-        tier1_ids = {"goblin_warrior", "goblin_mage", "skeleton", "lich"}
-        tier2_ids = {"giant_spider", "witch", "big_slime", "death_knight"}
-        boss_ids  = {"dragon"}
+        tier1_ids = {MonsterId.GOBLIN_WARRIOR, MonsterId.GOBLIN_MAGE, MonsterId.SKELETON, MonsterId.LICH}
+        tier2_ids = {MonsterId.GIANT_SPIDER, MonsterId.WITCH, MonsterId.BIG_SLIME, MonsterId.DEATH_KNIGHT}
+        boss_ids  = {MonsterId.DRAGON}
         by_id = {m["id"]: m["xpReward"] for m in MONSTERS}
         max_tier1 = max(by_id[mid] for mid in tier1_ids)
         min_tier2 = min(by_id[mid] for mid in tier2_ids)
@@ -177,35 +178,35 @@ class TestEliteMonsters:
 
     def test_skeleton_stronger_than_goblin_warrior(self):
         by_id = self._by_id()
-        base = by_id["goblin_warrior"]["stats"]
-        elite = by_id["skeleton"]["stats"]
+        base = by_id[MonsterId.GOBLIN_WARRIOR]["stats"]
+        elite = by_id[MonsterId.SKELETON]["stats"]
         assert elite["hp"] > base["hp"], "Skeleton HP should exceed Warrior HP"
         assert elite["attack"] > base["attack"], "Skeleton ATK should exceed Warrior ATK"
 
     def test_lich_stronger_than_goblin_mage(self):
         by_id = self._by_id()
-        base = by_id["goblin_mage"]["stats"]
-        elite = by_id["lich"]["stats"]
+        base = by_id[MonsterId.GOBLIN_MAGE]["stats"]
+        elite = by_id[MonsterId.LICH]["stats"]
         assert elite["hp"] > base["hp"], "Lich HP should exceed Mage HP"
         assert elite["magic"] > base["magic"], "Lich MAG should exceed Mage MAG"
 
     def test_elite_xp_exceeds_base_counterpart(self):
         by_id = self._by_id()
-        assert by_id["skeleton"]["xpReward"] > by_id["goblin_warrior"]["xpReward"]
-        assert by_id["lich"]["xpReward"] > by_id["goblin_mage"]["xpReward"]
+        assert by_id[MonsterId.SKELETON]["xpReward"] > by_id[MonsterId.GOBLIN_WARRIOR]["xpReward"]
+        assert by_id[MonsterId.LICH]["xpReward"] > by_id[MonsterId.GOBLIN_MAGE]["xpReward"]
 
     def test_elites_have_distinct_move_pools_from_base(self):
         # Base goblins reuse a melee/caster set; elites should NOT share movesets,
         # otherwise they're just stat-bumped clones (the original bug).
         by_id = self._by_id()
-        assert set(by_id["skeleton"]["moves"]) != set(by_id["goblin_warrior"]["moves"])
-        assert set(by_id["lich"]["moves"]) != set(by_id["goblin_mage"]["moves"])
+        assert set(by_id[MonsterId.SKELETON]["moves"]) != set(by_id[MonsterId.GOBLIN_WARRIOR]["moves"])
+        assert set(by_id[MonsterId.LICH]["moves"]) != set(by_id[MonsterId.GOBLIN_MAGE]["moves"])
 
     def test_lich_uses_dot(self):
         # Lich is the DOT specialist — its move set must include at least one
         # move whose effects contain a 'dot' entry.
         by_id = self._by_id()
-        lich_moves = by_id["lich"]["moves"]
+        lich_moves = by_id[MonsterId.LICH]["moves"]
         has_dot = any(
             any(fx["type"] == "dot" for fx in MOVES[m]["effects"])
             for m in lich_moves
@@ -219,7 +220,7 @@ class TestBigSlime:
     makes it distinct from the other tier-2 monsters."""
 
     def _slime(self):
-        return next(m for m in MONSTERS if m["id"] == "big_slime")
+        return next(m for m in MONSTERS if m["id"] == MonsterId.BIG_SLIME)
 
     def test_slime_debuffs_attack_and_defense(self):
         slime = self._slime()
@@ -250,7 +251,7 @@ class TestDeathKnight:
     the design so a future tweak can't accidentally homogenize it."""
 
     def _dk(self):
-        return next(m for m in MONSTERS if m["id"] == "death_knight")
+        return next(m for m in MONSTERS if m["id"] == MonsterId.DEATH_KNIGHT)
 
     def test_has_both_physical_and_magic_moves(self):
         dk = self._dk()
@@ -270,8 +271,8 @@ class TestDeathKnight:
 
     def test_stronger_than_lv2_lich(self):
         by_id = {m["id"]: m for m in MONSTERS}
-        lich = by_id["lich"]["stats"]
-        dk = by_id["death_knight"]["stats"]
+        lich = by_id[MonsterId.LICH]["stats"]
+        dk = by_id[MonsterId.DEATH_KNIGHT]["stats"]
         assert dk["hp"] > lich["hp"]
         assert dk["attack"] > lich["attack"], "DK should out-hit lv-2 lich physically"
 

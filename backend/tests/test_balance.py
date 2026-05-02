@@ -18,6 +18,7 @@ from collections import Counter
 import pytest
 
 import app.routers.battle as battle_module
+from app.data.monsters import MonsterId
 from app.game_config import HERO_CLASSES, MOVES, MONSTERS
 from app.models import CharacterState, MonsterMoveRequest
 from app.routers.battle import (
@@ -153,8 +154,8 @@ class TestStatSanity:
 
     def test_death_knight_does_not_outclass_dragon(self):
         b = _by_id()
-        dk = b["death_knight"]["stats"]
-        dragon = b["dragon"]["stats"]
+        dk = b[MonsterId.DEATH_KNIGHT]["stats"]
+        dragon = b[MonsterId.DRAGON]["stats"]
         # DK is lv-4 elite; dragon is the boss. Dragon must be >= DK on
         # the *aggregate* damage stats (atk + magic) and HP.
         assert dragon["hp"] > dk["hp"], "Dragon HP must exceed Death Knight HP"
@@ -166,15 +167,15 @@ class TestStatSanity:
         # Slime is lv-3; the lv-4 lineup (witch, death_knight) should
         # collectively be tougher on HP at minimum.
         b = _by_id()
-        slime_hp = b["big_slime"]["stats"]["hp"]
-        lv4_hps = [b["witch"]["stats"]["hp"], b["death_knight"]["stats"]["hp"]]
+        slime_hp = b[MonsterId.BIG_SLIME]["stats"]["hp"]
+        lv4_hps = [b[MonsterId.WITCH]["stats"]["hp"], b[MonsterId.DEATH_KNIGHT]["stats"]["hp"]]
         assert max(lv4_hps) > slime_hp, "At least one lv-4 monster should out-HP slime"
 
     def test_xp_strictly_increases_across_tiers(self):
         b = _by_id()
-        tier1 = max(b[m]["xpReward"] for m in ("goblin_warrior", "goblin_mage", "skeleton", "lich"))
-        tier2 = min(b[m]["xpReward"] for m in ("giant_spider", "witch", "big_slime", "death_knight"))
-        boss  = b["dragon"]["xpReward"]
+        tier1 = max(b[m]["xpReward"] for m in (MonsterId.GOBLIN_WARRIOR, MonsterId.GOBLIN_MAGE, MonsterId.SKELETON, MonsterId.LICH))
+        tier2 = min(b[m]["xpReward"] for m in (MonsterId.GIANT_SPIDER, MonsterId.WITCH, MonsterId.BIG_SLIME, MonsterId.DEATH_KNIGHT))
+        boss  = b[MonsterId.DRAGON]["xpReward"]
         assert tier1 < tier2,    "Tier-2 minimum xp must exceed tier-1 maximum"
         assert tier2 < boss,     "Boss xp must exceed tier-2 maximum"
 
@@ -215,8 +216,8 @@ class TestAIMoveDistribution:
         return counts
 
     @pytest.mark.parametrize("monster_id,hero_level", [
-        ("big_slime",    8),
-        ("death_knight", 12),
+        (MonsterId.BIG_SLIME,    8),
+        (MonsterId.DEATH_KNIGHT, 12),
     ])
     def test_every_move_is_picked_at_least_once(self, shallow_ai, monster_id, hero_level):
         b = _by_id()
@@ -228,8 +229,8 @@ class TestAIMoveDistribution:
             )
 
     @pytest.mark.parametrize("monster_id,hero_level", [
-        ("big_slime",    8),
-        ("death_knight", 12),
+        (MonsterId.BIG_SLIME,    8),
+        (MonsterId.DEATH_KNIGHT, 12),
     ])
     def test_no_single_move_dominates(self, shallow_ai, monster_id, hero_level):
         counts = self._distribution(monster_id, hero_level)
@@ -256,15 +257,15 @@ class TestBalanceSimulation:
     # (b) the shallow_ai fixture replaces depth-3 with depth-1 so the AI
     # plays slightly worse than in real games.
     MATCHUPS = [
-        ("goblin_warrior", 2,  1, 0.50, 1.00),
-        ("goblin_mage",    2,  1, 0.50, 1.00),
-        ("skeleton",       5,  4, 0.20, 0.95),
-        ("lich",           5,  4, 0.00, 0.95),  # Lich is meant to punish under-leveled heroes — DOT + 26-mag finisher
-        ("giant_spider",   8, 13, 0.00, 0.95),
-        ("big_slime",      8, 10, 0.00, 0.95),  # Debuff-stack + self-heal kit hard-counters random play; needs planning
-        ("witch",         12, 12, 0.00, 0.90),
-        ("death_knight",  12, 13, 0.00, 0.90),
-        ("dragon",        28, 28, 0.00, 0.85),
+        (MonsterId.GOBLIN_WARRIOR, 2,  1, 0.50, 1.00),
+        (MonsterId.GOBLIN_MAGE,    2,  1, 0.50, 1.00),
+        (MonsterId.SKELETON,       5,  4, 0.20, 0.95),
+        (MonsterId.LICH,           5,  4, 0.00, 0.95),  # Lich is meant to punish under-leveled heroes — DOT + 26-mag finisher
+        (MonsterId.GIANT_SPIDER,   8, 13, 0.00, 0.95),
+        (MonsterId.BIG_SLIME,      8, 10, 0.00, 0.95),  # Debuff-stack + self-heal kit hard-counters random play; needs planning
+        (MonsterId.WITCH,         12, 12, 0.00, 0.90),
+        (MonsterId.DEATH_KNIGHT,  12, 13, 0.00, 0.90),
+        (MonsterId.DRAGON,        28, 28, 0.00, 0.85),
     ]
 
     @pytest.mark.parametrize("monster_id,hero_level,monster_level,lo,hi", MATCHUPS)

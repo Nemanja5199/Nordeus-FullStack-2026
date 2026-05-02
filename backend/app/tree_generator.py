@@ -1,29 +1,31 @@
 import random
 from typing import Any
 
+from app.data.monsters import MonsterId
+
 # Tier pools.
-TIER1_MONSTERS       = ["goblin_warrior", "goblin_mage"]
-TIER1_ELITE_MONSTERS = ["skeleton", "lich"]
-TIER2_LV3_MONSTERS   = ["big_slime", "giant_spider"]
-TIER2_LV4_MONSTERS   = ["witch", "death_knight"]
+TIER1_MONSTERS       = [MonsterId.GOBLIN_WARRIOR, MonsterId.GOBLIN_MAGE]
+TIER1_ELITE_MONSTERS = [MonsterId.SKELETON, MonsterId.LICH]
+TIER2_LV3_MONSTERS   = [MonsterId.BIG_SLIME, MonsterId.GIANT_SPIDER]
+TIER2_LV4_MONSTERS   = [MonsterId.WITCH, MonsterId.DEATH_KNIGHT]
 TIER2_MONSTERS       = sorted(set(TIER2_LV3_MONSTERS) | set(TIER2_LV4_MONSTERS))
-BOSS_MONSTERS        = ["dragon"]
+BOSS_MONSTERS        = [MonsterId.DRAGON]
 
 # (monsterId, depth) → level band. monsterLevel = clamp(heroLevel, min, max).
 # Stat scale = 1 + 0.05 × (monsterLevel - 1).
-MONSTER_LEVEL_BANDS: dict[tuple[str, int], dict] = {
-    ("goblin_warrior",  1): {"min": 1,  "max": 3},
-    ("goblin_mage",     1): {"min": 1,  "max": 2},
-    ("skeleton",        2): {"min": 4,  "max": 6},
-    ("lich",            2): {"min": 4,  "max": 5},
-    ("giant_spider",    3): {"min": 13, "max": 14},
-    ("giant_spider",    4): {"min": 23, "max": 23},
-    ("witch",           3): {"min": 7,  "max": 10},
-    ("witch",           4): {"min": 12, "max": 13},
-    ("big_slime",       3): {"min": 10, "max": 12},
-    ("big_slime",       4): {"min": 14, "max": 16},
-    ("death_knight",    4): {"min": 13, "max": 15},
-    ("dragon",          5): {"min": 28, "max": 30},
+MONSTER_LEVEL_BANDS: dict[tuple[MonsterId, int], dict] = {
+    (MonsterId.GOBLIN_WARRIOR, 1): {"min": 1,  "max": 3},
+    (MonsterId.GOBLIN_MAGE,    1): {"min": 1,  "max": 2},
+    (MonsterId.SKELETON,       2): {"min": 4,  "max": 6},
+    (MonsterId.LICH,           2): {"min": 4,  "max": 5},
+    (MonsterId.GIANT_SPIDER,   3): {"min": 13, "max": 14},
+    (MonsterId.GIANT_SPIDER,   4): {"min": 23, "max": 23},
+    (MonsterId.WITCH,          3): {"min": 7,  "max": 10},
+    (MonsterId.WITCH,          4): {"min": 12, "max": 13},
+    (MonsterId.BIG_SLIME,      3): {"min": 10, "max": 12},
+    (MonsterId.BIG_SLIME,      4): {"min": 14, "max": 16},
+    (MonsterId.DEATH_KNIGHT,   4): {"min": 13, "max": 15},
+    (MonsterId.DRAGON,         5): {"min": 28, "max": 30},
 }
 
 # Probability that a node has 2 children instead of 1 (sparse branching)

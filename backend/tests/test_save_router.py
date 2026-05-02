@@ -11,6 +11,7 @@ manually, not in CI.
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
+from app.data.monsters import MonsterId
 from app.main import app
 
 client = TestClient(app)
@@ -140,7 +141,7 @@ class TestPartialSectionUpsert:
         with patch("app.routers.save._get_client", return_value=mock):
             client.post("/api/game/save", json={
                 "sessionId": "test-7",
-                "run": {"currentMonsterIndex": 2, "defeatedMonsterIds": ["goblin_warrior"], "runConfig": {"seed": 1}},
+                "run": {"currentMonsterIndex": 2, "defeatedMonsterIds": [MonsterId.GOBLIN_WARRIOR], "runConfig": {"seed": 1}},
             })
         # Find the run_saves upsert
         run_calls = [c for c in mock.table.call_args_list if c.args[0] == "run_saves"]
@@ -149,7 +150,7 @@ class TestPartialSectionUpsert:
         upsert_payloads = mock.table.return_value.upsert.call_args_list
         run_payload = next(c.args[0] for c in upsert_payloads if "current_monster_index" in c.args[0])
         assert run_payload["current_monster_index"] == 2
-        assert run_payload["defeated_monster_ids"] == ["goblin_warrior"]
+        assert run_payload["defeated_monster_ids"] == [MonsterId.GOBLIN_WARRIOR]
         assert run_payload["run_config"] == {"seed": 1}
 
 

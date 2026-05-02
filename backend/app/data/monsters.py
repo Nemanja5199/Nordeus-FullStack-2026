@@ -1,4 +1,22 @@
+from enum import StrEnum
 from typing import Any
+
+
+class MonsterId(StrEnum):
+    """Canonical monster IDs. StrEnum so members compare/serialize as plain
+    strings — `MonsterId.GOBLIN_WARRIOR == "goblin_warrior"` is True, JSON
+    output stays unchanged. Use this everywhere a monster id is referenced
+    (level bands, tier pools, tests) instead of magic strings."""
+    GOBLIN_WARRIOR = "goblin_warrior"
+    GOBLIN_MAGE    = "goblin_mage"
+    SKELETON       = "skeleton"
+    LICH           = "lich"
+    BIG_SLIME      = "big_slime"
+    GIANT_SPIDER   = "giant_spider"
+    WITCH          = "witch"
+    DEATH_KNIGHT   = "death_knight"
+    DRAGON         = "dragon"
+
 
 # Encounter pool. dropMoves (if present) gates what the player can learn
 # on victory; otherwise falls back to `moves`.
@@ -89,10 +107,19 @@ MONSTERS: list[dict[str, Any]] = [
 
 
 def _validate() -> None:
-    """Fail loudly at import-time if any monster is misshapen."""
+    """Fail loudly at import-time if any monster is misshapen or its id is
+    not declared in MonsterId."""
     from app.models import Monster
+    valid_ids = {m.value for m in MonsterId}
     for raw in MONSTERS:
         Monster.model_validate(raw)
+        assert raw["id"] in valid_ids, (
+            f"MONSTERS contains id {raw['id']!r} not declared in MonsterId enum"
+        )
+    # Reverse: every enum member must have an entry in MONSTERS.
+    declared = {m["id"] for m in MONSTERS}
+    missing = valid_ids - declared
+    assert not missing, f"MonsterId members without MONSTERS entry: {missing}"
 
 
 _validate()

@@ -19,6 +19,7 @@ from typing import Any
 sys.path.insert(0, ".")  # so 'tests' is importable when run as -m scripts.sim_mage
 
 import app.routers.battle as battle_module
+from app.data.monsters import MonsterId
 from app.game_config import HERO_CLASSES, MOVES, MONSTERS
 from app.models import CharacterState
 from tests.test_balance import simulate_fight, monster_state, _by_id
@@ -33,15 +34,15 @@ N_TRIALS = 80  # higher than the unit-test default for tighter estimates
 
 # (monster_id, hero_level, monster_level)
 MATCHUPS = [
-    ("goblin_warrior",  2,  1),
-    ("goblin_mage",     2,  1),
-    ("skeleton",        5,  4),
-    ("lich",            5,  4),
-    ("giant_spider",    8, 13),
-    ("big_slime",       8, 10),
-    ("witch",          12, 12),
-    ("death_knight",   12, 13),
-    ("dragon",         28, 28),
+    (MonsterId.GOBLIN_WARRIOR,  2,  1),
+    (MonsterId.GOBLIN_MAGE,     2,  1),
+    (MonsterId.SKELETON,        5,  4),
+    (MonsterId.LICH,            5,  4),
+    (MonsterId.GIANT_SPIDER,    8, 13),
+    (MonsterId.BIG_SLIME,       8, 10),
+    (MonsterId.WITCH,          12, 12),
+    (MonsterId.DEATH_KNIGHT,   12, 13),
+    (MonsterId.DRAGON,         28, 28),
 ]
 
 

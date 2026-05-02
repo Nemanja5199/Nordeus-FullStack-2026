@@ -1,5 +1,6 @@
 """Tests for monster AI move selection — _pick_move and minimax."""
 import pytest
+from app.data.monsters import MonsterId
 from app.models import MonsterMoveRequest, CharacterState, ActiveBuff
 from app.routers.battle import (
     _pick_move,
@@ -40,13 +41,13 @@ def make_request(monster_id, moves, monster_state=None, hero_state=None, turn=1,
 class TestPickMove:
     def test_returns_valid_move_id(self):
         moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
-        req = make_request("goblin_warrior", moves)
+        req = make_request(MonsterId.GOBLIN_WARRIOR, moves)
         result = _pick_move(req)
         assert result in moves
 
     def test_returns_valid_move_on_turn_zero(self):
         moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
-        req = make_request("goblin_warrior", moves, turn=0)
+        req = make_request(MonsterId.GOBLIN_WARRIOR, moves, turn=0)
         result = _pick_move(req)
         assert result in moves
 
@@ -57,13 +58,13 @@ class TestPickMove:
         assert result in moves
 
     def test_single_move_always_returned(self):
-        req = make_request("goblin_warrior", ["rusty_blade"])
+        req = make_request(MonsterId.GOBLIN_WARRIOR, ["rusty_blade"])
         for _ in range(20):
             assert _pick_move(req) == "rusty_blade"
 
     def test_turn_zero_returns_valid_move(self):
         moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
-        req = make_request("goblin_warrior", moves, turn=0)
+        req = make_request(MonsterId.GOBLIN_WARRIOR, moves, turn=0)
         for _ in range(50):
             result = _pick_move(req)
             assert result in moves
@@ -78,7 +79,7 @@ class TestMinimax:
     def test_drain_chosen_when_low_hp(self):
         # Witch at 15/75 HP — drain_life should be the most likely move (best survival score)
         req = make_request(
-            "witch", self.MONSTER_MOVES,
+            MonsterId.WITCH, self.MONSTER_MOVES,
             monster_state=make_state(hp=15, max_hp=75),
             hero_moves=HERO_MOVES,
         )
@@ -90,7 +91,7 @@ class TestMinimax:
         # goblin_mage with magic buff active — arcane_surge wastes a turn vs dealing damage
         magic_buff = ActiveBuff(stat="magic", multiplier=1.6, turnsRemaining=2)
         req = make_request(
-            "goblin_mage", ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
+            MonsterId.GOBLIN_MAGE, ["firebolt", "arcane_surge", "mana_drain", "hex_shield"],
             monster_state=make_state(attack=10, defense=8, magic=14, buffs=[magic_buff]),
             hero_moves=HERO_MOVES,
         )
@@ -101,7 +102,7 @@ class TestMinimax:
     def test_kill_shot_over_buff_when_hero_near_dead(self):
         # Hero at 5 HP — any damage move kills; minimax should take the kill, not buff
         req = make_request(
-            "dragon", self.DRAGON_MOVES,
+            MonsterId.DRAGON, self.DRAGON_MOVES,
             monster_state=make_state(attack=18, defense=14, magic=10),
             hero_state=make_state(hp=5, max_hp=100),
             hero_moves=HERO_MOVES,
@@ -114,7 +115,7 @@ class TestMinimax:
         # _pick_move is weighted-random, so dark_pact has ~2% pick probability on any single
         # call (worst score still gets sqrt(1)=1 weight). Sample many to assert it stays rare.
         req = make_request(
-            "witch", self.MONSTER_MOVES,
+            MonsterId.WITCH, self.MONSTER_MOVES,
             monster_state=make_state(hp=16, max_hp=75),
             hero_moves=HERO_MOVES,
         )
@@ -127,7 +128,7 @@ class TestMinimax:
         # less often than bite even at low hero HP where all damage moves score high.
         # Hero at 44 HP: pounce deals 32 (no instant kill), bite deals 26 — neither one-shots.
         req = make_request(
-            "giant_spider",
+            MonsterId.GIANT_SPIDER,
             ["bite", "web_throw", "pounce", "skitter"],
             monster_state=make_state(hp=85, max_hp=85, attack=20, defense=10, magic=3),
             hero_state=make_state(hp=44, max_hp=100),
@@ -145,7 +146,7 @@ class TestMinimax:
     def test_fallback_to_heuristic_when_no_hero_moves(self):
         # heroMoves=[] means minimax can't run — must fall back gracefully
         moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
-        req = make_request("goblin_warrior", moves, hero_moves=[])
+        req = make_request(MonsterId.GOBLIN_WARRIOR, moves, hero_moves=[])
         for _ in range(20):
             assert _pick_move(req) in moves
 
@@ -272,8 +273,8 @@ class TestRepeatPenalty:
         # Run _pick_move 200 times with headbutt as last move
         # It should appear significantly less than 50% (without penalty it dominates)
         moves = ["rusty_blade", "dirty_kick", "frenzy", "headbutt"]
-        req_fresh = make_request("goblin_warrior", moves, hero_moves=HERO_MOVES, last_monster_moves=[])
-        req_after = make_request("goblin_warrior", moves, hero_moves=HERO_MOVES,
+        req_fresh = make_request(MonsterId.GOBLIN_WARRIOR, moves, hero_moves=HERO_MOVES, last_monster_moves=[])
+        req_after = make_request(MonsterId.GOBLIN_WARRIOR, moves, hero_moves=HERO_MOVES,
                                  last_monster_moves=["headbutt"])
         n = 200
         fresh_count = sum(1 for _ in range(n) if _pick_move(req_fresh) == "headbutt")
