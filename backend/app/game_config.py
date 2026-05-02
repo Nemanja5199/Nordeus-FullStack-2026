@@ -1,6 +1,4 @@
-# Re-export shim. The actual config now lives split across app/data/ for
-# clarity (moves, items, monsters, hero defaults). Existing call sites can
-# keep importing from app.game_config until they migrate to the new paths.
+# Re-export shim. Config lives in app/data/; this keeps legacy import paths working.
 from app.data.moves import MOVES
 from app.data.items import ITEMS, POTION_PRICES
 from app.data.monsters import MONSTERS

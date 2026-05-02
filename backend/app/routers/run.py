@@ -9,8 +9,7 @@ router = APIRouter()
 
 @router.get("/run/meta", response_model=GameMetaResponse)
 def get_game_meta():
-    """Returns the static parts of a run (monsters, moves, items, hero defaults).
-    Same response on every call; clients should cache this for the page session."""
+    """Static config — monsters/moves/items/hero classes. Cache on the client."""
     return {
         "monsters": MONSTERS,
         "moves": MOVES,
@@ -22,8 +21,7 @@ def get_game_meta():
 
 @router.get("/run/start", response_model=RunStartResponse)
 def start_run(seed: int | None = Query(default=None)):
-    """Returns the run-specific data (map tree + seed). Cheap; ~1.5KB payload.
-    Pass an existing seed to regenerate the same map (used by Continue)."""
+    """Run-specific data (map tree + seed). Pass seed to reproduce the map."""
     run_seed = seed if seed is not None else random.randint(0, 2**31)
     return {
         "mapTree": generate_map_tree(run_seed),

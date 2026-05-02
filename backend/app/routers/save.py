@@ -4,10 +4,8 @@ from app.models import LoadGameResponse, SaveStateRequest, SaveStateResponse
 
 router = APIRouter()
 
-# Frontend speaks camelCase (TS conventions); the DB is snake_case (Postgres
-# conventions). We translate at the API boundary so neither side learns the
-# other's casing. Also acts as an allowlist — fields not in the map are
-# silently dropped on save, blocking accidental schema bleed-through.
+# camelCase (TS) ↔ snake_case (Postgres) translation. Doubles as an
+# allowlist — unmapped fields are dropped on save.
 HERO_FIELD_MAP = {
     "level": "level",
     "xp": "xp",
@@ -63,9 +61,8 @@ def save_game(req: SaveStateRequest):
     if not client:
         raise HTTPException(503, "Supabase not configured")
 
-    # Hero/meta/settings all live in the same row (hero_progress) — combine
-    # whichever sections were sent into a single upsert. Sections not sent
-    # leave their columns untouched (PostgREST merges on conflict).
+    # hero/meta/settings share one row. PostgREST upsert merges on conflict,
+    # so unsent sections keep their existing values.
     hero_columns: dict = {"session_id": req.sessionId}
     if req.hero:
         hero_columns.update(_to_db(req.hero, HERO_FIELD_MAP))
@@ -74,7 +71,7 @@ def save_game(req: SaveStateRequest):
     if req.settings is not None:
         hero_columns["settings"] = req.settings
 
-    # Skip the no-op call that would only set session_id.
+    # Skip the upsert when only session_id is set.
     if len(hero_columns) > 1:
         client.table("hero_progress").upsert(hero_columns).execute()
 
@@ -114,8 +111,7 @@ def load_game(session_id: str):
         row = hero_res.data
         hero_payload = _to_camel(row, HERO_FIELD_MAP_REV)
         meta_payload = _to_camel(row, META_FIELD_MAP_REV)
-        # Empty settings JSONB is `{}` not None, so coerce both to None for
-        # the "no saved settings yet" signal.
+        # Empty JSONB ({}) maps to None so frontend can detect "never saved".
         s = row.get("settings")
         settings_payload = s if s else None
 

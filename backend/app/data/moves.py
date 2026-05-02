@@ -164,7 +164,7 @@ MOVES: dict[str, dict[str, Any]] = {
         "description": "Raises own Defense by 50% for 2 turns.",
     },
     "rise_again": {
-        # Monster-only: lets the skeleton heal itself, justifying its elite slot.
+        # Monster-only — gives the elite skeleton a self-heal lever.
         "id": "rise_again", "name": "Rise Again", "moveType": "heal", "baseValue": 25,
         "effects": [], "repeatPenalty": 0.2, "dropChance": 0.0, "manaCost": 0,
         "description": "Knits broken bones — heals 25 HP plus magic scaling.",
@@ -177,8 +177,6 @@ MOVES: dict[str, dict[str, Any]] = {
         "description": "Light magic damage; heals self for the same amount.",
     },
     "decay_curse": {
-        # The new mechanic: light upfront magic damage, plus a DOT that ticks
-        # 4 dmg/turn for 4 turns at end-of-turn.
         "id": "decay_curse", "name": "Decay Curse", "moveType": "magic", "baseValue": 6,
         "effects": [{"type": "dot", "target": "opponent", "value": 4, "turns": 4}],
         "repeatPenalty": 0.5, "dropChance": 0.35, "manaCost": 25,
@@ -189,18 +187,14 @@ MOVES: dict[str, dict[str, Any]] = {
         "effects": [], "repeatPenalty": 0.25, "dropChance": 0.20, "manaCost": 30,
         "description": "A burst of necrotic energy. Heavy magic damage.",
     },
-    # ── Death Knight ─────────────────────────────────────────────────────
-    # Hybrid lv-4 elite. Mixes physical and magic — hits hard with both, plus
-    # the new mp_drain mechanic to lock the hero out of casting.
+    # ── Death Knight (hybrid physical+magic, mp_drain pressure) ──────────
     "death_strike": {
         "id": "death_strike", "name": "Death Strike", "moveType": "physical", "baseValue": 26,
         "effects": [], "repeatPenalty": 0.2, "dropChance": 0.20, "manaCost": 0,
         "description": "A brutal sweeping strike. Heavy physical damage.",
     },
     "mind_freeze": {
-        # The new mechanic: 'mp_drain' burns mana off the target instead of HP.
-        # Forces the hero to choose between holding mana for big spells vs
-        # spending it before the lich king burns it.
+        # mp_drain — burns hero mana, pressuring them to spend before it's lost.
         "id": "mind_freeze", "name": "Mind Freeze", "moveType": "magic", "baseValue": 16,
         "effects": [{"type": "mp_drain", "target": "opponent", "value": 15}],
         "repeatPenalty": 0.4, "dropChance": 0.30, "manaCost": 20,
@@ -224,10 +218,7 @@ MOVES: dict[str, dict[str, Any]] = {
         "repeatPenalty": 0.5, "dropChance": 0.40, "manaCost": 25,
         "description": "Empowers self with unholy energy. +40% Attack and Magic for 3 turns.",
     },
-    # ── Big Slime ────────────────────────────────────────────────────────
-    # Stat-erosion bruiser: stacks ATK+DEF debuffs and slams between them.
-    # body_slam stays monster-only so the slime keeps a punishing finisher
-    # the player can't poach (matches the headbutt pattern).
+    # ── Big Slime (stat-erosion bruiser; body_slam is monster-only) ──────
     "body_slam": {
         "id": "body_slam", "name": "Body Slam", "moveType": "physical", "baseValue": 30,
         "effects": [], "repeatPenalty": 0.2, "dropChance": 0.0, "manaCost": 0,
@@ -250,11 +241,7 @@ MOVES: dict[str, dict[str, Any]] = {
         "effects": [], "repeatPenalty": 0.4, "dropChance": 0.30, "manaCost": 15,
         "description": "Reconstitutes its body. Heals 25 HP plus magic scaling.",
     },
-    # ── Mage class defaults ──────────────────────────────────────────────
-    # Mirror the Knight's archetype set (primary / defense / buff / heal)
-    # but tilted to the Mage's MP-rich, HP-poor playstyle. dropChance 1.0
-    # keeps the convention used by the Knight defaults; monsters don't use
-    # these moves, so the value is effectively cosmetic for now.
+    # ── Mage class defaults (primary / defense / buff / heal) ───────────
     "arc_lash": {
         "id": "arc_lash", "name": "Arc Lash", "moveType": "magic", "baseValue": 20,
         "effects": [], "repeatPenalty": 0.3, "dropChance": 1.0, "manaCost": 10,
@@ -267,16 +254,14 @@ MOVES: dict[str, dict[str, Any]] = {
         "description": "Weaves a shimmering barrier of pure mana. +50% Defense for 2 turns.",
     },
     "focus": {
-        # 1-turn, 80% Magic spike — bigger than battle_cry's 50% but it
-        # lands only one cast, rewarding tight timing.
+        # Big single-turn MAG spike — rewards tight timing.
         "id": "focus", "name": "Focus", "moveType": "none", "baseValue": 0,
         "effects": [{"type": "buff", "target": "self", "stat": "magic", "multiplier": 1.8, "turns": 1}],
         "repeatPenalty": 0.6, "dropChance": 1.0, "manaCost": 15,
         "description": "Sharpens arcane focus. +80% Magic for 1 turn.",
     },
     "mend": {
-        # Smaller / cheaper than second_wind — Mage heals more often, less
-        # per cast.
+        # Smaller / cheaper than second_wind — heal more often, less per cast.
         "id": "mend", "name": "Mend", "moveType": "heal", "baseValue": 18,
         "effects": [], "repeatPenalty": 0.5, "dropChance": 1.0, "manaCost": 25,
         "description": "Mends torn flesh with woven mana. A quick magic-scaling heal.",

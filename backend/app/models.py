@@ -39,11 +39,8 @@ class MonsterMoveResponse(BaseModel):
 
 
 class SaveStateRequest(BaseModel):
+    # All sections optional — PostgREST upsert only updates sent columns.
     sessionId: str
-    # All sections optional so we can push a partial — e.g. settings-only
-    # when the user changes a slider before any run has started. PostgREST
-    # upsert only updates the columns we send, so unsent sections are
-    # preserved.
     hero: dict[str, Any] | None = None
     meta: dict[str, Any] | None = None
     settings: dict[str, Any] | None = None
@@ -62,14 +59,11 @@ class LoadGameResponse(BaseModel):
 
 
 class GameMetaResponse(BaseModel):
-    """Static config — same on every request. Cache on the client."""
+    """Static config — same on every request. Cached on the client."""
     monsters: list[dict[str, Any]]
     moves: dict[str, dict[str, Any]]
     items: dict[str, dict[str, Any]]
-    # Knight defaults, kept for back-compat with older clients.
-    heroDefaults: dict[str, Any]
-    # Per-class starting data (knight, mage, ...). The frontend picks one in
-    # CharacterSelectScene and feeds it to defaultHero().
+    heroDefaults: dict[str, Any]  # Knight defaults; kept for back-compat
     heroClasses: dict[str, dict[str, Any]]
 
 

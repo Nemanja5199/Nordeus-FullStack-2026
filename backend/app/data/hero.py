@@ -1,9 +1,7 @@
 from typing import Any
 
-# Per-class starting stats, level-up gains, and default moveset. Each entry
-# matches the HeroDefaults shape on the frontend. CharacterSelectScene picks
-# one of these by id (currently "knight" or "mage"); the chosen entry feeds
-# defaultHero() in gameState.ts.
+# Per-class starting stats, level-up gains, and default moveset. Mirrors
+# the HeroDefaults shape on the frontend.
 HERO_CLASSES: dict[str, dict[str, Any]] = {
     "knight": {
         "maxHp": 100,
@@ -15,11 +13,7 @@ HERO_CLASSES: dict[str, dict[str, Any]] = {
         "xpPerLevel": 100,
     },
     "mage": {
-        # Glass cannon — frail body, devastating magic. Fewer raw HP/ATK
-        # gains per level, heavier MAG growth, mirrors the playstyle.
-        # Tuned after a balance sim: starting HP bumped 75→80 to soften the
-        # early-Goblin matchup, MAG/level dropped 5→4 to cap late-game
-        # scaling (Dragon winrate was 82% pre-nerf).
+        # Glass cannon — tuned via scripts/sim_mage.py.
         "maxHp": 80,
         "attack": 8,
         "defense": 6,
@@ -30,6 +24,5 @@ HERO_CLASSES: dict[str, dict[str, Any]] = {
     },
 }
 
-# Backwards-compat alias. Existing imports of HERO_DEFAULTS map to the
-# Knight entry — the only class shipped before the Mage was added.
+# Back-compat alias — pre-Mage callers expect the Knight entry.
 HERO_DEFAULTS: dict[str, Any] = HERO_CLASSES["knight"]

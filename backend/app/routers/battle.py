@@ -8,7 +8,7 @@ from app.game_config import MOVES
 router = APIRouter()
 
 
-# ── Combat simulation (mirrors frontend combat.ts exactly) ───────────────────
+# Combat simulation — mirrors frontend combat.ts.
 
 
 def _get_effective_stat(state: CharacterState, stat: str) -> int:
@@ -63,23 +63,20 @@ def _apply_move_sim(
         elif ftype == "hp_cost":
             atk.hp = max(1, atk.hp - fx["value"])
         elif ftype == "dot":
-            # turns stored directly (NOT turns + 1 like buffs); see combat.ts
-            # for the rationale on the asymmetry with buff storage.
+            # DOT turns stored directly (NOT turns+1 like buffs) — see combat.ts.
             tgt = atk if fx.get("target") == "self" else dfn
             tgt.activeDots.append(
                 ActiveDot(damagePerTurn=fx["value"], turnsRemaining=fx["turns"])
             )
         elif ftype == "mp_drain":
-            # Mana lives on the live BattleScene, not on CharacterState. The
-            # minimax AI never models hero mana, so this effect just doesn't
-            # enter the search — it's a *player-pressure* mechanic.
+            # Mana lives on BattleScene, not CharacterState. AI ignores it.
             pass
 
     return atk, dfn
 
 
 def _tick_buffs_sim(state: CharacterState) -> CharacterState:
-    """Non-mutating: returns a deep copy with all buff durations decremented and expired ones removed."""
+    """Decrements buff durations on a deep copy; drops expired entries."""
     s = copy.deepcopy(state)
     s.activeBuffs = [
         ActiveBuff(stat=b.stat, multiplier=b.multiplier, turnsRemaining=b.turnsRemaining - 1)
@@ -90,8 +87,7 @@ def _tick_buffs_sim(state: CharacterState) -> CharacterState:
 
 
 def _tick_dots_sim(state: CharacterState) -> CharacterState:
-    """Non-mutating: deep-copies, applies one DOT tick of damage, decrements
-    durations, and drops expired DOTs. Mirrors tickDots() on the frontend."""
+    """One DOT tick on a deep copy; mirrors tickDots() on the frontend."""
     s = copy.deepcopy(state)
     if not s.activeDots:
         return s
@@ -119,9 +115,8 @@ def _buff_impact(stat: str, multiplier: float, turns: int, char: CharacterState)
 
 
 def _dot_threat(state: CharacterState) -> float:
-    """Total guaranteed-future damage from active DOTs. Used by _evaluate so
-    the AI treats an applied DOT as nearly-equivalent to dealing that damage
-    upfront (DOTs can't be cleansed in this game)."""
+    """Sum of all pending DOT damage. DOTs can't be cleansed, so this is
+    treated as nearly-realised damage by the evaluator."""
     return float(sum(d.damagePerTurn * d.turnsRemaining for d in state.activeDots))
 
 
@@ -139,10 +134,7 @@ def _evaluate(monster: CharacterState, hero: CharacterState) -> float:
         elif b.multiplier < 1.0:
             buff_score += _buff_impact(b.stat, b.multiplier, b.turnsRemaining, hero)
 
-    # DOT pending on the hero is good for the monster; on the monster, bad.
-    # Scale into the same units as direct HP swing — pending damage is real
-    # but slightly devalued vs. immediate HP because we might end the fight
-    # before all ticks land.
+    # Pending DOTs scaled below immediate HP — fight may end before ticks land.
     dot_score = (_dot_threat(hero) - _dot_threat(monster)) * 0.6
 
     return hp_score + buff_score * 3.0 + dot_score
@@ -158,13 +150,9 @@ def _minimax(
     monster_moves: list[str],
     hero_moves: list[str],
 ) -> float:
-    """
-    Expectiminimax from the monster's perspective.
-    Monster turn = maximiser with alpha-beta pruning.
-    Hero turn = expectation (uniform average over all hero moves) — models a
-    non-perfect opponent so the monster isn't discouraged from using buffs.
-    depth counts full turns; buffs tick after each full turn.
-    """
+    """Expectiminimax (monster pov). Monster = max with alpha-beta. Hero =
+    uniform average over hero moves — models a non-perfect opponent so buff
+    plays aren't discouraged. Depth counts full turns."""
     if monster.hp <= 0:
         return -1000.0
     if hero.hp <= 0:
@@ -173,7 +161,6 @@ def _minimax(
         return _evaluate(monster, hero)
 
     if is_monster_turn:
-        # Maximiser — alpha-beta still valid on max nodes
         best = -float("inf")
         for move_id in monster_moves:
             m2, h2 = _apply_move_sim(move_id, monster, hero)
@@ -184,12 +171,11 @@ def _minimax(
                 break
         return best
     else:
-        # Expectation node — average over all hero moves, no pruning
+        # Expectation node — average over hero moves; no pruning.
         total = 0.0
         for move_id in hero_moves:
             h2, m2 = _apply_move_sim(move_id, hero, monster)
-            # End of full turn: tick buffs, then DOTs (mirror the live BattleScene
-            # ordering so AI predictions match what actually happens).
+            # End of turn: tick buffs then DOTs (matches BattleScene order).
             m3 = _tick_buffs_sim(m2)
             h3 = _tick_buffs_sim(h2)
             m4 = _tick_dots_sim(m3)
@@ -198,11 +184,9 @@ def _minimax(
         return total / len(hero_moves)
 
 
-# ── Move selection ────────────────────────────────────────────────────────────
-
-_MINIMAX_DEPTH = 3  # expectation nodes can't be pruned; depth 3 keeps tree at ~4^5 = 1024 leaves
-
-_HISTORY_SIZE = 3  # number of past moves tracked for penalty decay
+# Depth 3 ≈ 4^5 leaves — expectation nodes can't be pruned.
+_MINIMAX_DEPTH = 3
+_HISTORY_SIZE = 3
 
 
 def _repeat_penalty(move_id: str, history: list[str]) -> float:
@@ -218,7 +202,7 @@ def _pick_move(req: MonsterMoveRequest) -> str:
     for move_id in req.monsterMoves:
         m2, h2 = _apply_move_sim(move_id, req.monsterState, req.heroState)
         if h2.hp <= 0:
-            return move_id  # immediate kill — no need to search
+            return move_id  # immediate kill, skip search
         if req.heroMoves:
             raw_scores[move_id] = _minimax(
                 m2, h2, _MINIMAX_DEPTH, False,
@@ -247,6 +231,5 @@ def _pick_move(req: MonsterMoveRequest) -> str:
 
 @router.post("/battle/monster-move", response_model=MonsterMoveResponse)
 def get_monster_move(req: MonsterMoveRequest):
-    """Called each turn after the player acts. Returns the monster's chosen move."""
     move_id = _pick_move(req)
     return MonsterMoveResponse(moveId=move_id, moveName=MOVES[move_id]["name"])
