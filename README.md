@@ -10,7 +10,15 @@
 
 **A turn-based, branching-map RPG built for the Nordeus Job Fair 2026 Full-Stack Engineer challenge**
 
-[Play](https://nemanja5199.github.io/Nordeus-FullStack-2026/) • [Features](#features) • [Tech Stack](#tech-stack) • [Architecture](#architecture) • [Run Locally](#run-locally)
+<br>
+
+[![▶ PLAY NOW](https://img.shields.io/badge/▶%20%20PLAY%20NOW-00C853?style=for-the-badge&logoColor=white&labelColor=00C853&color=00C853)](https://nemanja5199.github.io/Nordeus-FullStack-2026/)
+
+### 🎮 [nemanja5199.github.io/Nordeus-FullStack-2026](https://nemanja5199.github.io/Nordeus-FullStack-2026/)
+
+<br>
+
+[Features](#features) • [Tech Stack](#tech-stack) • [Architecture](#architecture) • [Run Locally](#run-locally)
 
 </div>
 
