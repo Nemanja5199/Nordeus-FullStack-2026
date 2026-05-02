@@ -694,6 +694,62 @@ describe("getGearBonuses", () => {
   });
 });
 
+describe("GameState.startFreshRun", () => {
+  it("installs the new config and seeds runSeed from it", () => {
+    const fresh: RunConfig = { ...MOCK_CONFIG, seed: 9999 };
+    GameState.startFreshRun(fresh);
+    expect(GameState.runConfig).toBe(fresh);
+    expect(GameState.runSeed).toBe(9999);
+  });
+
+  it("resets the hero to defaults (level 1, fresh stats)", () => {
+    GameState.runConfig = MOCK_CONFIG;
+    GameState.initHero(MOCK_CONFIG);
+    GameState.hero.level = 8;
+    GameState.hero.gold = 500;
+    GameState.startFreshRun({ ...MOCK_CONFIG, seed: 7 });
+    expect(GameState.hero.level).toBe(1);
+    // gold goes back to MetaProgress.getStartingBonuses().gold, which is 0
+    // here because no Hoarder was purchased.
+    expect(GameState.hero.gold).toBe(0);
+  });
+
+  it("preserves MetaProgress (shards + purchased upgrades) across the call", () => {
+    MetaProgress.shards = 75;
+    MetaProgress.purchased.add("vitality_1");
+    GameState.startFreshRun({ ...MOCK_CONFIG, seed: 1 });
+    expect(MetaProgress.shards).toBe(75);
+    expect(MetaProgress.purchased.has("vitality_1")).toBe(true);
+  });
+
+  it("applies meta starting bonuses to the new hero", () => {
+    MetaProgress.shards = 200;
+    MetaProgress.buy("vitality_1"); // +15 maxHp
+    MetaProgress.buy("strength_1"); // +2 attack
+    GameState.startFreshRun({ ...MOCK_CONFIG, seed: 1 });
+    expect(GameState.hero.maxHp).toBe(MOCK_CONFIG.heroDefaults.maxHp + 15);
+    expect(GameState.hero.attack).toBe(MOCK_CONFIG.heroDefaults.attack + 2);
+  });
+
+  it("clears prior tree state so old node ids don't bleed in", () => {
+    GameState.runSeed = 1;
+    GameState.completedNodes = ["n1", "n2"];
+    GameState.currentNode = "n2";
+    GameState.startFreshRun({ ...MOCK_CONFIG, seed: 42 });
+    expect(GameState.completedNodes).toEqual([]);
+    expect(GameState.currentNode).toBeNull();
+    expect(GameState.runSeed).toBe(42);
+  });
+
+  it("clears any in-fight runSave from the old seed", () => {
+    localStorage.setItem("rpg_run", JSON.stringify({ currentMonsterIndex: 2 }));
+    GameState.runSave = { currentMonsterIndex: 2, defeatedMonsterIds: [], runConfig: MOCK_CONFIG };
+    GameState.startFreshRun({ ...MOCK_CONFIG, seed: 1 });
+    expect(GameState.runSave).toBeNull();
+    expect(localStorage.getItem("rpg_run")).toBeNull();
+  });
+});
+
 describe("GameState cloud sync wiring", () => {
   beforeEach(() => {
     GameState.runConfig = MOCK_CONFIG;

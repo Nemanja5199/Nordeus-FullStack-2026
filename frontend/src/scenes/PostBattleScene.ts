@@ -5,6 +5,7 @@ import { MetaProgress } from "../utils/metaProgress";
 import { Audio, TrackGroup, MusicAsset } from "../utils/audio";
 import { SfxPlayer, Sfx } from "../utils/sfx";
 import { createButton, BTN_MD } from "../ui/Button";
+import { api } from "../services/api";
 import {
   BG_DARKEST,
   BG_HERO_BATTLE,
@@ -36,11 +37,37 @@ interface PostBattleData {
 }
 
 export class PostBattleScene extends Phaser.Scene {
+  // Guards the Fight Again handler so a flurry of clicks during the
+  // /api/run/start fetch doesn't kick off multiple runs.
+  private freshRunPending = false;
+
   constructor() {
     super("PostBattleScene");
   }
 
+  // Defeat-screen "Fight Again": fetch a fresh map seed, install it, and
+  // start TreeMapScene. MetaProgress (shards, purchased upgrades) is in a
+  // separate store so it survives the call. UpgradesScene's button does
+  // the same thing — both paths route through GameState.startFreshRun.
+  private async startFreshRun() {
+    if (this.freshRunPending) return;
+    this.freshRunPending = true;
+    try {
+      const newConfig = await api.getRunConfig();
+      GameState.startFreshRun(newConfig);
+      this.scene.start("TreeMapScene");
+    } catch (err) {
+      console.warn("[PostBattleScene] fight again failed:", err);
+      this.freshRunPending = false;
+    }
+  }
+
   create(data: PostBattleData) {
+    // Phaser keeps the scene instance alive across transitions, so any
+    // per-attempt state needs to be reset here. Without this, clicking
+    // FIGHT AGAIN, dying, and clicking it again would no-op forever.
+    this.freshRunPending = false;
+
     // Battle ended — split flow by outcome:
     //   Win  → silence + a short triumphant stinger (one-shot, no loop)
     //   Lose → death track starts here and persists into UpgradesScene
@@ -233,7 +260,7 @@ export class PostBattleScene extends Phaser.Scene {
         ...BTN_MD,
         label: "FIGHT AGAIN",
         color: BG_BTN_SUCCESS,
-        onClick: () => this.scene.start("TreeMapScene"),
+        onClick: () => this.startFreshRun(),
       });
       y += 60;
 

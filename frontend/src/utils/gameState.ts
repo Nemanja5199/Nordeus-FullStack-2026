@@ -365,6 +365,18 @@ class GameStateManager {
     this.saveHero();
   }
 
+  // Wipe the current run + tree state, install a freshly generated config,
+  // and reset the hero with meta bonuses applied. Used by the post-death
+  // "Fight Again" flow where we want a NEW seed/map but want MetaProgress
+  // (shards, purchased upgrades) preserved.
+  startFreshRun(config: RunConfig): void {
+    this.clearRun();
+    this.runConfig = config;
+    this.runSeed = config.seed;
+    console.log("Im here");
+    this.resetHero(config);
+  }
+
   // Safe lookups for runConfig-backed data. Returns undefined and logs a warning
   // on missing ids — caller is expected to handle null. Lets a stale moveId or
   // itemId in localStorage degrade gracefully instead of crashing on `.name`.

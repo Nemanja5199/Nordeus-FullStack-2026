@@ -4,6 +4,7 @@ import type { MetaUpgrade } from "../types/game";
 import { GameState } from "../utils/gameState";
 import { Audio, TrackGroup } from "../utils/audio";
 import { SfxPlayer, Sfx } from "../utils/sfx";
+import { api } from "../services/api";
 import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../ui/typography";
 import {
   BG_DARKEST,
@@ -42,11 +43,19 @@ const CATEGORIES = [
 const SPECIALS = ["scholar", "hoarder"];
 
 export class UpgradesScene extends Phaser.Scene {
+  // Guards the Fight Again handler so a flurry of clicks during the
+  // /api/run/start fetch doesn't kick off multiple runs.
+  private fightAgainPending = false;
+
   constructor() {
     super("UpgradesScene");
   }
 
   create() {
+    // Reset per-attempt state — Phaser reuses the scene instance across
+    // transitions, so without this the guard sticks at true after one click.
+    this.fightAgainPending = false;
+
     const { width, height } = this.scale;
     Audio.play(this, TrackGroup.Death);
     this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
@@ -128,10 +137,20 @@ export class UpgradesScene extends Phaser.Scene {
     });
   }
 
-  private fightAgain() {
-    // Re-apply meta bonuses so any upgrades bought this session take effect.
-    GameState.resetHero(GameState.runConfig!);
-    this.scene.start("TreeMapScene");
+  private async fightAgain() {
+    if (this.fightAgainPending) return;
+    this.fightAgainPending = true;
+    try {
+      // Fresh seed → fresh map and monster ordering for the new attempt.
+      // Continue from MainMenu still resumes the prior seed; this path is
+      // only the post-death "try again" button.
+      const newConfig = await api.getRunConfig();
+      GameState.startFreshRun(newConfig);
+      this.scene.start("TreeMapScene");
+    } catch (err) {
+      console.warn("[UpgradesScene] fightAgain failed:", err);
+      this.fightAgainPending = false;
+    }
   }
 
   private drawCard(cx: number, cy: number, upgrade: MetaUpgrade, accentColor: string) {
