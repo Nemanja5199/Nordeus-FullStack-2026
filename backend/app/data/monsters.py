@@ -86,3 +86,13 @@ MONSTERS: list[dict[str, Any]] = [
         "shardMin": 4, "shardMax": 5,
     },
 ]
+
+
+def _validate() -> None:
+    """Fail loudly at import-time if any monster is misshapen."""
+    from app.models import Monster
+    for raw in MONSTERS:
+        Monster.model_validate(raw)
+
+
+_validate()

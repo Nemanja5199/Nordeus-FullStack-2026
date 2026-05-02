@@ -192,3 +192,14 @@ ITEMS: dict[str, dict[str, Any]] = {
 # Fixed potion prices in the run shop. HP and MP potion costs live next to
 # the gear catalogue because they share the same shop UI / gold sink.
 POTION_PRICES: dict[str, int] = {"hp": 18, "mp": 21}
+
+
+def _validate() -> None:
+    """Fail loudly at import-time if any item is misshapen."""
+    from app.models import GearItem
+    for item_id, raw in ITEMS.items():
+        GearItem.model_validate(raw)
+        assert raw["id"] == item_id, f"ITEMS key {item_id!r} != id {raw['id']!r}"
+
+
+_validate()

@@ -32,7 +32,9 @@ class TestRunMeta:
         id_set = set(ids)
         for u in upgrades:
             assert u["cost"] > 0, f"upgrade {u['id']} has non-positive cost"
-            if "requires" in u:
+            # Pydantic serializes optional fields as null when absent on input;
+            # truthy check covers both shapes.
+            if u.get("requires"):
                 assert u["requires"] in id_set, f"upgrade {u['id']} requires unknown {u['requires']}"
 
     def test_meta_is_deterministic_across_calls(self):

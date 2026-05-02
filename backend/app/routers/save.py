@@ -119,9 +119,9 @@ def load_game(session_id: str):
     if run_res and run_res.data:
         run_payload = _to_camel(run_res.data, RUN_FIELD_MAP_REV)
 
-    return {
-        "hero": hero_payload,
-        "meta": meta_payload,
-        "settings": settings_payload,
-        "run": run_payload,
-    }
+    return LoadGameResponse(
+        hero=hero_payload,
+        meta=meta_payload,
+        settings=settings_payload,
+        run=run_payload,
+    )

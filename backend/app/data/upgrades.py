@@ -28,3 +28,13 @@ UPGRADE_DEFS: list[dict[str, Any]] = [
     {"id": "scholar",    "name": "Scholar",      "category": "skillPoints", "cost": 100, "bonus": 1, "description": "Gain +1 extra skill point on every level up"},
     {"id": "hoarder",    "name": "Hoarder",      "category": "gold",        "cost": 40,  "bonus": 25, "description": "Start each run with 25 gold"},
 ]
+
+
+def _validate() -> None:
+    """Fail loudly at import-time if any upgrade is misshapen."""
+    from app.models import MetaUpgrade
+    for raw in UPGRADE_DEFS:
+        MetaUpgrade.model_validate(raw)
+
+
+_validate()

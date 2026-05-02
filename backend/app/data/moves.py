@@ -2,6 +2,7 @@ from typing import Any
 
 # Each move: moveType in {"physical","magic","heal","none"}
 # effects: list of side-effects beyond the primary damage/heal
+# Schema is enforced by app.models.Move at module load (bottom of file).
 MOVES: dict[str, dict[str, Any]] = {
     # ── Knight defaults ──────────────────────────────────────────────────
     "slash": {
@@ -267,3 +268,14 @@ MOVES: dict[str, dict[str, Any]] = {
         "description": "Mends torn flesh with woven mana. A quick magic-scaling heal.",
     },
 }
+
+
+def _validate() -> None:
+    """Fail loudly at import-time if any move is misshapen."""
+    from app.models import Move
+    for move_id, raw in MOVES.items():
+        Move.model_validate(raw)
+        assert raw["id"] == move_id, f"MOVES key {move_id!r} != id {raw['id']!r}"
+
+
+_validate()

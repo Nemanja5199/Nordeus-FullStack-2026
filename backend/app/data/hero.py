@@ -23,3 +23,13 @@ HERO_CLASSES: dict[str, dict[str, Any]] = {
         "xpPerLevel": 100,
     },
 }
+
+
+def _validate() -> None:
+    """Fail loudly at import-time if any class is misshapen."""
+    from app.models import HeroDefaults
+    for cls_id, raw in HERO_CLASSES.items():
+        HeroDefaults.model_validate(raw)
+
+
+_validate()
