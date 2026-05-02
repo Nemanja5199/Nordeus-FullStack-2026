@@ -1,0 +1,56 @@
+# Local-dev DB stack — mimics Supabase's REST API surface so the backend
+# works unchanged against either real Supabase (prod) or this stack (local).
+#
+# Layout:
+#   postgres   → real Postgres 15, schema applied at first start
+#   postgrest  → exposes the schema as REST at internal port 3000
+#   nginx      → routes /rest/v1/* → postgrest:/* on host port 54321
+#                (matches Supabase's real URL shape so supabase-py works)
+#
+# Boot via dev.sh at the repo root, not directly.
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: rpg
+    volumes:
+      # Schema runs once on first init (when /var/lib/postgresql/data is empty).
+      # Drop the volume below if you change schema.sql and need a fresh apply.
+      - ../backend/supabase/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - rpg_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rpg"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  postgrest:
+    image: postgrest/postgrest:v12.2.0
+    environment:
+      PGRST_DB_URI: postgres://postgres:localdev@postgres:5432/rpg
+      PGRST_DB_SCHEMAS: public
+      # No JWT secret = anon role for every request, which is exactly what
+      # we want locally. Don't ever do this in production.
+      PGRST_DB_ANON_ROLE: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      # Matches the Supabase CLI's default local port so other Supabase
+      # tooling (if anyone uses it) lines up.
+      - "54321:80"
+    depends_on:
+      - postgrest
+
+volumes:
+  rpg_pg_data:
