@@ -4,3 +4,5 @@ export * from "./TooltipManager";
 export * from "./HeroPanel";
 export * from "./ScrollableArea";
 export * from "./MonsterNode";
+export * from "./BattleLog";
+export * from "./StatusBar";

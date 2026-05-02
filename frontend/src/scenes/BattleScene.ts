@@ -7,6 +7,7 @@ import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
 import { heroFrameFor, MONSTER_FRAMES } from "../sprites";
+import { BattleLog, StatusBar } from "../ui";
 import { BG, BORDER, TXT, BAR, HP_GHOST } from "../constants";
 
 interface BattleData {
@@ -52,10 +53,8 @@ export class BattleScene extends Phaser.Scene {
   private heroBuffText!: Phaser.GameObjects.Text;
   private monsterBuffText!: Phaser.GameObjects.Text;
   private monsterIntentText!: Phaser.GameObjects.Text;
-  private statusText!: Phaser.GameObjects.Text;
-  private descText!: Phaser.GameObjects.Text;
-  private logLines: Phaser.GameObjects.Text[] = [];
-  private logColors: string[] = [];
+  private statusBar!: StatusBar;
+  private log!: BattleLog;
   private moveButtons: Array<{
     container: Phaser.GameObjects.Container;
     bg: Phaser.GameObjects.Rectangle;
@@ -93,8 +92,6 @@ export class BattleScene extends Phaser.Scene {
     this.moveButtons = [];
     this.potionButtons = [];
     this.usedPotionThisTurn = false;
-    this.logLines = [];
-    this.logColors = [];
     this.monsterIntentMoveId = null;
 
     this.monsterCfg = data.monster;
@@ -147,10 +144,10 @@ export class BattleScene extends Phaser.Scene {
 
     this.buildHeroPanel(width, height);
     this.buildMonsterPanel(width, height);
-    this.buildStatusBar(width, height);
+    this.statusBar = new StatusBar(this, width, height);
     this.buildPotionButtons(width, height);
     this.buildMoveButtons(width, height);
-    this.buildBattleLog(width, height);
+    this.log = new BattleLog(this, width, height);
 
     this.setStatus("Your turn — choose a move!");
     void this.prefetchMonsterIntent();
@@ -319,20 +316,8 @@ export class BattleScene extends Phaser.Scene {
 
   // ── Status bar ───────────────────────────────────────────────────────────
 
-  private buildStatusBar(width: number, height: number) {
-    const y = height * 0.66;
-    this.add.rectangle(width / 2, y, width - 20, 38, BG.PANEL, 0.92).setStrokeStyle(1, BORDER.GOLD);
-    this.statusText = this.add
-      .text(width / 2, y, "", {
-        fontSize: FONT.LG,
-        fontFamily: "EnchantedLand",
-        color: TXT.GOLD,
-      })
-      .setOrigin(0.5);
-  }
-
   private setStatus(msg: string) {
-    this.statusText.setText(msg);
+    this.statusBar.setStatus(msg);
   }
 
   // ── Move buttons ─────────────────────────────────────────────────────────
@@ -345,16 +330,6 @@ export class BattleScene extends Phaser.Scene {
     const totalW = moves.length * btnW + (moves.length - 1) * btnGap;
     const startX = (width - totalW) / 2 + btnW / 2;
     const btnY = height * 0.77;
-    const descY = height * 0.71;
-
-    this.descText = this.add
-      .text(width / 2, descY, "", {
-        fontSize: FONT.BODY,
-        color: TXT.GOLD_MID,
-        wordWrap: { width: width - 40 },
-        align: "center",
-      })
-      .setOrigin(0.5);
 
     moves.forEach((moveId, i) => {
       const move = GameState.runConfig!.moves[moveId];
@@ -395,14 +370,14 @@ export class BattleScene extends Phaser.Scene {
         bg.setFillStyle(BG.BTN_HOVER);
         bg.setStrokeStyle(1, BORDER.GOLD_BRIGHT);
         nameTxt.setColor(TXT.GOLD);
-        this.descText.setText(this.buildMoveTooltip(moveId) || move.description);
+        this.statusBar.setDescription(this.buildMoveTooltip(moveId) || move.description);
         this.showMovePreview(moveId);
       });
       bg.on("pointerout", () => {
         bg.setFillStyle(BG.MOVE_CARD);
         bg.setStrokeStyle(1, BORDER.LOCKED);
         nameTxt.setColor(TXT.GOLD_LIGHT);
-        this.descText.setText("");
+        this.statusBar.setDescription("");
         this.hideMovePreview();
       });
       bg.on("pointerdown", () => {
@@ -551,41 +526,8 @@ export class BattleScene extends Phaser.Scene {
 
   // ── Battle log ───────────────────────────────────────────────────────────
 
-  private buildBattleLog(width: number, height: number) {
-    const startY = height * 0.89;
-    const lineH = 24;
-    this.add.rectangle(
-      width / 2,
-      startY + (BATTLE.LOG_LINES * lineH) / 2,
-      width * 0.7,
-      BATTLE.LOG_LINES * lineH + 14,
-      BG.DARKEST,
-      0.7,
-    );
-
-    for (let i = 0; i < BATTLE.LOG_LINES; i++) {
-      this.logLines.push(
-        this.add
-          .text(width / 2, startY + i * lineH, "", {
-            fontSize: FONT.MD,
-            color: TXT.GOLD_LIGHT,
-          })
-          .setOrigin(0.5),
-      );
-      this.logColors.push(TXT.GOLD_LIGHT);
-    }
-  }
-
   private pushLog(msg: string, color: string = TXT.GOLD_LIGHT) {
-    for (let i = 0; i < this.logLines.length - 1; i++) {
-      this.logLines[i].setText(this.logLines[i + 1].text);
-      this.logLines[i].setColor(this.logColors[i + 1]);
-      this.logColors[i] = this.logColors[i + 1];
-    }
-    const lastIdx = this.logLines.length - 1;
-    this.logLines[lastIdx].setText(`> ${msg}`);
-    this.logLines[lastIdx].setColor(color);
-    this.logColors[lastIdx] = color;
+    this.log.push(msg, color);
   }
 
   private moveLogColor(move: {
