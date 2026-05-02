@@ -31,58 +31,58 @@ export class PreloadScene extends Phaser.Scene {
 
     this.load.on("progress", (v: number) => bar.setSize(400 * v, 20));
 
-    this.load.spritesheet("monsters", "/assets/32rogues/monsters.png", {
+    this.load.spritesheet("monsters", "/assets/sprites/monsters.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
-    this.load.spritesheet("rogues", "/assets/32rogues/rogues.png", {
+    this.load.spritesheet("rogues", "/assets/sprites/rogues.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
-    this.load.image("bg_brick", "/assets/256x256/256_Brick 01 Mud.png");
-    this.load.image("bg_sand", "/assets/256x256/256_Sand 01.png");
-    this.load.image("stat_hp", "/assets/Items Assets/Misc/Heart.png");
-    this.load.image("stat_atk", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");
-    this.load.image("stat_def", "/assets/Items Assets/Weapon & Tool/Iron Shield.png");
-    this.load.image("stat_mag", "/assets/Items Assets/Weapon & Tool/Magic Wand.png");
-    this.load.image("stat_mp", "/assets/Items Assets/Misc/Rune Stone.png");
+    this.load.image("bg_brick", "/assets/bg/brick.png");
+    this.load.image("bg_sand", "/assets/bg/sand.png");
+    this.load.image("stat_hp", "/assets/items/misc/Heart.png");
+    this.load.image("stat_atk", "/assets/items/weapon/Iron Sword.png");
+    this.load.image("stat_def", "/assets/items/weapon/Iron Shield.png");
+    this.load.image("stat_mag", "/assets/items/weapon/Magic Wand.png");
+    this.load.image("stat_mp", "/assets/items/misc/Rune Stone.png");
 
     // Potions
-    this.load.image("potion_hp", "/assets/Items Assets/Potion/Red Potion 3.png");
-    this.load.image("potion_mp", "/assets/Items Assets/Potion/Blue Potion 3.png");
+    this.load.image("potion_hp", "/assets/items/potion/Red Potion 3.png");
+    this.load.image("potion_mp", "/assets/items/potion/Blue Potion 3.png");
 
     // Item icons
-    this.load.image("item_iron_sword", "/assets/Items Assets/Weapon & Tool/Iron Sword.png");
-    this.load.image("item_steel_blade", "/assets/Items Assets/Weapon & Tool/Silver Sword.png");
-    this.load.image("item_arcane_staff", "/assets/Items Assets/Weapon & Tool/Emerald Staff.png");
-    this.load.image("item_leather_cap", "/assets/Items Assets/Custom/wizard_hat_blue.png");
-    this.load.image("item_iron_helm", "/assets/Items Assets/Equipment/Iron Helmet.png");
-    this.load.image("item_leather_vest", "/assets/Items Assets/Equipment/Leather Armor.png");
-    this.load.image("item_chain_mail", "/assets/Items Assets/Equipment/Iron Armor.png");
-    this.load.image("item_gauntlets", "/assets/Items Assets/Custom/metal_glove.png");
-    this.load.image("item_spell_gloves", "/assets/Items Assets/Custom/blue_glove.png");
-    this.load.image("item_ring_of_strength", "/assets/Items Assets/Custom/ring_red_crystal.png");
-    this.load.image("item_ring_of_fortitude", "/assets/Items Assets/Custom/ring_plain.png");
-    this.load.image("item_arcane_ring", "/assets/Items Assets/Custom/ring_purple_green.png");
+    this.load.image("item_iron_sword", "/assets/items/weapon/Iron Sword.png");
+    this.load.image("item_steel_blade", "/assets/items/weapon/Silver Sword.png");
+    this.load.image("item_arcane_staff", "/assets/items/weapon/Emerald Staff.png");
+    this.load.image("item_leather_cap", "/assets/items/custom/wizard_hat_blue.png");
+    this.load.image("item_iron_helm", "/assets/items/equipment/Iron Helmet.png");
+    this.load.image("item_leather_vest", "/assets/items/equipment/Leather Armor.png");
+    this.load.image("item_chain_mail", "/assets/items/equipment/Iron Armor.png");
+    this.load.image("item_gauntlets", "/assets/items/custom/metal_glove.png");
+    this.load.image("item_spell_gloves", "/assets/items/custom/blue_glove.png");
+    this.load.image("item_ring_of_strength", "/assets/items/custom/ring_red_crystal.png");
+    this.load.image("item_ring_of_fortitude", "/assets/items/custom/ring_plain.png");
+    this.load.image("item_arcane_ring", "/assets/items/custom/ring_purple_green.png");
 
     // New items
-    this.load.image("item_wooden_wand", "/assets/Items Assets/Weapon & Tool/Wooden Wand.png");
-    this.load.image("item_war_club", "/assets/Items Assets/Weapon & Tool/War Club.png");
-    this.load.image("item_battlemage_sword", "/assets/Items Assets/Weapon & Tool/Battlemage Sword.png");
-    this.load.image("item_dragonfang_blade", "/assets/Items Assets/Weapon & Tool/Dragonfang Blade.png");
-    this.load.image("item_archmage_staff", "/assets/Items Assets/Weapon & Tool/Archmage Staff.png");
-    this.load.image("item_iron_skullcap", "/assets/Items Assets/Equipment/Iron Skullcap.png");
-    this.load.image("item_battle_helm", "/assets/Items Assets/Equipment/Battle Helm.png");
-    this.load.image("item_crown_of_embers", "/assets/Items Assets/Equipment/Crown of Embers.png");
-    this.load.image("item_mage_robe", "/assets/Items Assets/Equipment/Mage Robe.png");
-    this.load.image("item_battle_plate", "/assets/Items Assets/Equipment/Battle Plate.png");
-    this.load.image("item_aegis_mantle", "/assets/Items Assets/Equipment/Aegis Mantle.png");
-    this.load.image("item_iron_gauntlets", "/assets/Items Assets/Equipment/Iron Gauntlets.png");
-    this.load.image("item_sorcerer_wraps", "/assets/Items Assets/Equipment/Sorcerer Wraps.png");
-    this.load.image("item_crimson_gauntlets", "/assets/Items Assets/Custom/golden_glove.png");
-    this.load.image("item_ring_of_insight", "/assets/Items Assets/Custom/ring_plain_gold.png");
-    this.load.image("item_ring_of_vigor", "/assets/Items Assets/Custom/gem_green.png");
-    this.load.image("item_ring_of_power", "/assets/Items Assets/Custom/orb_orange.png");
+    this.load.image("item_wooden_wand", "/assets/items/weapon/Wooden Wand.png");
+    this.load.image("item_war_club", "/assets/items/weapon/War Club.png");
+    this.load.image("item_battlemage_sword", "/assets/items/weapon/Battlemage Sword.png");
+    this.load.image("item_dragonfang_blade", "/assets/items/weapon/Dragonfang Blade.png");
+    this.load.image("item_archmage_staff", "/assets/items/weapon/Archmage Staff.png");
+    this.load.image("item_iron_skullcap", "/assets/items/equipment/Iron Skullcap.png");
+    this.load.image("item_battle_helm", "/assets/items/equipment/Battle Helm.png");
+    this.load.image("item_crown_of_embers", "/assets/items/equipment/Crown of Embers.png");
+    this.load.image("item_mage_robe", "/assets/items/equipment/Mage Robe.png");
+    this.load.image("item_battle_plate", "/assets/items/equipment/Battle Plate.png");
+    this.load.image("item_aegis_mantle", "/assets/items/equipment/Aegis Mantle.png");
+    this.load.image("item_iron_gauntlets", "/assets/items/equipment/Iron Gauntlets.png");
+    this.load.image("item_sorcerer_wraps", "/assets/items/equipment/Sorcerer Wraps.png");
+    this.load.image("item_crimson_gauntlets", "/assets/items/custom/golden_glove.png");
+    this.load.image("item_ring_of_insight", "/assets/items/custom/ring_plain_gold.png");
+    this.load.image("item_ring_of_vigor", "/assets/items/custom/gem_green.png");
+    this.load.image("item_ring_of_power", "/assets/items/custom/orb_orange.png");
 
     // Music
     this.load.audio(MusicAsset.Menu1, "/assets/music/menu_1.mp3");
