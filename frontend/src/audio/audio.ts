@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { Settings } from "./settings";
+import { Settings } from "../state/settings";
 
 // Background-music orchestrator. Tracks persist across scene transitions
 // when the *group* doesn't change (map → equipment → map = no restart).

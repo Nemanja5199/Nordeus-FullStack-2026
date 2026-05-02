@@ -1,9 +1,9 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_TITLE, FONT_LG, FONT_BODY } from "../ui/typography";
-import { Settings } from "../utils/settings";
-import { Audio } from "../utils/audio";
-import { SfxPlayer, Sfx } from "../utils/sfx";
+import { Settings } from "../state/settings";
+import { Audio } from "../audio/audio";
+import { SfxPlayer, Sfx } from "../audio/sfx";
 import { createModalFooter } from "../ui/ModalFooter";
 import {
   BG_BLACK,

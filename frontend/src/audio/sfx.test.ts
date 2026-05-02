@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { SfxPlayer, Sfx, SfxAsset } from "./sfx";
-import { Settings } from "./settings";
+import { Settings } from "../state/settings";
 
 interface FakeSound {
   isPlaying: boolean;

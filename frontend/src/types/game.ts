@@ -101,7 +101,7 @@ export interface RunConfig {
   heroDefaults: HeroDefaults; // back-compat; mirrors heroClasses.knight
   heroClasses: Record<HeroClass, HeroDefaults>;
   upgrades: MetaUpgrade[];
-  mapTree: import("../utils/mockMapTree").MapTree;
+  mapTree: import("../map/mapTree").MapTree;
   seed: number;
 }
 

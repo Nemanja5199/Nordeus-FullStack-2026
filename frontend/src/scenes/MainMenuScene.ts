@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
 import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../ui/typography";
 import { api } from "../services/api";
-import { GameState } from "../utils/gameState";
-import { TestMode } from "../utils/testMode";
-import { Audio, TrackGroup } from "../utils/audio";
+import { GameState } from "../state/gameState";
+import { TestMode } from "../state/testMode";
+import { Audio, TrackGroup } from "../audio/audio";
 import { createButton, BTN_LG } from "../ui/Button";
 import {
   BG_BLACK,

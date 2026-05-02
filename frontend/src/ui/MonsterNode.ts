@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { MonsterConfig } from "../types/game";
-import { MONSTER_FRAMES } from "../utils/spriteFrames";
+import { MONSTER_FRAMES } from "../sprites/spriteFrames";
 import { FONT_MD, FONT_SM } from "./typography";
 import {
   BG_NODE_DEFEATED,

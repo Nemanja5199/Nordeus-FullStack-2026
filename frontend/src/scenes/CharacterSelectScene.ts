@@ -1,9 +1,9 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
 import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../ui/typography";
-import { GameState } from "../utils/gameState";
-import { MetaProgress } from "../utils/metaProgress";
-import { HERO_FRAMES } from "../utils/spriteFrames";
+import { GameState } from "../state/gameState";
+import { MetaProgress } from "../state/metaProgress";
+import { HERO_FRAMES } from "../sprites/spriteFrames";
 import type { HeroClass, RunConfig } from "../types/game";
 import { createButton, BTN_MD } from "../ui/Button";
 import {

@@ -1,5 +1,5 @@
 import type { GearItem, GearSlot, GearStatBonuses, HeroClass, HeroState, MoveConfig, RunConfig, RunSave } from "../types/game";
-import { XP_CURVE_FACTOR } from "./gameConstants";
+import { XP_CURVE_FACTOR } from "../constants";
 import { MetaProgress } from "./metaProgress";
 import { TestMode } from "./testMode";
 import { Cloud } from "./cloudSync";

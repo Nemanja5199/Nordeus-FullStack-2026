@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
-import { MetaProgress } from "../utils/metaProgress";
+import { MetaProgress } from "../state/metaProgress";
 import type { MetaUpgrade } from "../types/game";
-import { GameState } from "../utils/gameState";
-import { Audio, TrackGroup } from "../utils/audio";
-import { SfxPlayer, Sfx } from "../utils/sfx";
+import { GameState } from "../state/gameState";
+import { Audio, TrackGroup } from "../audio/audio";
+import { SfxPlayer, Sfx } from "../audio/sfx";
 import { api } from "../services/api";
 import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../ui/typography";
 import {

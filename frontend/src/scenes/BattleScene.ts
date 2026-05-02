@@ -3,7 +3,7 @@ import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
-import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../utils/combat";
+import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat/combat";
 import {
   HP_BAR_HIGH_THRESHOLD,
   HP_BAR_MID_THRESHOLD,
@@ -12,15 +12,15 @@ import {
   MANA_REGEN,
   MONSTER_LEVEL_SCALING,
   MP_POTION_RESTORE,
-} from "../utils/gameConstants";
-import { GameState, getGearBonuses } from "../utils/gameState";
-import { TestMode } from "../utils/testMode";
-import { Settings } from "../utils/settings";
-import { Audio, TrackGroup } from "../utils/audio";
-import { SfxPlayer, Sfx } from "../utils/sfx";
-import { MetaProgress } from "../utils/metaProgress";
+} from "../constants";
+import { GameState, getGearBonuses } from "../state/gameState";
+import { TestMode } from "../state/testMode";
+import { Settings } from "../state/settings";
+import { Audio, TrackGroup } from "../audio/audio";
+import { SfxPlayer, Sfx } from "../audio/sfx";
+import { MetaProgress } from "../state/metaProgress";
 import { api } from "../services/api";
-import { heroFrameFor, MONSTER_FRAMES } from "../utils/spriteFrames";
+import { heroFrameFor, MONSTER_FRAMES } from "../sprites/spriteFrames";
 import {
   BG_DARKEST,
   BG_HERO_BATTLE,
@@ -81,7 +81,7 @@ export class BattleScene extends Phaser.Scene {
   private turnNumber = 0;
   private busy = false;
 
-  // Mana — values come from utils/gameConstants
+  // Mana — values come from constants
   private heroMana = MANA_MAX;
   private heroManaBarLeft!: number;
   private usedPotionThisTurn = false;

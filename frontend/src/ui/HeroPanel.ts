@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { GearItem, HeroState, MoveConfig } from "../types/game";
-import { GameState, getGearBonuses } from "../utils/gameState";
-import { heroFrameFor } from "../utils/spriteFrames";
+import { GameState, getGearBonuses } from "../state/gameState";
+import { heroFrameFor } from "../sprites/spriteFrames";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "./typography";
 import {
   BG_PANEL,

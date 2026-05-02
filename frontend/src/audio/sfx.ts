@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { Settings } from "./settings";
+import { Settings } from "../state/settings";
 
 // Short fire-and-forget cues. Each logical Sfx is a slot; multi-variant
 // slots pick at random with ±jitter pitch so back-to-back triggers don't

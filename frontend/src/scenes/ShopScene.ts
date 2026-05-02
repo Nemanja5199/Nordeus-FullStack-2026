@@ -1,13 +1,13 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
 import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../ui/typography";
-import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../utils/gameState";
-import { SfxPlayer, Sfx } from "../utils/sfx";
+import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../state/gameState";
+import { SfxPlayer, Sfx } from "../audio/sfx";
 import type { GearItem } from "../types/game";
 import { createModalFooter } from "../ui/ModalFooter";
 import { TooltipManager } from "../ui/TooltipManager";
 import { createScrollableArea, type ScrollableArea } from "../ui/ScrollableArea";
-import { itemFrames } from "../utils/itemFrames";
+import { itemFrames } from "../sprites/itemFrames";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
