@@ -1,9 +1,8 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
-import { BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui/layout";
+import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM, BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
-import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat/combat";
+import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat";
 import {
   HP_BAR_HIGH_THRESHOLD,
   HP_BAR_MID_THRESHOLD,
@@ -13,14 +12,10 @@ import {
   MONSTER_LEVEL_SCALING,
   MP_POTION_RESTORE,
 } from "../constants";
-import { GameState, getGearBonuses } from "../state/gameState";
-import { TestMode } from "../state/testMode";
-import { Settings } from "../state/settings";
-import { Audio, TrackGroup } from "../audio/audio";
-import { SfxPlayer, Sfx } from "../audio/sfx";
-import { MetaProgress } from "../state/metaProgress";
+import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../state";
+import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
-import { heroFrameFor, MONSTER_FRAMES } from "../sprites/spriteFrames";
+import { heroFrameFor, MONSTER_FRAMES } from "../sprites";
 import {
   BG_DARKEST,
   BG_HERO_BATTLE,
@@ -56,7 +51,7 @@ import {
   TXT_INTENT_HEAL,
   TXT_LOG_MAGIC,
   TXT_DUST_MOTE,
-} from "../ui/colors";
+} from "../ui";
 
 interface BattleData {
   monster: MonsterConfig;

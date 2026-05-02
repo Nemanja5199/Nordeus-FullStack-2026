@@ -1,13 +1,10 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../ui/typography";
-import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../state/gameState";
-import { SfxPlayer, Sfx } from "../audio/sfx";
+import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import { GameState, HP_POTION_PRICE, MANA_POTION_PRICE } from "../state";
+import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem } from "../types/game";
-import { createModalFooter } from "../ui/ModalFooter";
-import { TooltipManager } from "../ui/TooltipManager";
-import { createScrollableArea, type ScrollableArea } from "../ui/ScrollableArea";
-import { itemFrames } from "../sprites/itemFrames";
+import { itemFrames } from "../sprites";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
@@ -26,7 +23,7 @@ import {
   TXT_STAT_MAGIC,
   TXT_STAT_HP,
   RARITY_COLOR,
-} from "../ui/colors";
+} from "../ui";
 
 interface ShopData {
   returnScene: SceneKey;

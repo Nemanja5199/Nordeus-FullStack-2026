@@ -1,11 +1,9 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
-import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE } from "../ui/typography";
-import { GameState } from "../state/gameState";
-import { MetaProgress } from "../state/metaProgress";
-import { HERO_FRAMES } from "../sprites/spriteFrames";
+import { FONT_LG, FONT_SM, FONT_XS, FONT_SCENE_TITLE, createButton, BTN_MD } from "../ui";
+import { GameState, MetaProgress } from "../state";
+import { HERO_FRAMES } from "../sprites";
 import type { HeroClass, RunConfig } from "../types/game";
-import { createButton, BTN_MD } from "../ui/Button";
 import {
   BG_BLACK,
   BG_MOVE_CARD,
@@ -25,7 +23,7 @@ import {
   TXT_CARD_LOCKED,
   TXT_CLASS_LOCKED,
   TXT_COMING_SOON,
-} from "../ui/colors";
+} from "../ui";
 
 interface CharacterSelectData {
   runConfig: RunConfig;

@@ -1,10 +1,8 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_TITLE, FONT_LG, FONT_BODY } from "../ui/typography";
-import { Settings } from "../state/settings";
-import { Audio } from "../audio/audio";
-import { SfxPlayer, Sfx } from "../audio/sfx";
-import { createModalFooter } from "../ui/ModalFooter";
+import { FONT_TITLE, FONT_LG, FONT_BODY, createModalFooter } from "../ui";
+import { Settings } from "../state";
+import { Audio, SfxPlayer, Sfx } from "../audio";
 import {
   BG_BLACK,
   BG_DARKEST,
@@ -13,7 +11,7 @@ import {
   TXT_GOLD_LIGHT,
   TXT_MUTED,
   TXT_STROKE_HEADER,
-} from "../ui/colors";
+} from "../ui";
 
 interface OptionsData {
   returnScene?: SceneKey;

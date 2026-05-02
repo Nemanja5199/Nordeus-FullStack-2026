@@ -1,11 +1,9 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
-import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../ui/typography";
+import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM, createButton, BTN_LG } from "../ui";
 import { api } from "../services/api";
-import { GameState } from "../state/gameState";
-import { TestMode } from "../state/testMode";
-import { Audio, TrackGroup } from "../audio/audio";
-import { createButton, BTN_LG } from "../ui/Button";
+import { GameState, TestMode } from "../state";
+import { Audio, TrackGroup } from "../audio";
 import {
   BG_BLACK,
   BG_BTN_SUCCESS,
@@ -17,7 +15,7 @@ import {
   TXT_TAGLINE,
   TXT_MUTED,
   TXT_BOSS,
-} from "../ui/colors";
+} from "../ui";
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {

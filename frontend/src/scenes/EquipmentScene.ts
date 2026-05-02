@@ -1,14 +1,10 @@
 import Phaser from "phaser";
 import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
-import { EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from "../ui/layout";
-import { GameState, getGearBonuses } from "../state/gameState";
-import { SfxPlayer, Sfx } from "../audio/sfx";
+import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y, createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import { GameState, getGearBonuses } from "../state";
+import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem, GearSlot } from "../types/game";
-import { createModalFooter } from "../ui/ModalFooter";
-import { TooltipManager } from "../ui/TooltipManager";
-import { createScrollableArea, type ScrollableArea } from "../ui/ScrollableArea";
-import { itemFrames } from "../sprites/itemFrames";
+import { itemFrames } from "../sprites";
 import {
   BG_DARKEST,
   BG_MOVE_CARD,
@@ -25,7 +21,7 @@ import {
   RARITY_COLOR,
   RARITY_COLOR_NUM,
   STAT_COLOR,
-} from "../ui/colors";
+} from "../ui";
 
 const SLOTS: GearSlot[] = ["weapon", "helmet", "chestplate", "gloves", "ring"];
 const SLOT_LABELS: Record<GearSlot, string> = {

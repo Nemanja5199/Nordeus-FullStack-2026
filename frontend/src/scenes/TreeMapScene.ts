@@ -1,15 +1,12 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
-import { FONT_MD, FONT_SM, FONT_MAP_TITLE } from "../ui/typography";
-import { HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE } from "../ui/layout";
-import { GameState } from "../state/gameState";
-import { Audio, TrackGroup } from "../audio/audio";
+import { FONT_MD, FONT_SM, FONT_MAP_TITLE, HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE, createHeroPanel, createButton, BTN_SM } from "../ui";
+import { GameState } from "../state";
+import { Audio, TrackGroup } from "../audio";
 import { XP_CURVE_FACTOR } from "../constants";
-import { createHeroPanel } from "../ui/HeroPanel";
-import { createButton, BTN_SM } from "../ui/Button";
-import { MONSTER_FRAMES, SHOPKEEPER_FRAME } from "../sprites/spriteFrames";
-import { getNodeState } from "../map/mapTree";
-import type { MapTree, MapTreeNode, TreeNodeState } from "../map/mapTree";
+import { MONSTER_FRAMES, SHOPKEEPER_FRAME } from "../sprites";
+import { getNodeState } from "../map";
+import type { MapTree, MapTreeNode, TreeNodeState } from "../map";
 import {
   BG_BLACK,
   TXT_GOLD,
@@ -43,7 +40,7 @@ import {
   TXT_BOSS,
   TXT_TIER_BOSS,
   TXT_BLACK,
-} from "../ui/colors";
+} from "../ui";
 
 interface NodeColors {
   fillColor: number;

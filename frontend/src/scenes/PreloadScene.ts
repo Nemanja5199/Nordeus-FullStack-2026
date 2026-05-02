@@ -1,12 +1,8 @@
 import Phaser from "phaser";
 import { Scene } from "./sceneKeys";
-import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
-import { FONT_LOAD } from "../ui/typography";
-import { MetaProgress } from "../state/metaProgress";
-import { GameState } from "../state/gameState";
-import { Cloud } from "../state/cloudSync";
-import { MusicAsset } from "../audio/audio";
-import { SFX_FILES } from "../audio/sfx";
+import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD, FONT_LOAD } from "../ui";
+import { MetaProgress, GameState, Cloud } from "../state";
+import { MusicAsset, SFX_FILES } from "../audio";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
