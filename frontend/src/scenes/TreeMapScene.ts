@@ -1,9 +1,8 @@
 import Phaser from "phaser";
-import { Scene } from "./sceneKeys";
-import { FONT_MD, FONT_SM, FONT_MAP_TITLE, HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE, createHeroPanel, createButton, BTN_SM } from "../ui";
+import { Scene, FONT_MD, FONT_SM, FONT_MAP_TITLE, HERO_PANEL_W as PANEL_W, HERO_PANEL_H as PANEL_H, HERO_PANEL_GAP as PANEL_GAP, NODE_W, NODE_H, BOSS_W, BOSS_H, NODE_HOVER_SCALE as HOVER_SCALE, XP_CURVE_FACTOR } from "../constants";
+import { createHeroPanel, createButton, BTN_SM } from "../ui";
 import { GameState } from "../state";
 import { Audio, TrackGroup } from "../audio";
-import { XP_CURVE_FACTOR } from "../constants";
 import { MONSTER_FRAMES, SHOPKEEPER_FRAME } from "../sprites";
 import { getNodeState } from "../map";
 import type { MapTree, MapTreeNode, TreeNodeState } from "../map";
@@ -40,7 +39,7 @@ import {
   TXT_BOSS,
   TXT_TIER_BOSS,
   TXT_BLACK,
-} from "../ui";
+} from "../constants";
 
 interface NodeColors {
   fillColor: number;

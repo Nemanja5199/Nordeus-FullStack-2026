@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_SCENE_TITLE, FONT_CONQUEST, createButton, BTN_MD } from "../ui";
+import { Scene, type SceneKey, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_SCENE_TITLE, FONT_CONQUEST } from "../constants";
+import { createButton, BTN_MD } from "../ui";
 import { GameState, MetaProgress } from "../state";
 import { Audio, TrackGroup, MusicAsset, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
@@ -19,7 +19,7 @@ import {
   TXT_DEFEAT,
   TXT_SHARD,
   TXT_BLACK,
-} from "../ui";
+} from "../constants";
 
 interface PostBattleData {
   won: boolean;

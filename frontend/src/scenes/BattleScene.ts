@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM, BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../ui";
+import { Scene, type SceneKey, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, BATTLE_PANEL_W as PANEL_W, BATTLE_LOG_LINES as LOG_LINES } from "../constants";
 import type { CombatCharacter, MoveConfig, MonsterConfig } from "../types/game";
 import { applyMove, tickBuffs, tickDots, getEffectiveStat, hasSimilarMove } from "../combat";
 import {
@@ -51,7 +50,7 @@ import {
   TXT_INTENT_HEAL,
   TXT_LOG_MAGIC,
   TXT_DUST_MOTE,
-} from "../ui";
+} from "../constants";
 
 interface BattleData {
   monster: MonsterConfig;

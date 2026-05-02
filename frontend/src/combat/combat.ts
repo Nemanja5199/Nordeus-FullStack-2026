@@ -6,7 +6,7 @@ import {
   TXT_MOVE_BUFF,
   TXT_MOVE_DEBUFF,
   TXT_SHARD,
-} from "../ui/colors";
+} from "../constants";
 
 const STAT_LABEL: Record<string, string> = { attack: "ATK", defense: "DEF", magic: "MAG" };
 

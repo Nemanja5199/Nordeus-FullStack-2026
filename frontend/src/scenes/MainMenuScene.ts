@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { Scene } from "./sceneKeys";
-import { FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM, createButton, BTN_LG } from "../ui";
+import { Scene, FONT_MD, FONT_GAME_TITLE, FONT_TAGLINE, FONT_SM } from "../constants";
+import { createButton, BTN_LG } from "../ui";
 import { api } from "../services/api";
 import { GameState, TestMode } from "../state";
 import { Audio, TrackGroup } from "../audio";
@@ -15,7 +15,7 @@ import {
   TXT_TAGLINE,
   TXT_MUTED,
   TXT_BOSS,
-} from "../ui";
+} from "../constants";
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {

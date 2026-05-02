@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { GearItem, HeroState, MoveConfig } from "../types/game";
 import { GameState, getGearBonuses } from "../state/gameState";
 import { heroFrameFor } from "../sprites/spriteFrames";
-import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "./typography";
+import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM } from "../constants";
 import {
   BG_PANEL,
   BG_ROW,
@@ -18,7 +18,7 @@ import {
   BAR_XP_FILL,
   TXT_SKILL_POINTS,
   TXT_MANA,
-} from "./colors";
+} from "../constants";
 
 export interface HeroPanelOptions {
   x: number;

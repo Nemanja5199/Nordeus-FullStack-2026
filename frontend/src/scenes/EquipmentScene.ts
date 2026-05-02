@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y, createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import { Scene, type SceneKey, FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM, EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from "../constants";
+import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
 import { GameState, getGearBonuses } from "../state";
 import { SfxPlayer, Sfx } from "../audio";
 import type { GearItem, GearSlot } from "../types/game";
@@ -21,7 +21,7 @@ import {
   RARITY_COLOR,
   RARITY_COLOR_NUM,
   STAT_COLOR,
-} from "../ui";
+} from "../constants";
 
 const SLOTS: GearSlot[] = ["weapon", "helmet", "chestplate", "gloves", "ring"];
 const SLOT_LABELS: Record<GearSlot, string> = {

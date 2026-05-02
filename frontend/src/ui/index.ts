@@ -4,6 +4,3 @@ export * from "./TooltipManager";
 export * from "./HeroPanel";
 export * from "./ScrollableArea";
 export * from "./MonsterNode";
-export * from "./colors";
-export * from "./layout";
-export * from "./typography";

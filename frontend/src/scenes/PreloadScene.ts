@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { Scene } from "./sceneKeys";
-import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD, FONT_LOAD } from "../ui";
+import { Scene, BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD, FONT_LOAD } from "../constants";
 import { MetaProgress, GameState, Cloud } from "../state";
 import { MusicAsset, SFX_FILES } from "../audio";
 

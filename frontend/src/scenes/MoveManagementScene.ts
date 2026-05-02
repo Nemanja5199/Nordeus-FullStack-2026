@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { Scene, type SceneKey } from "./sceneKeys";
-import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS, MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y, createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
+import { Scene, type SceneKey, FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS, MOVE_CARD_W as CARD_W, MOVE_CARD_H as CARD_H, MOVE_CARD_GAP as CARD_GAP, MOVE_CARD_START_Y as START_Y } from "../constants";
+import { createModalFooter, TooltipManager, createScrollableArea, type ScrollableArea } from "../ui";
 import { GameState } from "../state";
 import type { MoveConfig } from "../types/game";
 import { buildMoveStatLines } from "../combat";
@@ -24,7 +24,7 @@ import {
   BG_BTN_STAT,
   BG_BTN_STAT_HOVER,
   TXT_STROKE_HEADER,
-} from "../ui";
+} from "../constants";
 
 interface MoveManagementData {
   returnScene: SceneKey;

@@ -1,10 +1,10 @@
 import Phaser from "phaser";
-import { Scene } from "./sceneKeys";
+import { Scene, FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, UPGRADE_CARD_W as CARD_W, UPGRADE_CARD_H as CARD_H, UPGRADE_CARD_GAP as CARD_GAP } from "../constants";
 import { MetaProgress, GameState } from "../state";
 import type { MetaUpgrade } from "../types/game";
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
-import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, UPGRADE_CARD_W as CARD_W, UPGRADE_CARD_H as CARD_H, UPGRADE_CARD_GAP as CARD_GAP, createButton, BTN_MD } from "../ui";
+import { createButton, BTN_MD } from "../ui";
 import {
   BG_DARKEST,
   BG_UPGRADE_AVAILABLE,
@@ -28,7 +28,7 @@ import {
   TXT_STAT_MAGIC,
   TXT_STAT_HP,
   TXT_STAT_DEFENSE,
-} from "../ui";
+} from "../constants";
 
 const CATEGORIES = [
   { key: "vitality", label: "VITALITY", color: TXT_STAT_HP },

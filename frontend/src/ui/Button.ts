@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { TXT_GOLD, TXT_GOLD_LIGHT } from "./colors";
-import { FONT_LG, FONT_MD } from "./typography";
+import { TXT_GOLD, TXT_GOLD_LIGHT, FONT_LG, FONT_MD } from "../constants";
 import { SfxPlayer, Sfx } from "../audio/sfx";
 
 export interface ButtonOptions {

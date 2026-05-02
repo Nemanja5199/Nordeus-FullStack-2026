@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import { createButton, BTN_SM } from "./Button";
-import { BG_BTN_CLOSE, TXT_MUTED } from "./colors";
-import { FONT_BODY } from "./typography";
+import { BG_BTN_CLOSE, TXT_MUTED, FONT_BODY } from "../constants";
 
 export interface ModalFooterOptions {
   hint: string;

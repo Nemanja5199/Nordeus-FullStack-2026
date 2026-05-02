@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { MonsterConfig } from "../types/game";
 import { MONSTER_FRAMES } from "../sprites/spriteFrames";
-import { FONT_MD, FONT_SM } from "./typography";
+import { FONT_MD, FONT_SM } from "../constants";
 import {
   BG_NODE_DEFEATED,
   BG_NODE_ACTIVE,
@@ -15,7 +15,7 @@ import {
   TXT_DEFEATED,
   TXT_LOCKED,
   TXT_LOCKED_NAME,
-} from "./colors";
+} from "../constants";
 
 export type NodeState = "defeated" | "next" | "locked";
 
