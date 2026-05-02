@@ -55,9 +55,20 @@ echo "  ✓ DB stack ready at http://localhost:54321"
 # ── Backend ──────────────────────────────────────────────────────────────
 echo "▶ Setting up backend…"
 cd backend
-if [ ! -d .venv ]; then
-    echo "  Creating Python venv…"
+# Check for the actual Unix venv binary, not just the directory —
+# a Windows-created venv leaves the dir but no bin/ (it has Scripts\).
+if [ ! -f .venv/bin/python ]; then
+    if [ -d .venv ]; then
+        echo "  Existing .venv is not a Unix venv, recreating…"
+        rm -rf .venv
+    else
+        echo "  Creating Python venv…"
+    fi
     python3 -m venv .venv
+    if [ ! -f .venv/bin/activate ]; then
+        echo "✗ venv creation failed. On Debian/Ubuntu/WSL run: sudo apt install -y python3-venv"
+        exit 1
+    fi
 fi
 # shellcheck disable=SC1091
 source .venv/bin/activate

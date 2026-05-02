@@ -53,8 +53,15 @@ echo   OK DB stack ready at http://localhost:54321
 
 REM ── Backend ──────────────────────────────────────────────────────────────
 echo ^> Setting up backend...
-if not exist backend\.venv (
-    echo   Creating Python venv...
+REM Check for the actual Windows venv binary, not just the directory —
+REM a Linux-created venv (e.g. from WSL) leaves the dir but no Scripts\.
+if not exist backend\.venv\Scripts\python.exe (
+    if exist backend\.venv (
+        echo   Existing .venv is not a Windows venv, recreating...
+        rmdir /s /q backend\.venv
+    ) else (
+        echo   Creating Python venv...
+    )
     python -m venv backend\.venv
     if errorlevel 1 (
         echo X Failed to create venv. Install Python 3.10+ and try again.
