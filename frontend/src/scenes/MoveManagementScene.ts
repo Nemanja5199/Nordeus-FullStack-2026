@@ -71,7 +71,6 @@ export class MoveManagementScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Column X positions
     const colLearnedX = width * 0.22;
     const colEquippedX = width * 0.5;
     const colStatsX = width * 0.78;
@@ -98,7 +97,6 @@ export class MoveManagementScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Vertical dividers
     const divAlpha = 0.25;
     const divTop = 90;
     const divBot = height - 80;
@@ -172,7 +170,6 @@ export class MoveManagementScene extends Phaser.Scene {
       if (!move) return;
 
       const isEquipped = GameState.hero.equippedMoves.includes(moveId);
-      // Position relative to scroll viewport: i=0 sits at the top.
       const cardCenterY = i * rowStep + CARD_H / 2;
 
       const container = this.add.container(panelX, cardCenterY);
@@ -240,7 +237,6 @@ export class MoveManagementScene extends Phaser.Scene {
     const cardH = 80;
     const gap = 16;
 
-    // Points badge — sits just below the column header
     this.add
       .text(panelX, 112, pts > 0 ? `✦ ${pts} to spend` : "no points", {
         fontSize: FONT_MD,
@@ -261,7 +257,6 @@ export class MoveManagementScene extends Phaser.Scene {
       { label: "MAX HP", key: "maxHp", gain: "+8", sub: "Max health" },
     ];
 
-    // Cards start below the badge — badge is at y=100, badge height ~22, gap 18 → cards from y=140
     const cardsStartY = 156;
 
     stats.forEach(({ label, key, gain, sub }, i) => {
@@ -273,7 +268,6 @@ export class MoveManagementScene extends Phaser.Scene {
         .rectangle(panelX, y, cardW, cardH, haspts ? BG_STAT_CARD_AVAIL : BG_STAT_CARD, 0.95)
         .setStrokeStyle(haspts ? 2 : 1, haspts ? BORDER_STAT_AVAIL : BORDER_LOCKED);
 
-      // Stat name + sub
       this.add.text(panelX - cardW / 2 + 14, y - 22, label, {
         fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
@@ -284,14 +278,12 @@ export class MoveManagementScene extends Phaser.Scene {
         color: TXT_MUTED,
       });
 
-      // Current value
       this.add.text(panelX - cardW / 2 + 14, y + 16, String(val), {
         fontSize: FONT_LG,
         fontFamily: "EnchantedLand",
         color: TXT_GOLD_LIGHT,
       });
 
-      // Gain label
       this.add.text(panelX - cardW / 2 + 66, y + 16, gain, {
         fontSize: FONT_BODY,
         fontFamily: "EnchantedLand",

@@ -42,9 +42,8 @@ interface ClassCard {
   locked: boolean;
 }
 
-// Card data is hand-authored for the menu — keep stats/moves in sync with
-// HERO_CLASSES on the backend. The actual run uses the backend numbers,
-// not these; these strings are display-only.
+// Display-only — the run uses HERO_CLASSES from the backend. Keep numbers
+// in sync with backend/app/data/hero.py.
 const CLASSES: ClassCard[] = [
   {
     id: "knight",
@@ -129,9 +128,8 @@ export class CharacterSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Layout scales with the card count so removing/adding classes doesn't
-    // leave a lopsided gap. cardW caps at 280 to keep the look consistent
-    // even when there are only 2 cards.
+    // Layout scales with card count; cardW caps at 280 so 2-card layouts
+    // don't go cartoonishly wide.
     const n = CLASSES.length;
     const cardW = Math.min(280, (width - 160) / Math.max(n, 3));
     const cardH = height * 0.6;
@@ -148,7 +146,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     this.highlightCard(0);
 
-    // Stat info bar — shown when hovering a stat icon
+    // Stat hover info bar
     this.statInfoBg = this.add
       .rectangle(width / 2, height * 0.835, width * 0.55, 32, BG_MOVE_CARD, 0.92)
       .setStrokeStyle(1, BORDER_GOLD)
@@ -213,15 +211,13 @@ export class CharacterSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Stats — 4-row vertical list
     const statObjs: Phaser.GameObjects.GameObject[] = [];
     const statValues = [cls.stats.hp, cls.stats.atk, cls.stats.def, cls.stats.mag, 60];
     const iconScale = 0.72;
     const iconHalf = 16 * iconScale;
     const rowSpacing = 28;
     const statsStartY = -h * 0.06;
-    // left-align the block, centered on card
-    const blockW = iconHalf * 2 + 8 + 70; // icon + gap + text estimate
+    const blockW = iconHalf * 2 + 8 + 70;
     const iconX = -blockW / 2 + iconHalf;
     const textX = iconX + iconHalf + 8;
 
@@ -331,8 +327,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     MetaProgress.resetAll();
     GameState.runConfig = this.runConfig;
-    // Persist the picked class BEFORE resetHero() so defaultHero() reads
-    // the right entry from runConfig.heroClasses.
+    // Set class before resetHero so defaultHero reads the right heroClasses entry.
     GameState.setSelectedClass(cls.id);
     GameState.resetHero(this.runConfig);
     GameState.clearRun();

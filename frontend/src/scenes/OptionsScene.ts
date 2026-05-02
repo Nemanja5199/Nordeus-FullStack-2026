@@ -63,9 +63,7 @@ export class OptionsScene extends Phaser.Scene {
       },
     );
 
-    // Throttle the SFX preview tick — playing button_click on every drag
-    // event spams the audio system. One sample every ~150ms is enough to
-    // hear the level change without machine-gun-clicking.
+    // ~150ms throttle — playing on every drag event would machine-gun click.
     let lastSfxPreview = 0;
     this.buildSliderRow(
       width / 2,
@@ -169,9 +167,8 @@ export class OptionsScene extends Phaser.Scene {
     return { label, check, desc };
   }
 
-  // Horizontal slider with click-to-set track + draggable handle. Calls
-  // onChange live (every drag tick) so the music volume change is audible
-  // immediately, not only on release.
+  // Click-to-set track + draggable handle. onChange fires every drag tick
+  // so music volume reacts live, not only on release.
   private buildSliderRow(
     cx: number,
     cy: number,
@@ -182,7 +179,7 @@ export class OptionsScene extends Phaser.Scene {
   ): void {
     const trackW = 360;
     const trackH = 10;
-    const trackX = cx - 240; // align label column with the toggle rows
+    const trackX = cx - 240;
     const trackY = cy + 8;
 
     this.add
@@ -193,19 +190,16 @@ export class OptionsScene extends Phaser.Scene {
       })
       .setOrigin(0, 0.5);
 
-    // Track + outline
     const track = this.add
       .rectangle(trackX, trackY, trackW, trackH, BG_BLACK)
       .setStrokeStyle(2, BORDER_GOLD)
       .setOrigin(0, 0.5)
       .setInteractive({ useHandCursor: true });
 
-    // Filled portion (left of handle)
     const fill = this.add
       .rectangle(trackX, trackY, trackW * read(), trackH - 4, 0xc8a035, 1)
       .setOrigin(0, 0.5);
 
-    // Draggable handle
     const handle = this.add
       .circle(trackX + trackW * read(), trackY, 12, 0xe8c060)
       .setStrokeStyle(2, 0x000000)

@@ -684,31 +684,22 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ── Battle animations ────────────────────────────────────────────────────
-  // All visual feel for resolving a move lives here. Each helper returns a
-  // Promise so handlePlayerMove / doMonsterTurn can await a coordinated
-  // sequence (lunge -> hit flash + damage number -> bar drain) instead of
-  // racing animations against the next turn.
+  // Each helper returns a Promise so handlePlayerMove / doMonsterTurn can
+  // await an ordered sequence (lunge → flash + damage number → bar drain).
 
-  // Multiplier on every animation duration. Read once from Settings in
-  // create() so toggling fast-animations from the options screen takes
-  // effect on the next battle entry.
   private animSpeed = 1;
 
-  // Helper: scale a base duration by animSpeed. All duration constants below
-  // are wall-clock at normal speed; multiply through this to get the actual
-  // tween duration / delay.
   private ms(base: number): number {
     return Math.max(1, Math.round(base * this.animSpeed));
   }
 
-  private LUNGE_PX = 50;       // attack dash distance
-  private LUNGE_MS = 220;      // total dash time (yoyo split half/half)
-  private FLASH_MS = 150;      // hit-tint duration
-  private DAMAGE_FLOAT_MS = 750; // damage number rise + fade
-  private HP_TWEEN_MS = 380;   // HP bar drain duration
-  // Heavy hit thresholds: any damage >= 25% of target's max HP triggers
-  // an "impact" feel — brief hit-stop, screen shake, and an oversized red
-  // damage number. Self-balancing across hero and monster scaling.
+  private LUNGE_PX = 50;
+  private LUNGE_MS = 220;
+  private FLASH_MS = 150;
+  private DAMAGE_FLOAT_MS = 750;
+  private HP_TWEEN_MS = 380;
+  // Heavy hit (damage ≥ 25% of target's max HP): hit-stop + screen shake
+  // + oversized red damage number. Self-balances across hero/monster scaling.
   private HEAVY_DMG_RATIO = 0.25;
   private HIT_STOP_MS = 80;
   private SHAKE_MS = 220;
@@ -845,9 +836,8 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  // Tinted hold (longer than flashSprite, lighter color) — used to mark a
-  // character "got buffed" or "got debuffed". Distinct from the hit flash so
-  // both can play on the same target without one overwriting the other.
+  // Longer/lighter tint than flashSprite — distinguishes buff/debuff feedback
+  // from a hit so both can play on the same target without overwriting.
   private auraPulse(
     sprite: Phaser.GameObjects.Image | undefined,
     color: number,
@@ -863,9 +853,7 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  // Orchestrates the full hit feel: lunge (or windup) → flash + damage number
-  // + buff/debuff aura → bar drain. attackerSide tells us which way to lunge
-  // ('hero' lunges right, 'monster' lunges left).
+  // Lunge → flash + damage number + buff/debuff aura → bar drain.
   private async animateMove(
     attackerSide: "hero" | "monster",
     move: MoveConfig,
@@ -959,9 +947,6 @@ export class BattleScene extends Phaser.Scene {
     if (tasks.length) await Promise.all(tasks);
   }
 
-  // Plays when a DOT tick chunks a character's HP at end of turn. Read the
-  // amount and target separately because tickDots returns a number and the
-  // caller knows which sprite belongs to whom.
   private async animateDotTick(target: "hero" | "monster", damage: number): Promise<void> {
     if (damage <= 0) return;
     const sprite = target === "hero" ? this.heroSprite : this.monsterSprite;
@@ -974,9 +959,8 @@ export class BattleScene extends Phaser.Scene {
     ]);
   }
 
-  // mp_drain side-effect from monster moves (currently only Mind Freeze).
-  // Mana lives on this scene, not on CombatCharacter, so applyMove can't touch
-  // it directly — it surfaces the drain via result.mpDrain instead.
+  // mp_drain side-effect (currently only Mind Freeze). applyMove surfaces it
+  // via result.mpDrain since mana lives on this scene, not CombatCharacter.
   private applyMonsterManaDrain(amount: number | undefined) {
     if (!amount) return;
     const before = this.heroMana;
@@ -984,9 +968,7 @@ export class BattleScene extends Phaser.Scene {
     const dropped = before - this.heroMana;
     if (dropped > 0) {
       this.pushLog(`Your mind is frozen! -${dropped} MP`, TXT_INTENT_DEBUFF);
-      // Fire-and-forget visuals — applyMonsterManaDrain is sync and we don't
-      // want to block the move-resolution flow on these. Blue wisps + a
-      // floating MP number sell the magical disruption.
+      // Fire-and-forget visuals — don't block the move-resolution flow.
       if (this.heroSprite) {
         void this.sparkles(this.heroSprite.x, this.heroSprite.y, 0x4488ff, 6, 600);
         void this.floatNumber(
@@ -1184,9 +1166,7 @@ export class BattleScene extends Phaser.Scene {
       .setColor(TXT_MANA_LOW);
   }
 
-  // Preview future HP after drinking an HP potion. Skip when the potion would
-  // do nothing (no charges, already at full HP, in-flight turn, etc.) so the
-  // ghost bar doesn't lie about a heal that won't happen.
+  // Skip when the potion would no-op so the ghost bar doesn't lie.
   private previewHpPotion(): void {
     if (!this.canUseHpPotion()) return;
     this.previewHeroHp(0, HP_POTION_HEAL, 0);
@@ -1412,16 +1392,15 @@ export class BattleScene extends Phaser.Scene {
     tickBuffs(this.hero);
     tickBuffs(this.monster);
 
-    // DOTs tick at end of full turn, after both sides have acted. A DOT
-    // applied this turn won't expire before its first damage tick because
-    // applyMove stored turns + 1.
+    // DOTs tick after both sides have acted. applyMove stored turns+1 so a
+    // DOT applied this turn fires its first damage before expiry.
     const heroDotDmg = tickDots(this.hero);
     if (heroDotDmg > 0) this.pushLog(`Decay tick: -${heroDotDmg} HP`, TXT_INTENT_DEBUFF);
     const monsterDotDmg = tickDots(this.monster);
     if (monsterDotDmg > 0)
       this.pushLog(`${this.monster.name} loses ${monsterDotDmg} to decay`, TXT_INTENT_HEAL);
 
-    // Sequential DOT visuals (so the player reads which side took damage).
+    // Sequential so the player can read which side took damage.
     if (heroDotDmg > 0) await this.animateDotTick("hero", heroDotDmg);
     if (monsterDotDmg > 0) await this.animateDotTick("monster", monsterDotDmg);
 

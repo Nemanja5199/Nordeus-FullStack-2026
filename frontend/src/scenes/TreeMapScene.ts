@@ -115,10 +115,6 @@ export class TreeMapScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // The label is 11 chars at 4px letter-spacing (~154px), so the prior
-    // 120px box squeezed it. Bump to 170px and shift the center left a
-    // touch so the button sits comfortably in the corner instead of
-    // hugging the edge.
     createButton(this, width - 100, 28, {
       ...BTN_SM,
       width: 170,
@@ -355,7 +351,6 @@ export class TreeMapScene extends Phaser.Scene {
     const { fillColor, strokeColor, glowColor, nameColor, statusLabel, statusColor } =
       getNodeColors(isShop, isBoss, state);
 
-    // ── Container — all children use LOCAL coords ─────────────────────────
     const container = this.add.container(x, y);
 
     if (state === "available") {
@@ -411,7 +406,6 @@ export class TreeMapScene extends Phaser.Scene {
 
     const isClickable = (state === "available" || state === "completed") && !isShop;
 
-    // ── Hover expand / shrink ──────────────────────────────────────────────
     bg.setInteractive({ useHandCursor: isClickable });
 
     bg.on("pointerover", () => {

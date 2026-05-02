@@ -93,9 +93,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.createTestModeToggle();
   }
 
-  // Bottom-right dev toggle: gives the next-started run god stats + a full kit.
-  // Clears the persisted hero on flip so changes apply on the next NEW GAME
-  // without the player having to reset progress manually.
+  // Dev toggle: drops persisted hero on flip so the next NEW GAME picks
+  // up the test-mode defaults without a manual reset.
   private createTestModeToggle() {
     const { width, height } = this.scale;
     const padX = 24;
@@ -133,7 +132,6 @@ export class MainMenuScene extends Phaser.Scene {
         const on = TestMode.toggle();
         check.setVisible(on);
         labelText.setColor(on ? TXT_GOLD : TXT_MUTED);
-        // Drop the saved hero so the next NEW GAME picks up the new defaults.
         localStorage.removeItem("rpg_hero");
       });
   }

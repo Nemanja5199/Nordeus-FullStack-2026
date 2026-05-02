@@ -80,7 +80,6 @@ export class EquipmentScene extends Phaser.Scene {
 
     this.add.rectangle(width / 2, (90 + height - 80) / 2, 1, height - 170, BORDER_GOLD, 0.25);
 
-    // Gear bonus summary
     const items = GameState.runConfig!.items;
     const bonuses = getGearBonuses(GameState.hero.equipment ?? {}, items);
     const bonusParts: string[] = [];
@@ -150,13 +149,11 @@ export class EquipmentScene extends Phaser.Scene {
         .setStrokeStyle(1, item ? BORDER_GOLD_BRIGHT : BORDER_LOCKED)
         .setInteractive({ useHandCursor: !!item });
 
-      // Slot label — top-left, clearly separated from content
       this.add.text(panelX - EQ_CARD_W / 2 + 10, y - EQ_CARD_H / 2 + 7, SLOT_LABELS[slot], {
         fontSize: FONT_SM,
         color: TXT_MUTED,
       });
 
-      // Icon + item name — lower half of card
       const iconX = panelX - EQ_CARD_W / 2 + EQ_ICON / 2 + 10;
       const contentY = y + 12;
       if (item && itemId) {
@@ -228,7 +225,6 @@ export class EquipmentScene extends Phaser.Scene {
       const col = i % GRID_COLS;
       const row = Math.floor(i / GRID_COLS);
       const cx = gridLeft + col * step;
-      // y is relative to the scroll viewport (0 == top).
       const cy = row * step + GRID_CELL / 2;
 
       const bg = this.add

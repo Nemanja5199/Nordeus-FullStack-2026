@@ -84,10 +84,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image("item_ring_of_vigor", "/assets/Items Assets/Custom/gem_green.png");
     this.load.image("item_ring_of_power", "/assets/Items Assets/Custom/orb_orange.png");
 
-    // Background music — two variants per scene group where applicable;
-    // AudioManager picks randomly each play so back-to-back entries don't
-    // repeat exactly. Death loops for the upgrades flow; victory is a
-    // one-shot stinger on win.
+    // Music
     this.load.audio(MusicAsset.Menu1, "/assets/music/menu_1.mp3");
     this.load.audio(MusicAsset.Menu2, "/assets/music/menu_2.mp3");
     this.load.audio(MusicAsset.Map1, "/assets/music/map_1.mp3");
@@ -97,18 +94,14 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio(MusicAsset.Death, "/assets/music/death.mp3");
     this.load.audio(MusicAsset.Victory, "/assets/music/victory.mp3");
 
-    // SFX — every cue defined in sfx.ts. Iterating SFX_FILES keeps the
-    // loader in lockstep with SfxAsset constants so adding a new SFX is
-    // a one-place change.
+    // SFX
     for (const [key, file] of Object.entries(SFX_FILES)) {
       this.load.audio(key, `/assets/sfx/${file}`);
     }
   }
 
   async create() {
-    // Cloud hydrate first so MetaProgress/Settings/GameState read the
-    // freshly-pulled localStorage values on their next access. Failure is
-    // soft — if the network is down we fall through to the local cache.
+    // Cloud hydrate before any module reads localStorage. Soft-fails offline.
     await Cloud.loadFromCloud();
     MetaProgress.load();
     GameState.loadSelectedClass();

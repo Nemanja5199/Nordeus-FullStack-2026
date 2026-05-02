@@ -52,7 +52,7 @@ export class ShopScene extends Phaser.Scene {
 
   create(data: ShopData) {
     this.returnScene = data.returnScene ?? Scene.TreeMap;
-    // children.removeAll(true) doesn't tear down our wheel listener — destroy explicitly before re-creating.
+    // children.removeAll doesn't drop the wheel listener — destroy explicitly.
     this.gearScroll?.destroy();
     this.gearScroll = undefined;
 
@@ -108,14 +108,9 @@ export class ShopScene extends Phaser.Scene {
     const startY = 148;
     const rowGap = 8;
 
-    // Vertical stripes from top to bottom (heights for a typical h=800):
-    //   148-440  gear scroll viewport
-    //   470-580  potion section (header + 2 rows)
-    //   605-660  tooltip area (when hovering — height-195)
-    //   670      modal footer hint
-    //   745      close button
-    // Cutting gear short at 440 keeps the bottom-most gear row from
-    // bleeding into potion territory when scrolled.
+    // Layout (h=800): 148–440 gear viewport · 470–580 potions · 605–660 tooltip
+    // · 670 hint · 745 close. Capping gear at 440 prevents bottom-row bleed
+    // into the potion stripe while scrolling.
     const GEAR_VIEWPORT_BOTTOM = 440;
     const viewportH = Math.max(220, GEAR_VIEWPORT_BOTTOM - startY);
     const rowCount = Math.ceil(items.length / 2);
@@ -133,7 +128,6 @@ export class ShopScene extends Phaser.Scene {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = col === 0 ? colLeft : colRight;
-      // Position relative to the scroll viewport (y=0 == top of viewport).
       const y = row * (ROW_H + rowGap) + ROW_H / 2;
       this.buildGearRow(x, y, item, this.gearScroll!);
     });
@@ -167,9 +161,7 @@ export class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0, 0.5);
 
-    // Stats render as separate Text objects so each chunk gets its own
-    // stat color (ATK red, DEF grey, MAG purple, HP green) instead of the
-    // muted grey one-liner the formatter used to produce.
+    // Per-stat colored chunks (Phaser.Text has no inline coloring).
     const statTexts = this.buildStatChunks(item, textLeft, y + 14);
 
     let badgeText: string;
@@ -214,9 +206,7 @@ export class ShopScene extends Phaser.Scene {
         }
       });
     } else if (!owned) {
-      // Card is shown but un-buyable (insufficient gold or locked tier).
-      // Don't be silent — give a denied tick so the click registers as
-      // intentional rather than a dead area.
+      // Insufficient gold / locked tier — denied tick so the click isn't silent.
       bg.on("pointerdown", () => SfxPlayer.play(this, Sfx.Denied));
     }
 
@@ -226,9 +216,7 @@ export class ShopScene extends Phaser.Scene {
     scroll.container.add([bg, ...(icon ? [icon] : []), nameTxt, ...statTexts, badgeTxt]);
   }
 
-  // Renders +N STAT chunks left-to-right, each in its own stat color.
-  // Phaser.Text doesn't support inline coloring, so we lay out individual
-  // Text objects and advance the cursor by each chunk's measured width.
+  // Lays out +N STAT chunks left-to-right, each in its stat color.
   private buildStatChunks(item: GearItem, x: number, y: number): Phaser.GameObjects.Text[] {
     const chunks: Array<{ value: number; label: string; color: string }> = [];
     if (item.statBonuses.attack) chunks.push({ value: item.statBonuses.attack, label: "ATK", color: TXT_STAT_ATTACK });
@@ -270,9 +258,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private buildPotionSection(width: number, height: number) {
-    // Sit just below the gear viewport (which cuts off at 440) with a
-    // 30px breathing gap. For very small windows, fall back to keeping
-    // it above the tooltip stripe at the bottom.
+    // Sits just below the gear viewport. Falls back above the tooltip stripe on tiny screens.
     const sectionH = 38 + POTION_ROW_H + 6 + POTION_ROW_H / 2;
     const startY = Math.min(470, height - 205 - sectionH);
     this.add

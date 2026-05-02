@@ -38,18 +38,12 @@ interface PostBattleData {
 }
 
 export class PostBattleScene extends Phaser.Scene {
-  // Guards the Fight Again handler so a flurry of clicks during the
-  // /api/run/start fetch doesn't kick off multiple runs.
   private freshRunPending = false;
 
   constructor() {
     super(Scene.PostBattle);
   }
 
-  // Defeat-screen "Fight Again": fetch a fresh map seed, install it, and
-  // start TreeMapScene. MetaProgress (shards, purchased upgrades) is in a
-  // separate store so it survives the call. UpgradesScene's button does
-  // the same thing — both paths route through GameState.startFreshRun.
   private async startFreshRun() {
     if (this.freshRunPending) return;
     this.freshRunPending = true;
@@ -64,21 +58,13 @@ export class PostBattleScene extends Phaser.Scene {
   }
 
   create(data: PostBattleData) {
-    // Phaser keeps the scene instance alive across transitions, so any
-    // per-attempt state needs to be reset here. Without this, clicking
-    // FIGHT AGAIN, dying, and clicking it again would no-op forever.
+    // Phaser scene instance persists across transitions; reset per-attempt state.
     this.freshRunPending = false;
 
-    // Battle ended — split flow by outcome:
-    //   Win  → silence + a short triumphant stinger (one-shot, no loop)
-    //   Lose → death track starts here and persists into UpgradesScene
-    //          (Audio.play("death") there is a no-op since group matches)
     if (data.won) {
       Audio.stop();
       Audio.playStinger(this, MusicAsset.Victory, 0.7);
-      // Layer the reward cues slightly after the stinger so they don't
-      // pile up. Shards get the crystalline ping, new-move drops get the
-      // chest-open chime — both only fire when actually earned.
+      // Reward cues delayed so they don't pile on top of the stinger.
       if (data.shardsEarned) {
         this.time.delayedCall(450, () => SfxPlayer.play(this, Sfx.ShardPickup));
       }
@@ -166,7 +152,6 @@ export class PostBattleScene extends Phaser.Scene {
       if (data.learnedMoveId) {
         const move = GameState.runConfig!.moves[data.learnedMoveId];
 
-        // Move card — hover to see description
         const cardH = 52;
         const cardBg = this.add
           .rectangle(width / 2, y + cardH / 2, 380, cardH, BG_HERO_BATTLE, 0.92)
@@ -186,7 +171,6 @@ export class PostBattleScene extends Phaser.Scene {
           })
           .setOrigin(0.5);
 
-        // Description shows on hover
         const descText = this.add
           .text(width / 2, y + cardH + 16, "", {
             fontSize: FONT_SM,

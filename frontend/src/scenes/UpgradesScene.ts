@@ -44,8 +44,6 @@ const CATEGORIES = [
 const SPECIALS = ["scholar", "hoarder"];
 
 export class UpgradesScene extends Phaser.Scene {
-  // Guards the Fight Again handler so a flurry of clicks during the
-  // /api/run/start fetch doesn't kick off multiple runs.
   private fightAgainPending = false;
 
   constructor() {
@@ -53,15 +51,12 @@ export class UpgradesScene extends Phaser.Scene {
   }
 
   create() {
-    // Reset per-attempt state — Phaser reuses the scene instance across
-    // transitions, so without this the guard sticks at true after one click.
     this.fightAgainPending = false;
 
     const { width, height } = this.scale;
     Audio.play(this, TrackGroup.Death);
     this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
 
-    // Header
     this.add
       .text(width / 2, 34, "UPGRADES", {
         fontSize: FONT_TITLE,
@@ -72,7 +67,6 @@ export class UpgradesScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Shard counter
     this.add
       .text(width / 2, 72, `◆ ${MetaProgress.shards} Shards available`, {
         fontSize: FONT_LG,
@@ -81,7 +75,7 @@ export class UpgradesScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // ── Main stat upgrade grid (4 columns × 3 rows) ──────────────────────
+    // 4-column × 3-tier upgrade grid
     const totalGridW = 4 * CARD_W + 3 * CARD_GAP;
     const gridLeft = (width - totalGridW) / 2 + CARD_W / 2;
     const gridTop = 120;
@@ -89,7 +83,6 @@ export class UpgradesScene extends Phaser.Scene {
     CATEGORIES.forEach(({ key, label, color }, col) => {
       const cx = gridLeft + col * (CARD_W + CARD_GAP);
 
-      // Column header
       this.add
         .text(cx, gridTop, label, {
           fontSize: FONT_MD,
@@ -105,7 +98,6 @@ export class UpgradesScene extends Phaser.Scene {
       });
     });
 
-    // ── Special upgrades row ─────────────────────────────────────────────
     const specialY = gridTop + 32 + 3 * (CARD_H + CARD_GAP) + CARD_H / 2 + 24;
     this.add
       .text(width / 2, specialY - CARD_H / 2 - 8, "SPECIAL", {
@@ -122,7 +114,6 @@ export class UpgradesScene extends Phaser.Scene {
       this.drawCard(cx, specialY, upgrade, TXT_GOLD_MID);
     });
 
-    // Bottom actions
     const canFightAgain = !!GameState.runConfig;
     createButton(this, width / 2 - 140, height - 40, {
       ...BTN_MD,
@@ -142,9 +133,6 @@ export class UpgradesScene extends Phaser.Scene {
     if (this.fightAgainPending) return;
     this.fightAgainPending = true;
     try {
-      // Fresh seed → fresh map and monster ordering for the new attempt.
-      // Continue from MainMenu still resumes the prior seed; this path is
-      // only the post-death "try again" button.
       const newConfig = await api.getRunConfig();
       GameState.startFreshRun(newConfig);
       this.scene.start(Scene.TreeMap);
@@ -169,7 +157,6 @@ export class UpgradesScene extends Phaser.Scene {
 
     if (available) bg.setInteractive({ useHandCursor: true });
 
-    // Upgrade name
     this.add
       .text(cx, cy - 52, upgrade.name, {
         fontSize: FONT_MD,
@@ -178,7 +165,6 @@ export class UpgradesScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Bonus
     this.add
       .text(cx, cy - 18, upgrade.description.replace("Start each run with ", ""), {
         fontSize: FONT_BODY,
@@ -188,7 +174,6 @@ export class UpgradesScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Status line
     if (purchased) {
       this.add.text(cx, cy + 28, "✓ Purchased", { fontSize: FONT_BODY, color: TXT_STAT_HP }).setOrigin(0.5);
     } else if (locked) {
@@ -204,7 +189,6 @@ export class UpgradesScene extends Phaser.Scene {
         .setOrigin(0.5);
     }
 
-    // Buy button
     if (affordable) {
       const btn = this.add
         .rectangle(cx, cy + 56, CARD_W - 28, 32, BG_BTN_BUY, 0.95)
