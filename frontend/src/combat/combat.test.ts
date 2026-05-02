@@ -240,7 +240,7 @@ describe("applyMove — buff/debuff effects", () => {
 });
 
 describe("applyMove — drain", () => {
-  it("heals attacker for the same amount as damage dealt", () => {
+  it("heals attacker for 50% of damage dealt (lifesteal)", () => {
     const attacker = makeChar({
       hp: 50,
       maxHp: 100,
@@ -254,8 +254,28 @@ describe("applyMove — drain", () => {
     });
 
     const result = applyMove(move, attacker, defender);
-    expect(result.heal).toBe(result.damage);
-    expect(attacker.hp).toBe(Math.min(100, 50 + result.damage));
+    expect(result.heal).toBe(Math.max(1, Math.floor(result.damage * 0.5)));
+    expect(attacker.hp).toBe(Math.min(100, 50 + result.heal));
+  });
+
+  it("drain heals at least 1 HP even when damage is tiny", () => {
+    const attacker = makeChar({
+      hp: 50,
+      maxHp: 100,
+      baseStats: { attack: 1, defense: 1, magic: 1 },
+    });
+    const defender = makeChar({
+      hp: 100,
+      baseStats: { attack: 1, defense: 99, magic: 1 },
+    });
+    const move = makeMove({
+      moveType: "magic",
+      baseValue: 1,
+      effects: [{ type: "drain", target: "self" }],
+    });
+
+    const result = applyMove(move, attacker, defender);
+    expect(result.heal).toBeGreaterThanOrEqual(1);
   });
 });
 

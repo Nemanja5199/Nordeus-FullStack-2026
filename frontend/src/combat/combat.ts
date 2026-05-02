@@ -81,7 +81,9 @@ export function applyMove(
   for (const fx of move.effects) {
     switch (fx.type) {
       case "drain": {
-        result.heal = result.damage;
+        // 50% lifesteal — full-heal-on-hit caused unkillable mage snowball
+        // when stacked with Focus's MAG buff.
+        result.heal = Math.max(1, Math.floor(result.damage * 0.5));
         attacker.hp = Math.min(attacker.maxHp, attacker.hp + result.heal);
         logs.push(`drained ${result.heal} HP`);
         break;

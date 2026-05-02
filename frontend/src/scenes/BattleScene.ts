@@ -7,7 +7,7 @@ import { GameState, getGearBonuses, TestMode, Settings, MetaProgress } from "../
 import { Audio, TrackGroup, SfxPlayer, Sfx } from "../audio";
 import { api } from "../services/api";
 import { heroNameFor } from "../sprites";
-import { BattleLog, StatusBar, PotionRow, MoveButtonRow, BattleHeroPanel, BattleMonsterPanel } from "../ui";
+import { BattleLog, StatusBar, PotionRow, MoveButtonRow, BattleHeroPanel, BattleMonsterPanel, WaitButton } from "../ui";
 import { BG, TXT } from "../constants";
 
 interface BattleData {
@@ -40,6 +40,7 @@ export class BattleScene extends Phaser.Scene {
   private log!: BattleLog;
   private potions!: PotionRow;
   private moveRow!: MoveButtonRow;
+  private waitBtn!: WaitButton;
 
   private monsterIntentMoveId: string | null = null;
   private monsterMoveHistory: string[] = [];
@@ -115,6 +116,9 @@ export class BattleScene extends Phaser.Scene {
       onHoverMana: () => this.previewManaPotion(),
       onHoverEnd: () => this.hideMovePreview(),
     });
+    this.waitBtn = new WaitButton(this, width, height, {
+      onWait: () => this.handlePlayerWait(),
+    });
     const moveCfgs = this.hero.moves
       .map((id) => {
         const config = GameState.runConfig!.moves[id];
@@ -148,7 +152,18 @@ export class BattleScene extends Phaser.Scene {
 
   private setButtonsEnabled(enabled: boolean) {
     this.moveRow.setEnabled(enabled);
+    this.waitBtn.setEnabled(enabled);
     this.updatePotionButtons();
+  }
+
+  private async handlePlayerWait() {
+    if (this.busy) return;
+    this.busy = true;
+    this.hideMovePreview();
+    this.setButtonsEnabled(false);
+    this.pushLog("You wait, gathering focus.", TXT.GOLD_LIGHT);
+    this.setStatus("Monster is deciding...");
+    this.time.delayedCall(300, () => void this.doMonsterTurn());
   }
 
   private canUseHpPotion(): boolean {
@@ -581,7 +596,8 @@ export class BattleScene extends Phaser.Scene {
     for (const fx of move.effects) {
       if (fx.type === "drain") {
         const dmg = Math.max(1, Math.floor(move.baseValue + effMag * 1.1));
-        parts.push(`heals you for ~${dmg} HP`);
+        const lifesteal = Math.max(1, Math.floor(dmg * 0.5));
+        parts.push(`heals you for ~${lifesteal} HP`);
       } else if (fx.type === "buff" && fx.target === "self") {
         const pct = Math.round((fx.multiplier! - 1) * 100);
         parts.push(`+${pct}% your ${fx.stat} for ${fx.turns} turns`);
@@ -743,7 +759,9 @@ export class BattleScene extends Phaser.Scene {
     else if (move.moveType === "heal")
       playerHeal = Math.max(5, Math.floor(move.baseValue + effMag));
 
-    if (move.effects.some((e) => e.type === "drain")) playerHeal = playerDmg;
+    if (move.effects.some((e) => e.type === "drain")) {
+      playerHeal = Math.max(1, Math.floor(playerDmg * 0.5));
+    }
 
     if (playerDmg > 0) {
       this.monsterPanel.previewHpDamage(this.monster.hp, playerDmg, this.monster.maxHp);
