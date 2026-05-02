@@ -1,0 +1,65 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+# Single concurrent deploy; cancel in-flight runs on a new push.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npx vitest run
+
+      - name: Build
+        env:
+          # Sub-path GitHub Pages serves the project at.
+          BASE_PATH: /${{ github.event.repository.name }}/
+          # Fly.io URL — set this as a repo secret (Settings → Secrets → Actions).
+          # Without it, the built game points at localhost and won't work in prod.
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
