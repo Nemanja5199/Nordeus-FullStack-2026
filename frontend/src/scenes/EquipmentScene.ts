@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { FONT_TITLE, FONT_MD, FONT_BODY, FONT_SM } from "../ui/typography";
 import { EQ_CARD_W, EQ_CARD_H, EQ_CARD_GAP, EQ_START_Y, EQ_ICON_SIZE as EQ_ICON, INV_GRID_CELL as GRID_CELL, INV_GRID_GAP as GRID_GAP, INV_GRID_COLS as GRID_COLS, INV_GRID_START_Y as GRID_START_Y } from "../ui/layout";
 import { GameState, getGearBonuses } from "../utils/gameState";
+import { SfxPlayer, Sfx } from "../utils/sfx";
 import type { GearItem, GearSlot } from "../types/game";
 import { createModalFooter } from "../ui/ModalFooter";
 import { TooltipManager } from "../ui/TooltipManager";
@@ -182,6 +183,7 @@ export class EquipmentScene extends Phaser.Scene {
         });
         bg.on("pointerdown", () => {
           GameState.unequipItem(slot);
+          SfxPlayer.play(this, Sfx.Unequip);
           this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
           this.children.removeAll(true);
           this.create({ returnScene: this.returnScene });
@@ -257,6 +259,7 @@ export class EquipmentScene extends Phaser.Scene {
       });
       bg.on("pointerdown", () => {
         GameState.equipItem(itemId);
+        SfxPlayer.play(this, Sfx.Equip);
         this.scene.get(this.returnScene)?.events.emit("refreshHeroPanel");
         this.children.removeAll(true);
         this.create({ returnScene: this.returnScene });

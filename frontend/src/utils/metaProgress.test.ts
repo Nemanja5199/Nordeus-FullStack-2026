@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { MetaProgress, UPGRADE_DEFS } from "./metaProgress";
+import { Cloud } from "./cloudSync";
 
 // ── localStorage mock ────────────────────────────────────────────────────────
 
@@ -234,5 +235,29 @@ describe("UPGRADE_DEFS", () => {
 
   it("all costs are positive", () => {
     expect(UPGRADE_DEFS.every((u) => u.cost > 0)).toBe(true);
+  });
+});
+
+describe("MetaProgress cloud sync wiring", () => {
+  it("addShards triggers Cloud.pushDebounced", () => {
+    const spy = vi.spyOn(Cloud, "pushDebounced").mockImplementation(() => {});
+    MetaProgress.addShards(5);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("buy triggers Cloud.pushDebounced on success", () => {
+    MetaProgress.addShards(100);
+    const spy = vi.spyOn(Cloud, "pushDebounced").mockImplementation(() => {});
+    MetaProgress.buy("vitality_1");
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("resetAll triggers Cloud.pushDebounced", () => {
+    const spy = vi.spyOn(Cloud, "pushDebounced").mockImplementation(() => {});
+    MetaProgress.resetAll();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

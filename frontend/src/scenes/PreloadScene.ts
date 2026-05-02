@@ -2,6 +2,9 @@ import Phaser from "phaser";
 import { BG_DARKEST, BG_LOAD_BAR_TRACK, BORDER_GOLD, TXT_GOLD } from "../ui/colors";
 import { FONT_LOAD } from "../ui/typography";
 import { MetaProgress } from "../utils/metaProgress";
+import { Cloud } from "../utils/cloudSync";
+import { MusicAsset } from "../utils/audio";
+import { SFX_FILES } from "../utils/sfx";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -78,9 +81,33 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image("item_ring_of_insight", "/assets/Items Assets/Ore & Gem/Ring of Insight.png");
     this.load.image("item_ring_of_vigor", "/assets/Items Assets/Ore & Gem/Ring of Vigor.png");
     this.load.image("item_ring_of_power", "/assets/Items Assets/Ore & Gem/Ring of Power.png");
+
+    // Background music — two variants per scene group where applicable;
+    // AudioManager picks randomly each play so back-to-back entries don't
+    // repeat exactly. Death loops for the upgrades flow; victory is a
+    // one-shot stinger on win.
+    this.load.audio(MusicAsset.Menu1, "/assets/music/menu_1.mp3");
+    this.load.audio(MusicAsset.Menu2, "/assets/music/menu_2.mp3");
+    this.load.audio(MusicAsset.Map1, "/assets/music/map_1.mp3");
+    this.load.audio(MusicAsset.Map2, "/assets/music/map_2.mp3");
+    this.load.audio(MusicAsset.Battle1, "/assets/music/battle_1.mp3");
+    this.load.audio(MusicAsset.Battle2, "/assets/music/battle_2.mp3");
+    this.load.audio(MusicAsset.Death, "/assets/music/death.mp3");
+    this.load.audio(MusicAsset.Victory, "/assets/music/victory.mp3");
+
+    // SFX — every cue defined in sfx.ts. Iterating SFX_FILES keeps the
+    // loader in lockstep with SfxAsset constants so adding a new SFX is
+    // a one-place change.
+    for (const [key, file] of Object.entries(SFX_FILES)) {
+      this.load.audio(key, `/assets/sfx/${file}`);
+    }
   }
 
-  create() {
+  async create() {
+    // Cloud hydrate first so MetaProgress/Settings/GameState read the
+    // freshly-pulled localStorage values on their next access. Failure is
+    // soft — if the network is down we fall through to the local cache.
+    await Cloud.loadFromCloud();
     MetaProgress.load();
     this.scene.start("MainMenuScene");
   }

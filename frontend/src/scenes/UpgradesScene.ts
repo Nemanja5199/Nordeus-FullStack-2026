@@ -2,7 +2,9 @@ import Phaser from "phaser";
 import { MetaProgress, UPGRADE_DEFS } from "../utils/metaProgress";
 import type { MetaUpgrade } from "../types/game";
 import { GameState } from "../utils/gameState";
-import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_XS } from "../ui/typography";
+import { Audio, TrackGroup } from "../utils/audio";
+import { SfxPlayer, Sfx } from "../utils/sfx";
+import { FONT_TITLE, FONT_LG, FONT_MD, FONT_BODY } from "../ui/typography";
 import {
   BG_DARKEST,
   BG_UPGRADE_AVAILABLE,
@@ -46,6 +48,7 @@ export class UpgradesScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    Audio.play(this, TrackGroup.Death);
     this.add.rectangle(0, 0, width, height, BG_DARKEST, 0.97).setOrigin(0).setInteractive();
 
     // Header
@@ -148,8 +151,8 @@ export class UpgradesScene extends Phaser.Scene {
 
     // Upgrade name
     this.add
-      .text(cx, cy - 34, upgrade.name, {
-        fontSize: FONT_BODY,
+      .text(cx, cy - 52, upgrade.name, {
+        fontSize: FONT_MD,
         fontFamily: "EnchantedLand",
         color: purchased ? TXT_STAT_HP : available ? accentColor : TXT_LOCKED,
       })
@@ -157,24 +160,24 @@ export class UpgradesScene extends Phaser.Scene {
 
     // Bonus
     this.add
-      .text(cx, cy - 12, upgrade.description.replace("Start each run with ", ""), {
-        fontSize: FONT_XS,
+      .text(cx, cy - 18, upgrade.description.replace("Start each run with ", ""), {
+        fontSize: FONT_BODY,
         color: purchased ? TXT_MUTED : available ? TXT_GOLD_LIGHT : TXT_LOCKED,
-        wordWrap: { width: CARD_W - 16 },
+        wordWrap: { width: CARD_W - 20 },
         align: "center",
       })
       .setOrigin(0.5);
 
     // Status line
     if (purchased) {
-      this.add.text(cx, cy + 20, "✓ Purchased", { fontSize: FONT_SM, color: TXT_STAT_HP }).setOrigin(0.5);
+      this.add.text(cx, cy + 28, "✓ Purchased", { fontSize: FONT_BODY, color: TXT_STAT_HP }).setOrigin(0.5);
     } else if (locked) {
-      this.add.text(cx, cy + 20, "🔒 Locked", { fontSize: FONT_SM, color: TXT_LOCKED }).setOrigin(0.5);
+      this.add.text(cx, cy + 28, "🔒 Locked", { fontSize: FONT_BODY, color: TXT_LOCKED }).setOrigin(0.5);
     } else {
       const costColor = MetaProgress.shards >= upgrade.cost ? TXT_SHARD : TXT_STAT_ATTACK;
       this.add
-        .text(cx, cy + 20, `◆ ${upgrade.cost} Shards`, {
-          fontSize: FONT_SM,
+        .text(cx, cy + 28, `◆ ${upgrade.cost} Shards`, {
+          fontSize: FONT_BODY,
           fontFamily: "EnchantedLand",
           color: costColor,
         })
@@ -184,17 +187,18 @@ export class UpgradesScene extends Phaser.Scene {
     // Buy button
     if (affordable) {
       const btn = this.add
-        .rectangle(cx, cy + 40, CARD_W - 24, 26, BG_BTN_BUY, 0.95)
+        .rectangle(cx, cy + 56, CARD_W - 28, 32, BG_BTN_BUY, 0.95)
         .setStrokeStyle(1, BORDER_SHARD)
         .setInteractive({ useHandCursor: true });
       this.add
-        .text(cx, cy + 40, "BUY", { fontSize: FONT_SM, fontFamily: "EnchantedLand", color: TXT_SHARD })
+        .text(cx, cy + 56, "BUY", { fontSize: FONT_BODY, fontFamily: "EnchantedLand", color: TXT_SHARD })
         .setOrigin(0.5);
 
       btn.on("pointerover", () => btn.setFillStyle(BG_BTN_BUY_HOVER));
       btn.on("pointerout", () => btn.setFillStyle(BG_BTN_BUY));
       btn.on("pointerdown", () => {
         MetaProgress.buy(upgrade.id);
+        SfxPlayer.play(this, Sfx.ShardPickup);
         this.scene.restart();
       });
     }

@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { FONT_LG, FONT_MD, FONT_BODY, FONT_SM, FONT_SCENE_TITLE, FONT_CONQUEST } from "../ui/typography";
 import { GameState } from "../utils/gameState";
 import { MetaProgress } from "../utils/metaProgress";
+import { Audio, TrackGroup, MusicAsset } from "../utils/audio";
+import { SfxPlayer, Sfx } from "../utils/sfx";
 import { createButton, BTN_MD } from "../ui/Button";
 import {
   BG_DARKEST,
@@ -39,6 +41,25 @@ export class PostBattleScene extends Phaser.Scene {
   }
 
   create(data: PostBattleData) {
+    // Battle ended — split flow by outcome:
+    //   Win  → silence + a short triumphant stinger (one-shot, no loop)
+    //   Lose → death track starts here and persists into UpgradesScene
+    //          (Audio.play("death") there is a no-op since group matches)
+    if (data.won) {
+      Audio.stop();
+      Audio.playStinger(this, MusicAsset.Victory, 0.7);
+      // Layer the reward cues slightly after the stinger so they don't
+      // pile up. Shards get the crystalline ping, new-move drops get the
+      // chest-open chime — both only fire when actually earned.
+      if (data.shardsEarned) {
+        this.time.delayedCall(450, () => SfxPlayer.play(this, Sfx.ShardPickup));
+      }
+      if (data.learnedMoveId) {
+        this.time.delayedCall(750, () => SfxPlayer.play(this, Sfx.MoveDrop));
+      }
+    } else {
+      Audio.play(this, TrackGroup.Death);
+    }
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, BG_DARKEST).setOrigin(0);
 
